@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>بلاغ مفقود + تتبع الدرون</title>
+
+  <style>
+    :root{
+      /* Desert / Sand Brown theme */
+      --bg:#2b2118;
+      --card:#3a2c21;
+      --card2:#463528;
+      --muted:#d6c2a8;
+      --text:#f4e7d6;
+      --line:#5a4636;
+
+      --accent:#c6a06a;
+      --accent2:#e0b26b;
+
+      --blue:#3b82f6;   /* موقع الدرون */
+      --red:#ef4444;    /* تنبيه غير مقروء */
+      --green:#22c55e;  /* تنبيه مقروء */
+
+      --shadow: 0 14px 40px rgba(0,0,0,.45);
+      --radius: 18px;
+
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Kufi Arabic", "Noto Sans Arabic", Arial, sans-serif;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(214,194,168,.18), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(198,160,106,.14), transparent 55%),
+        var(--bg);
+    }
+
+    header{
+      position: sticky;
+      top:0;
+      z-index:10;
+      backdrop-filter: blur(10px);
+      background: rgba(43,33,24,.78);
+      border-bottom: 1px solid rgba(90,70,54,.65);
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 16px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      background: rgba(58,44,33,.92);
+      border:1px solid rgba(90,70,54,.9);
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space:nowrap;
+    }
+    .pill b{ color: var(--text); }
+    .spacer{ flex:1; }
+
+    main .wrap{ padding-top: 14px; padding-bottom: 28px; }
+
+    .card{
+      background: rgba(58,44,33,.94);
+      border:1px solid rgba(90,70,54,.95);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(90,70,54,.7);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .card .hd h2{
+      margin:0;
+      font-size: 15px;
+      color: var(--text);
+    }
+    .card .bd{ padding: 14px 16px 16px; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width: 720px){
+      .grid2{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .field{
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(70,53,40,.55);
+      border:1px solid rgba(90,70,54,.85);
+    }
+    .field .k{
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .field .v{
+      font-size: 14px;
+      line-height: 1.7;
+      word-break: break-word;
+    }
+
+    .statusRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top: 12px;
+    }
+
+    select, button{ font: inherit; }
+
+    .select{
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(70,53,40,.55);
+      border:1px solid rgba(90,70,54,.9);
+      color: var(--text);
+      outline:none;
+      min-width: 260px;
+    }
+
+    .btn{
+      cursor:pointer;
+      border:1px solid rgba(90,70,54,.95);
+      background: rgba(74,56,42,.78);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      transition: transform .08s ease, background .15s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(63,47,36,.95); }
+    .btn:active{ transform: scale(.98); }
+    .btn-accent{
+      border-color: rgba(198,160,106,.6);
+      background: rgba(198,160,106,.18);
+    }
+    .btn-accent:hover{ background: rgba(198,160,106,.26); }
+
+    .badgeStatus{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(90,70,54,.9);
+      background: rgba(58,44,33,.8);
+      color: var(--muted);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(198,160,106,.18);
+    }
+
+    /* CENTER stack (video + map) */
+    .centerStack{
+      max-width: 860px;
+      margin: 0 auto;
+      display:grid;
+      gap:14px;
+    }
+
+    .placeholder{
+      height: 320px;
+      border-radius: 16px;
+      background:
+        linear-gradient(135deg, rgba(214,194,168,.10), rgba(198,160,106,.06)),
+        rgba(43,33,24,.35);
+      border: 1px dashed rgba(90,70,54,.9);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding: 18px;
+      color: var(--muted);
+    }
+    .placeholder b{ color: var(--text); }
+
+    .mapWrap{
+      height: 420px;
+      border-radius: 16px;
+      border:1px solid rgba(90,70,54,.95);
+      background: rgba(43,33,24,.35);
+      overflow:hidden;
+      position: relative;
+    }
+
+    .mapHeader{
+      position:absolute;
+      top:10px;
+      inset-inline:10px;
+      z-index:2;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      pointer-events:none;
+    }
+    .legend{
+      pointer-events:none;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .legend .item{
+      pointer-events:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(58,44,33,.85);
+      border:1px solid rgba(90,70,54,.9);
+      color: var(--muted);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    .sw{ width:10px;height:10px;border-radius:50%; display:inline-block; }
+
+    canvas{ width:100%; height:100%; display:block; }
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.6);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 100;
+    }
+    .modal{
+      width: min(880px, 100%);
+      background: rgba(58,44,33,.98);
+      border:1px solid rgba(90,70,54,.95);
+      border-radius: 18px;
+      box-shadow: 0 20px 70px rgba(0,0,0,.60);
+      overflow:hidden;
+    }
+    .modal .mhd{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border-bottom: 1px solid rgba(90,70,54,.75);
+      flex-wrap:wrap;
+    }
+    .modal .mhd h3{ margin:0; font-size: 15px; }
+    .modal .mbd{ padding: 14px 16px 16px; display:grid; gap:12px; }
+
+    .mgrid{
+      display:grid;
+      gap:12px;
+      grid-template-columns: 1fr;
+      align-items:start;
+    }
+    @media (min-width: 760px){
+      .mgrid{ grid-template-columns: 1.1fr .9fr; }
+    }
+
+    .imgBox{
+      width:100%;
+      border-radius: 16px;
+      border:1px solid rgba(90,70,54,.9);
+      background: rgba(43,33,24,.35);
+      overflow:hidden;
+    }
+    .imgBox img{
+      display:block;
+      width:100%;
+      height:auto;
+      max-height: 380px;
+      object-fit: cover;
+    }
+
+    .toast{
+      position: fixed;
+      bottom: 16px;
+      inset-inline: 16px;
+      display:flex;
+      justify-content:center;
+      pointer-events:none;
+      z-index: 120;
+    }
+    .toast .box{
+      pointer-events:auto;
+      background: rgba(58,44,33,.96);
+      border:1px solid rgba(90,70,54,.95);
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 13px;
+      display:none;
+      gap:10px;
+      align-items:center;
+    }
+    .toastDot{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--accent2);
+      box-shadow: 0 0 0 4px rgba(224,178,107,.18);
+      flex: 0 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <div class="topbar">
+        <h1>بلاغ مفقود — التفاصيل وتتبع الدرون</h1>
+        <span class="pill">رقم البلاغ: <b id="reportId">—</b></span>
+        <span class="pill">تنبيهات غير مقروءة: <b id="unreadCount">0</b></span>
+        <div class="spacer"></div>
+        <span class="badgeStatus" title="الحالة الحالية">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">—</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+
+      <!-- تفاصيل البلاغ -->
+      <section class="card">
+        <div class="hd">
+          <h2>تفاصيل البلاغ</h2>
+          <div class="spacer"></div>
+          <span class="pill">آخر تحديث: <b id="lastUpdated">—</b></span>
+        </div>
+
+        <div class="bd">
+          <div class="grid2">
+            <div class="field">
+              <div class="k">اسم المفقود</div>
+              <div class="v" id="missingName">—</div>
+            </div>
+            <div class="field">
+              <div class="k">العمر</div>
+              <div class="v" id="missingAge">—</div>
+            </div>
+            <div class="field">
+              <div class="k">المدينة / المنطقة</div>
+              <div class="v" id="missingArea">—</div>
+            </div>
+            <div class="field">
+              <div class="k">وقت البلاغ</div>
+              <div class="v" id="reportTime">—</div>
+            </div>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="field">
+            <div class="k">وصف و تفاصيل البلاغ</div>
+            <div class="v" id="reportDetails">—</div>
+          </div>
+
+          <div class="statusRow">
+            <label class="pill" style="background:rgba(70,53,40,.55);border-color:rgba(90,70,54,.9);">
+              الحالة:
+              <select id="statusSelect" class="select" aria-label="تغيير حالة البلاغ">
+                <option value="accepted">مقبول</option>
+                <option value="searching">جاري البحث</option>
+                <option value="found">تم العثور</option>
+                <option value="rescued">تم الإنقاذ</option>
+              </select>
+            </label>
+
+            <button class="btn btn-accent" id="saveStatusBtn" type="button">حفظ الحالة</button>
+            <span class="pill" id="statusSavedHint" style="display:none;">تم حفظ الحالة ✅</span>
+          </div>
+        </div>
+      </section>
+
+      <div style="height:14px"></div>
+
+      <!-- وسط الصفحة: فيديو + خريطة (بوكسين تحت بعض) -->
+      <section class="centerStack">
+
+        <div class="card">
+          <div class="hd">
+            <h2>Live Video (من الدرون)</h2>
+            <div class="spacer"></div>
+            <span class="pill">مصدر: <b id="videoSource">—</b></span>
+          </div>
+          <div class="bd">
+            <!-- Dynamic box: replace with real stream -->
+            <div class="placeholder" id="liveVideoBox">
+              <div>
+                <div style="font-size:14px;"><b>منطقة عرض الفيديو المباشر</b></div>
+                <div style="margin-top:8px;font-size:13px;line-height:1.7;">
+                  اربط هنا بث الدرون لاحقًا (HLS / WebRTC / أي Player).<br/>
+                  حالياً Placeholder دينمك.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="hd">
+            <h2>خريطة تتبع الدرون</h2>
+            <div class="spacer"></div>
+            <span class="pill">اضغط على نقطة التنبيه لعرض التفاصيل</span>
+          </div>
+          <div class="bd">
+            <div class="mapWrap">
+              <div class="mapHeader">
+                <div class="legend">
+                  <span class="item"><span class="sw" style="background:var(--blue)"></span> موقع الدرون</span>
+                  <span class="item"><span class="sw" style="background:var(--red)"></span> تنبيه (غير مقروء)</span>
+                  <span class="item"><span class="sw" style="background:var(--green)"></span> تنبيه (مقروء)</span>
+                </div>
+              </div>
+              <canvas id="mapCanvas" width="1100" height="650" aria-label="خريطة دينمك للدرون"></canvas>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <div class="field">
+              <div class="k">ملاحظة</div>
+              <div class="v" style="color:var(--muted);font-size:13px;">
+                هذه خريطة Canvas تجريبية. لاحقًا استبدلها بخريطة حقيقية (Google/Mapbox)
+                وخلي نفس بيانات التنبيهات/المسار/موقع الدرون.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Alert details modal (ONLY تظهر عند الضغط على نقطة بالخريطة) -->
+  <div id="alertModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="mhd">
+        <h3 id="alertModalTitle">تفاصيل تنبيه الذكاء الاصطناعي</h3>
+        <div class="spacer"></div>
+        <button class="btn" id="closeAlertModalBtn" type="button">إغلاق ✕</button>
+      </div>
+
+      <div class="mbd">
+        <div class="mgrid">
+          <div class="imgBox">
+            <img id="alertImg" alt="الصورة الملتقطة" />
+          </div>
+
+          <div>
+            <div class="field">
+              <div class="k">التاريخ والوقت</div>
+              <div class="v" id="alertTime">—</div>
+            </div>
+
+            <div style="height:10px"></div>
+
+            <div class="field">
+              <div class="k">الموقع (Location)</div>
+              <div class="v" id="alertLocation">—</div>
+            </div>
+
+            <div style="height:10px"></div>
+
+            <div class="field">
+              <div class="k">الوصف</div>
+              <div class="v" id="alertDesc">—</div>
+            </div>
+
+            <div style="height:10px"></div>
+
+            <button class="btn btn-accent" id="markReadBtn" type="button">تعليم كمقروء</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" aria-live="polite" aria-atomic="true">
+    <div id="toastBox" class="box">
+      <span class="toastDot" aria-hidden="true"></span>
+      <span id="toastText"></span>
+    </div>
+  </div>
+
+  <script>
+    /***************************************
+     * ✅ حسب طلبك:
+     * 1) التنبيهات ما تنضاف يدوي (لا زر إضافة)
+     *    -> هنا ديمو: جايه تلقائي من "model feed" (محاكاة بتحديث كل 8 ثواني)
+     * 2) التفاصيل تظهر من الضغط على نقطة بالخريطة فقط (Modal)
+     * 3) الفيديو والخريطة بوكسين بالمنتصف تحت بعض (centerStack)
+     * 4) بيانات كذبية للاسم/العمر/المدينة
+     * 5) الاحداثيات تكون Location (lat,lng)
+     ***************************************/
+
+    const STORAGE_KEY = "missing_report_page_v2";
+
+    const STATUSES = {
+      accepted:  { label: "مقبول",     dot: "var(--accent)" },
+      searching: { label: "جاري البحث", dot: "var(--accent2)" },
+      found:     { label: "تم العثور", dot: "var(--green)" },
+      rescued:   { label: "تم الإنقاذ", dot: "var(--blue)" },
+    };
+
+    // ============= DEMO STATE =============
+    // alerts are "model output" points with lat/lng
+    // For drawing on canvas, we project lat/lng to canvas using bounds (min/max).
+    const DEFAULT_STATE = {
+      report: {
+        id: "BLG-0002",
+        missingName: "سلمان الدوسري",
+        missingAge: "28",
+        missingArea: "الرياض — رماح",
+        reportTime: new Date(Date.now() - 1000*60*35).toLocaleString("ar-SA", { dateStyle:"medium", timeStyle:"short" }),
+        details: "تم الإبلاغ عن فقدان الشخص بعد خروجه للتنزه في منطقة صحراوية. آخر تواصل كان قبل 3 ساعات. يرتدي ثوبًا أبيض وشماغًا أحمر.",
+        status: "searching",
+        videoSource: "Drone-01"
+      },
+
+      // Drone location + path as lat/lng
+      drone: {
+        pos: { lat: 24.9950, lng: 46.7400 },
+        path: [
+          { lat: 24.9920, lng: 46.7100 },
+          { lat: 24.9930, lng: 46.7170 },
+          { lat: 24.9942, lng: 46.7240 },
+          { lat: 24.9948, lng: 46.7320 },
+          { lat: 24.9950, lng: 46.7400 },
+          { lat: 24.9958, lng: 46.7480 },
+          { lat: 24.9964, lng: 46.7560 },
+          { lat: 24.9960, lng: 46.7640 }
+        ]
+      },
+
+      alerts: [
+        {
+          id: crypto.randomUUID(),
+          lat: 24.9942, lng: 46.7240,
+          ts: new Date(Date.now() - 1000*60*18).toISOString(),
+          desc: "اشتباه وجود بشري بالقرب من كثبان منخفضة.",
+          imgDataUrl: demoImg("AI Alert #1"),
+          read: false
+        },
+        {
+          id: crypto.randomUUID(),
+          lat: 24.9958, lng: 46.7480,
+          ts: new Date(Date.now() - 1000*60*9).toISOString(),
+          desc: "رصد حركة محتملة بجانب مسار رملي.",
+          imgDataUrl: demoImg("AI Alert #2"),
+          read: false
+        }
+      ]
+    };
+
+    function loadState(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return structuredClone(DEFAULT_STATE);
+      try{
+        const s = JSON.parse(raw);
+        // merge shallow
+        return {
+          report: { ...structuredClone(DEFAULT_STATE.report), ...(s.report||{}) },
+          drone:  { ...structuredClone(DEFAULT_STATE.drone), ...(s.drone||{}) },
+          alerts: Array.isArray(s.alerts) ? s.alerts : structuredClone(DEFAULT_STATE.alerts),
+        };
+      }catch{
+        return structuredClone(DEFAULT_STATE);
+      }
+    }
+    function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+    // Demo image (data URL)
+    function demoImg(label){
+      const c = document.createElement("canvas");
+      c.width = 960; c.height = 540;
+      const g = c.getContext("2d");
+      const grd = g.createLinearGradient(0,0,c.width,c.height);
+      grd.addColorStop(0, "rgba(214,194,168,0.35)");
+      grd.addColorStop(1, "rgba(198,160,106,0.18)");
+      g.fillStyle = grd; g.fillRect(0,0,c.width,c.height);
+
+      g.strokeStyle = "rgba(90,70,54,0.9)";
+      g.lineWidth = 10;
+      g.strokeRect(20,20,c.width-40,c.height-40);
+
+      g.fillStyle = "rgba(244,231,214,0.95)";
+      g.font = "bold 54px system-ui";
+      g.fillText("AI Capture", 60, 110);
+
+      g.fillStyle = "rgba(214,194,168,0.95)";
+      g.font = "28px system-ui";
+      g.fillText(label, 60, 160);
+
+      g.fillStyle = "rgba(244,231,214,0.85)";
+      g.font = "22px system-ui";
+      g.fillText("Demo frame - replace with real snapshot", 60, 210);
+
+      g.beginPath();
+      g.fillStyle = "rgba(239,68,68,0.55)";
+      g.arc(720, 260, 44, 0, Math.PI*2);
+      g.fill();
+      g.fillStyle = "rgba(244,231,214,0.95)";
+      g.font = "bold 22px system-ui";
+      g.fillText("?", 712, 268);
+
+      return c.toDataURL("image/jpeg", 0.85);
+    }
+
+    // ============= UI =============
+    const $ = (s) => document.querySelector(s);
+    let state = loadState();
+    let activeAlertId = null;
+
+    function showToast(msg){
+      const box = $("#toastBox");
+      $("#toastText").textContent = msg;
+      box.style.display = "inline-flex";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=>{ box.style.display = "none"; }, 2200);
+    }
+
+    function unreadCount(){ return state.alerts.filter(a => !a.read).length; }
+
+    function setHeader(){
+      $("#reportId").textContent = state.report.id;
+      $("#lastUpdated").textContent = new Date().toLocaleString("ar-SA", { dateStyle:"medium", timeStyle:"short" });
+      $("#unreadCount").textContent = unreadCount();
+
+      const st = STATUSES[state.report.status] || STATUSES.searching;
+      $("#statusText").textContent = st.label;
+      $("#statusDot").style.background = st.dot;
+    }
+
+    function setReport(){
+      $("#missingName").textContent = state.report.missingName;
+      $("#missingAge").textContent = state.report.missingAge;
+      $("#missingArea").textContent = state.report.missingArea;
+      $("#reportTime").textContent = state.report.reportTime;
+      $("#reportDetails").textContent = state.report.details;
+      $("#videoSource").textContent = state.report.videoSource;
+      $("#statusSelect").value = state.report.status;
+      setHeader();
+    }
+
+    $("#saveStatusBtn").addEventListener("click", ()=>{
+      state.report.status = $("#statusSelect").value;
+      saveState();
+      setHeader();
+      $("#statusSavedHint").style.display = "inline-flex";
+      showToast("تم حفظ حالة البلاغ");
+      setTimeout(()=> $("#statusSavedHint").style.display = "none", 1600);
+    });
+
+    // ============= MAP CANVAS (lat/lng projection) =============
+    const canvas = $("#mapCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function boundsFromState(){
+      const pts = [
+        ...state.drone.path,
+        state.drone.pos,
+        ...state.alerts.map(a => ({lat:a.lat,lng:a.lng}))
+      ];
+      let minLat=Infinity, maxLat=-Infinity, minLng=Infinity, maxLng=-Infinity;
+      for(const p of pts){
+        minLat = Math.min(minLat, p.lat);
+        maxLat = Math.max(maxLat, p.lat);
+        minLng = Math.min(minLng, p.lng);
+        maxLng = Math.max(maxLng, p.lng);
+      }
+      // padding صغير
+      const padLat = (maxLat - minLat || 0.01) * 0.25;
+      const padLng = (maxLng - minLng || 0.01) * 0.25;
+      return {
+        minLat: minLat - padLat,
+        maxLat: maxLat + padLat,
+        minLng: minLng - padLng,
+        maxLng: maxLng + padLng
+      };
+    }
+
+    function project(p, b){
+      // lng -> x , lat -> y (نعكس y)
+      const w = canvas.width, h = canvas.height;
+      const x = ((p.lng - b.minLng) / (b.maxLng - b.minLng)) * w;
+      const y = (1 - (p.lat - b.minLat) / (b.maxLat - b.minLat)) * h;
+      return { x, y };
+    }
+
+    function hexToRgba(color, a){
+      if(color.startsWith("rgb(") || color.startsWith("rgba(")){
+        return color.replace("rgb(", "rgba(").replace(")", `, ${a})`);
+      }
+      if(!color.startsWith("#")) return `rgba(255,255,255,${a})`;
+      const hex = color.replace("#","").trim();
+      const n = parseInt(hex.length===3 ? hex.split("").map(c=>c+c).join("") : hex, 16);
+      const r = (n>>16)&255, g=(n>>8)&255, b=n&255;
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function draw(){
+      const b = boundsFromState();
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // background
+      const bg = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+      bg.addColorStop(0, "rgba(214,194,168,0.12)");
+      bg.addColorStop(1, "rgba(198,160,106,0.06)");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // soft topo lines
+      ctx.strokeStyle = "rgba(90,70,54,0.25)";
+      ctx.lineWidth = 2;
+      for(let i=0;i<9;i++){
+        ctx.beginPath();
+        const y = (i+1)*(canvas.height/10);
+        ctx.moveTo(0, y);
+        ctx.bezierCurveTo(canvas.width*0.25, y-30, canvas.width*0.55, y+30, canvas.width, y);
+        ctx.stroke();
+      }
+
+      // drone path
+      const pathPx = state.drone.path.map(p => project(p,b));
+      ctx.setLineDash([10,10]);
+      ctx.strokeStyle = "rgba(244,231,214,0.35)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      pathPx.forEach((p,i)=> i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // small nodes along path
+      ctx.fillStyle = "rgba(244,231,214,0.25)";
+      for(const p of pathPx){
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,5,0,Math.PI*2);
+        ctx.fill();
+      }
+
+      // alerts points
+      for(const a of state.alerts){
+        const p = project({lat:a.lat,lng:a.lng}, b);
+        const color = getComputedStyle(document.documentElement)
+          .getPropertyValue(a.read ? "--green" : "--red").trim();
+
+        ctx.beginPath();
+        ctx.fillStyle = hexToRgba(color, 0.18);
+        ctx.arc(p.x,p.y,18,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(p.x,p.y,8,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(90,70,54,0.75)";
+        ctx.lineWidth = 2;
+        ctx.arc(p.x,p.y,8,0,Math.PI*2);
+        ctx.stroke();
+      }
+
+      // drone pos
+      const dp = project(state.drone.pos, b);
+      const blue = getComputedStyle(document.documentElement).getPropertyValue("--blue").trim();
+      ctx.beginPath();
+      ctx.fillStyle = hexToRgba(blue, 0.20);
+      ctx.arc(dp.x, dp.y, 22, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.fillStyle = blue;
+      ctx.arc(dp.x, dp.y, 10, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(90,70,54,0.85)";
+      ctx.lineWidth = 2;
+      ctx.arc(dp.x, dp.y, 10, 0, Math.PI*2);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(244,231,214,0.85)";
+      ctx.font = "bold 16px system-ui";
+      ctx.fillText("DRONE", dp.x + 14, dp.y - 14);
+    }
+
+    function pickAlertAt(mx,my){
+      const b = boundsFromState();
+      const threshold = 14;
+      for(const a of state.alerts){
+        const p = project({lat:a.lat,lng:a.lng}, b);
+        const dx = mx - p.x, dy = my - p.y;
+        if(Math.sqrt(dx*dx + dy*dy) <= threshold) return a;
+      }
+      return null;
+    }
+
+    canvas.addEventListener("click", (e)=>{
+      const rect = canvas.getBoundingClientRect();
+      const sx = canvas.width / rect.width;
+      const sy = canvas.height / rect.height;
+      const mx = (e.clientX - rect.left) * sx;
+      const my = (e.clientY - rect.top) * sy;
+
+      const a = pickAlertAt(mx,my);
+      if(a) openAlert(a.id);
+    });
+
+    // ============= ALERT MODAL =============
+    function formatAr(tsIso){
+      const d = new Date(tsIso);
+      return d.toLocaleString("ar-SA", { dateStyle:"medium", timeStyle:"short" });
+    }
+
+    function openAlert(alertId){
+      const a = state.alerts.find(x => x.id === alertId);
+      if(!a) return;
+
+      activeAlertId = alertId;
+
+      $("#alertImg").src = a.imgDataUrl;
+      $("#alertTime").textContent = formatAr(a.ts);
+      $("#alertLocation").textContent = `${a.lat.toFixed(6)}, ${a.lng.toFixed(6)}`;
+      $("#alertDesc").textContent = a.desc;
+
+      $("#markReadBtn").style.display = a.read ? "none" : "inline-flex";
+      $("#alertModalBackdrop").style.display = "flex";
+    }
+
+    function closeAlert(){
+      $("#alertModalBackdrop").style.display = "none";
+      activeAlertId = null;
+    }
+
+    $("#closeAlertModalBtn").addEventListener("click", closeAlert);
+    $("#alertModalBackdrop").addEventListener("click", (e)=>{
+      if(e.target === $("#alertModalBackdrop")) closeAlert();
+    });
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape" && $("#alertModalBackdrop").style.display === "flex") closeAlert();
+    });
+
+    $("#markReadBtn").addEventListener("click", ()=>{
+      if(!activeAlertId) return;
+      const a = state.alerts.find(x => x.id === activeAlertId);
+      if(!a) return;
+
+      a.read = true; // يتحول من الأحمر للأخضر
+      saveState();
+      setHeader();
+      draw();
+      showToast("تم تعليم التنبيه كمقروء");
+      closeAlert();
+    });
+
+    // ============= MODEL FEED (محاكاة) =============
+    // لاحقًا: استبدلها ب WebSocket / SSE / Polling من السيرفر
+    // وتستدعي applyModelEvent(event)
+    function applyModelEvent(event){
+      // event = { type:"human_detected", lat,lng, ts, desc, imgDataUrl }
+      if(event?.type !== "human_detected") return;
+
+      state.alerts.unshift({
+        id: crypto.randomUUID(),
+        lat: event.lat,
+        lng: event.lng,
+        ts: event.ts || new Date().toISOString(),
+        desc: event.desc || "تنبيه: تم رصد مؤشر بشري.",
+        imgDataUrl: event.imgDataUrl || demoImg("AI Alert"),
+        read: false
+      });
+
+      // أبقِ آخر 50 تنبيه
+      state.alerts = state.alerts.slice(0, 50);
+
+      saveState();
+      setHeader();
+      draw();
+      showToast("وصل تنبيه جديد من المودل");
+    }
+
+    // محاكاة وصول تنبيهات تلقائية (مو زر)
+    // تقدر تحذف هذا الجزء لما تربط المصدر الحقيقي
+    setInterval(()=>{
+      // احتمال وصول تنبيه
+      if(Math.random() < 0.35){
+        const base = state.drone.pos;
+        const jitter = () => (Math.random() - 0.5) * 0.02; // ~±0.01
+        applyModelEvent({
+          type:"human_detected",
+          lat: base.lat + jitter(),
+          lng: base.lng + jitter(),
+          ts: new Date().toISOString(),
+          desc: "تنبيه تلقائي: تم رصد مؤشر بشري (محاكاة).",
+          imgDataUrl: demoImg("Auto Alert")
+        });
+      }
+    }, 8000);
+
+    // ============= INIT =============
+    function init(){
+      setReport();
+      draw();
+    }
+    init();
+  </script>
+</body>
+</html>
