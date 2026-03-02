@@ -623,18 +623,28 @@ document.addEventListener('DOMContentLoaded', () => {
       setFieldError(rDesc, document.getElementById('rDescErr'), '');
     }
 
-    if (rFile && rFile.files && rFile.files[0]) {
-      const f = rFile.files[0];
-      const max = 5 * 1024 * 1024;
-      if (f.size > max) {
-        ok = false;
-        if (rFileErr) rFileErr.textContent = 'حجم الملف يتجاوز 5MB. الرجاء اختيار ملف أصغر.';
-      } else {
-        if (rFileErr) rFileErr.textContent = '';
-      }
-    } else {
-      if (rFileErr) rFileErr.textContent = '';
-    }
+    // ✅ إرفاق المحضر إجباري
+if (!rFile || !rFile.files.length) {
+  ok = false;
+
+  if (rFileErr)
+    rFileErr.textContent =
+      'الرجاء إرفاق صورة أو ملف المحضر.';
+} else {
+
+  const f = rFile.files[0];
+  const max = 5 * 1024 * 1024;
+
+  if (f.size > max) {
+    ok = false;
+    if (rFileErr)
+      rFileErr.textContent =
+        'حجم الملف يتجاوز 5MB.';
+  } else {
+    if (rFileErr)
+      rFileErr.textContent = '';
+  }
+}
 
     if (!ok) {
       const firstInvalid =
@@ -647,7 +657,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const resetReportUI = () => {
-    if (reportSuccess) reportSuccess.hidden = true;
 
     [rName, rContact, rLocation, rDesc].forEach(f => {
       if (!f) return;
@@ -661,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (el) el.textContent = '';
     });
 
-    if (rFileName) rFileName.textContent = 'لم يتم اختيار ملف';
+    if (rFileName) rFileName.textContent = 'اضغط لاختيار ملف (PDF، JPG، PNG)';
     if (rFileSize) rFileSize.textContent = '';
   };
 
@@ -669,7 +678,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (openReportBtn && reportModal) {
     openReportBtn.addEventListener('click', () => {
-      resetReportUI();
+      
+      
+  resetReportUI();
       if (reportForm) reportForm.reset();
       openModal(reportModal, openReportBtn, '#rName');
 
@@ -680,28 +691,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (rFile) {
-    rFile.addEventListener('change', () => {
-      if (!rFile.files || !rFile.files[0]) {
-        if (rFileName) rFileName.textContent = 'لم يتم اختيار ملف';
-        if (rFileSize) rFileSize.textContent = '';
-        if (rFileErr) rFileErr.textContent = '';
-        return;
-      }
+   rFile.addEventListener('change', () => {
 
-      const f = rFile.files[0];
-      const sizeKB = (f.size / 1024);
-      const sizeText = sizeKB >= 1024 ? `${(sizeKB / 1024).toFixed(2)} MB` : `${Math.round(sizeKB)} KB`;
+  if (!rFile.files.length) {
+    if (rFileName)
+      rFileName.textContent =
+        'اضغط لاختيار ملف (PDF، JPG، PNG)';
+    return;
+  }
 
-      if (rFileName) rFileName.textContent = f.name;
-      if (rFileSize) rFileSize.textContent = `(${sizeText})`;
+  const file = rFile.files[0];
 
-      const max = 5 * 1024 * 1024;
-      if (f.size > max) {
-        if (rFileErr) rFileErr.textContent = 'حجم الملف يتجاوز 5MB. الرجاء اختيار ملف أصغر.';
-      } else {
-        if (rFileErr) rFileErr.textContent = '';
-      }
-    });
+  if (rFileName)
+    rFileName.textContent = file.name;
+
+});
   }
 
   if (reportForm) {
@@ -715,22 +719,32 @@ document.addEventListener('DOMContentLoaded', () => {
     reportForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      if (reportSuccess) reportSuccess.hidden = true;
+  const ok = validateReportForm();
+  if (!ok) return;
 
-      const ok = validateReportForm();
-      if (!ok) return;
+  // ✅ اظهار رسالة النجاح
+if (reportSuccess)
+  reportSuccess.hidden = false;
+reportSuccess.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 
-      if (reportSuccess) reportSuccess.hidden = false;
+setTimeout(() => {
 
-      const submitBtn = document.getElementById('submitReportBtn');
-      if (submitBtn) submitBtn.disabled = true;
+  // نخلي المستخدم يشوف الرسالة أول
+  reportForm.reset();
 
-      setTimeout(() => {
-        if (reportForm) reportForm.reset();
-        resetReportUI();
-        closeModal(reportModal);
-        if (submitBtn) submitBtn.disabled = false;
-      }, 1800);
+  if (reportSuccess)
+    reportSuccess.hidden = true;
+
+  closeModal(reportModal);
+
+  if (submitBtn)
+    submitBtn.disabled = false;
+
+}, 3000);
+      
     });
   }
 

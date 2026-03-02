@@ -611,14 +611,39 @@
               <!-- NEW: File Upload -->
               <div class="form-group form-group--full">
                 <label for="rFile">إرفاق محضر</label>
-                <div class="file-row">
-                  <input type="file" id="rFile" name="rFile" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" />
-                  <div class="file-meta" id="rFileMeta" aria-live="polite">
-                    <span class="file-name" id="rFileName">لم يتم اختيار ملف</span>
-                    <span class="file-size" id="rFileSize"></span>
-                  </div>
-                </div>
-                <small class="field-error" id="rFileErr" aria-live="polite"></small>
+              <!-- إرفاق محضر -->
+<div class="form-group" style="grid-column:1/-1">
+
+  <label for="rFile" id="fileLabel">
+   
+  </label>
+
+  <div class="file-wrap" role="group" aria-labelledby="fileLabel">
+
+    <label class="file-label" for="rFile">
+      <i class="fas fa-cloud-arrow-up"></i>
+      <span class="file-name" id="rFileName">
+        اضغط لاختيار ملف (PDF، JPG، PNG)
+      </span>
+    </label>
+
+    <input
+      type="file"
+      id="rFile"
+      name="rFile"
+      accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+    />
+
+  </div>
+
+  <span class="field-hint">
+    الحد الأقصى للحجم: 5 ميغابايت
+  </span>
+
+  <span class="field-error" id="rFileErr"></span>
+
+</div>
+
               </div>
             </div>
 
@@ -635,7 +660,7 @@
             <div class="form-success" id="reportSuccess" hidden>
               <div class="success-icon"><i class="fas fa-circle-check"></i></div>
               <div class="success-text">
-                <strong>تم استلام البلاغ بنجاح.</strong>
+                <strong>تم استلام البلاغ بنجاح</strong>
                 <span>شكرًا لك — سيتم توجيه البلاغ للجهة المختصة.</span>
               </div>
             </div>

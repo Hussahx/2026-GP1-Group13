@@ -2268,3 +2268,59 @@ pre,
   margin-inline: auto;
   margin-top: 1.1rem;
 }
+.file-wrap {
+  position: relative;
+}
+
+.file-label {
+  border: 2px dashed #C2A477;
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-height: 55px;
+  
+  cursor: pointer;
+  display: block;
+  background: #faf6f0;
+  transition: 0.3s;
+  color: #7A6245;
+  font-family: 'Tajawal';
+}
+
+.file-label:hover {
+  background: #f3ece2;
+  border-color: #A67C52;
+}
+
+.file-label i {
+  font-size: 20px;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.file-name {
+  font-size: 14px;
+}
+
+.file-wrap input[type="file"] {
+  display: none;
+}
+
+.field-hint {
+  font-size: 13px;
+  color: #8c7a63;
+  margin-top: 6px;
+  display: block;
+}
+input[type="file"] {
+  display: none;
+}
+.form-success {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* FIX */
+.form-success[hidden] {
+  display: none !important;
+}
