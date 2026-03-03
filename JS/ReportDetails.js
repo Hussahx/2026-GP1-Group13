@@ -1,3 +1,4 @@
+// ../JS/RealTimeReportDetails.js
 (() => {
   "use strict";
 
@@ -67,6 +68,7 @@
   let state = null;
   let activeAlertId = null;
 
+  // -------- Storage ----------
   function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return structuredClone(DEFAULT_STATE);
@@ -87,6 +89,7 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
+  // -------- Demo image ----------
   function demoImg(label) {
     const c = document.createElement("canvas");
     c.width = 960;
@@ -133,6 +136,7 @@
     }
   }
 
+  // -------- UI ----------
   function showToast(msg) {
     const box = $("#toastBox");
     const text = $("#toastText");
@@ -150,14 +154,27 @@
     return state.alerts.filter((a) => !a.read).length;
   }
 
-  function setHeader() {
-    const id = state.report.id;
+  function forceTitles() {
+    const id = state?.report?.id || "—";
 
+    // الرقم داخل البيلز
     const reportIdEl = $("#reportId");
     if (reportIdEl) reportIdEl.textContent = id;
 
-    const titleEl = $("#reportTitleId");
-    if (titleEl) titleEl.textContent = id;
+    // لو عندك عنوان topbar
+    const topTitleEl = $("#reportTitleId");
+    if (topTitleEl) topTitleEl.textContent = id;
+
+    // العنوان الكبير بالنص (اللي بالصورة)
+    const bigTitleEl = $("#bigReportTitleId");
+    if (bigTitleEl) bigTitleEl.textContent = id;
+
+    // عنوان التبويب (اختياري)
+    try { document.title = `${id} - التفاصيل وتتبع الدرون`; } catch {}
+  }
+
+  function setHeader() {
+    forceTitles();
 
     const lastUpdatedEl = $("#lastUpdated");
     if (lastUpdatedEl) {
@@ -206,73 +223,7 @@
     setHeader();
   }
 
-  function wireEvents() {
-    const saveBtn = $("#saveStatusBtn");
-    if (saveBtn) {
-      saveBtn.addEventListener("click", () => {
-        const sel = $("#statusSelect");
-        if (!sel) return;
-        state.report.status = sel.value;
-        saveState();
-        setHeader();
-
-        const hint = $("#statusSavedHint");
-        if (hint) hint.style.display = "inline-flex";
-
-        showToast("تم حفظ حالة البلاغ");
-        setTimeout(() => {
-          const h = $("#statusSavedHint");
-          if (h) h.style.display = "none";
-        }, 1600);
-      });
-    }
-
-    const closeBtn = $("#closeAlertModalBtn");
-    if (closeBtn) closeBtn.addEventListener("click", closeAlert);
-
-    const backdrop = $("#alertModalBackdrop");
-    if (backdrop) {
-      backdrop.addEventListener("click", (e) => {
-        if (e.target === backdrop) closeAlert();
-      });
-    }
-
-    document.addEventListener("keydown", (e) => {
-      const bd = $("#alertModalBackdrop");
-      if (e.key === "Escape" && bd && bd.style.display === "flex") closeAlert();
-    });
-
-    const markBtn = $("#markReadBtn");
-    if (markBtn) {
-      markBtn.addEventListener("click", () => {
-        if (!activeAlertId) return;
-        const a = state.alerts.find((x) => x.id === activeAlertId);
-        if (!a) return;
-
-        a.read = true;
-        saveState();
-        setHeader();
-        draw();
-        showToast("تم تعليم التنبيه كمقروء");
-        closeAlert();
-      });
-    }
-
-    const map = $("#mapCanvas");
-    if (map) {
-      map.addEventListener("click", (e) => {
-        const rect = map.getBoundingClientRect();
-        const sx = map.width / rect.width;
-        const sy = map.height / rect.height;
-        const mx = (e.clientX - rect.left) * sx;
-        const my = (e.clientY - rect.top) * sy;
-
-        const a = pickAlertAt(mx, my);
-        if (a) openAlert(a.id);
-      });
-    }
-  }
-
+  // -------- Map helpers ----------
   function getCanvas() {
     return $("#mapCanvas");
   }
@@ -340,7 +291,6 @@
     if (!c || !g) return;
 
     const b = boundsFromState();
-
     g.clearRect(0, 0, c.width, c.height);
 
     const bg = g.createLinearGradient(0, 0, c.width, c.height);
@@ -359,6 +309,7 @@
       g.stroke();
     }
 
+    // drone path
     const pathPx = state.drone.path.map((p) => project(p, b, c.width, c.height));
     g.setLineDash([10, 10]);
     g.strokeStyle = "rgba(74,56,40,0.28)";
@@ -379,6 +330,7 @@
     const red = "#ef4444";
     const green = "#22c55e";
 
+    // alerts
     for (const a of state.alerts) {
       const p = project({ lat: a.lat, lng: a.lng }, b, c.width, c.height);
       const color = a.read ? green : red;
@@ -401,6 +353,7 @@
       g.stroke();
     }
 
+    // drone pos
     const dp = project(state.drone.pos, b, c.width, c.height);
     const rgbB = parseCssColorToRgb(blue);
 
@@ -441,6 +394,7 @@
     return null;
   }
 
+  // -------- Modal ----------
   function formatAr(tsIso) {
     const d = new Date(tsIso);
     return d.toLocaleString("ar-SA", { dateStyle: "medium", timeStyle: "short" });
@@ -477,6 +431,76 @@
     activeAlertId = null;
   }
 
+  // -------- Events ----------
+  function wireEvents() {
+    const saveBtn = $("#saveStatusBtn");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", () => {
+        const sel = $("#statusSelect");
+        if (!sel) return;
+
+        state.report.status = sel.value;
+        saveState();
+        setHeader();
+
+        const hint = $("#statusSavedHint");
+        if (hint) hint.style.display = "inline-flex";
+
+        showToast("تم حفظ حالة البلاغ");
+        setTimeout(() => {
+          const h = $("#statusSavedHint");
+          if (h) h.style.display = "none";
+        }, 1600);
+      });
+    }
+
+    const closeBtn = $("#closeAlertModalBtn");
+    if (closeBtn) closeBtn.addEventListener("click", closeAlert);
+
+    const backdrop = $("#alertModalBackdrop");
+    if (backdrop) {
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) closeAlert();
+      });
+    }
+
+    document.addEventListener("keydown", (e) => {
+      const bd = $("#alertModalBackdrop");
+      if (e.key === "Escape" && bd && bd.style.display === "flex") closeAlert();
+    });
+
+    const markBtn = $("#markReadBtn");
+    if (markBtn) {
+      markBtn.addEventListener("click", () => {
+        if (!activeAlertId) return;
+        const a = state.alerts.find((x) => x.id === activeAlertId);
+        if (!a) return;
+
+        a.read = true;
+        saveState();
+        setHeader();
+        draw();
+        showToast("تم تعليم التنبيه كمقروء");
+        closeAlert();
+      });
+    }
+
+    const map = $("#mapCanvas");
+    if (map) {
+      map.addEventListener("click", (e) => {
+        const rect = map.getBoundingClientRect();
+        const sx = map.width / rect.width;
+        const sy = map.height / rect.height;
+        const mx = (e.clientX - rect.left) * sx;
+        const my = (e.clientY - rect.top) * sy;
+
+        const a = pickAlertAt(mx, my);
+        if (a) openAlert(a.id);
+      });
+    }
+  }
+
+  // -------- Feed (simulation) ----------
   function applyModelEvent(event) {
     if (event?.type !== "human_detected") return;
 
@@ -515,23 +539,19 @@
     }, 8000);
   }
 
-  function hardForceTitleOnce() {
-    const id = state?.report?.id || "—";
-    const el = $("#reportTitleId");
-    if (el) el.textContent = id;
-  }
-
+  // -------- Init ----------
   function init() {
     state = loadState();
     ensureImages();
     setReport();
-    hardForceTitleOnce();
     draw();
     wireEvents();
     startSim();
 
-    setTimeout(hardForceTitleOnce, 50);
-    setTimeout(hardForceTitleOnce, 200);
+    // ضمان تحديث العناوين حتى لو الـ DOM تأخر
+    setTimeout(setHeader, 50);
+    setTimeout(setHeader, 200);
+    setTimeout(setHeader, 500);
   }
 
   document.addEventListener("DOMContentLoaded", init);
