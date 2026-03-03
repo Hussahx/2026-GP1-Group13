@@ -1,226 +1,196 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>بلاغ مفقود + تتبع الدرون</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F5EFE6" />
+  <title>راصد — بلاغ مفقود وتتبع الدرون</title>
+  <link rel="icon" href="../assest/logo.PNG" type="image/png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="../CSS/Rasid.css" />
 
   <style>
-    :root{
-      /* Desert / Sand Brown theme */
-      --bg:#2b2118;
-      --card:#3a2c21;
-      --card2:#463528;
-      --muted:#d6c2a8;
-      --text:#f4e7d6;
-      --line:#5a4636;
-
-      --accent:#c6a06a;
-      --accent2:#e0b26b;
-
-      --blue:#3b82f6;   /* موقع الدرون */
-      --red:#ef4444;    /* تنبيه غير مقروء */
-      --green:#22c55e;  /* تنبيه مقروء */
-
-      --shadow: 0 14px 40px rgba(0,0,0,.45);
-      --radius: 18px;
-
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Kufi Arabic", "Noto Sans Arabic", Arial, sans-serif;
+    .page-body{
+      width:100%;
+      max-width:1100px;
+      margin:0 auto;
+      padding:0 1rem 2.5rem;
     }
 
-    *{ box-sizing:border-box; }
-
-    body{
-      margin:0;
-      min-height:100vh;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 20% 0%, rgba(214,194,168,.18), transparent 60%),
-        radial-gradient(900px 500px at 90% 10%, rgba(198,160,106,.14), transparent 55%),
-        var(--bg);
-    }
-
-    header{
-      position: sticky;
-      top:0;
-      z-index:10;
-      backdrop-filter: blur(10px);
-      background: rgba(43,33,24,.78);
-      border-bottom: 1px solid rgba(90,70,54,.65);
-    }
-
-    .wrap{
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 18px 16px;
-    }
-
-    .topbar{
+    .toolbar{
+      max-width: 860px;
+      margin: 0 auto 1.1rem;
       display:flex;
       align-items:center;
-      gap:12px;
+      justify-content:space-between;
+      gap:.8rem;
       flex-wrap:wrap;
-    }
-
-    h1{
-      margin:0;
-      font-size: 18px;
-      letter-spacing:.2px;
+      animation: fadeUp .7s var(--ease-out) both;
     }
 
     .pill{
       display:inline-flex;
       align-items:center;
-      gap:8px;
-      background: rgba(58,44,33,.92);
-      border:1px solid rgba(90,70,54,.9);
-      padding: 8px 12px;
-      border-radius: 999px;
-      color: var(--muted);
-      font-size: 13px;
+      gap:.45rem;
+      padding:.45rem .85rem;
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(231,221,207,.95);
+      box-shadow: 0 8px 18px rgba(42,36,28,.08);
+      color: var(--ink-mid);
+      font-size:.85rem;
+      font-weight:800;
       white-space:nowrap;
     }
-    .pill b{ color: var(--text); }
-    .spacer{ flex:1; }
 
-    main .wrap{ padding-top: 14px; padding-bottom: 28px; }
-
-    .card{
-      background: rgba(58,44,33,.94);
-      border:1px solid rgba(90,70,54,.95);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
+    .badgeStatus{
+      display:inline-flex;
+      align-items:center;
+      gap:.55rem;
+      padding:.45rem .85rem;
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(231,221,207,.95);
+      box-shadow: 0 8px 18px rgba(42,36,28,.08);
+      color: var(--ink-mid);
+      font-size:.85rem;
+      font-weight:900;
+      white-space:nowrap;
     }
-    .card .hd{
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(90,70,54,.7);
+
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background: var(--oak-400);
+      box-shadow: 0 0 0 4px rgba(166,124,82,0.12);
+    }
+
+    .section{
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .cardWide{
+      max-width: unset;
+      width: 100%;
+      padding: 1.2rem 1.2rem;
+    }
+
+    .cardHd{
       display:flex;
       align-items:center;
-      gap:10px;
+      gap:.75rem;
       flex-wrap:wrap;
+      margin-bottom: .9rem;
     }
-    .card .hd h2{
+
+    .cardHd h3{
       margin:0;
-      font-size: 15px;
-      color: var(--text);
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--ink);
     }
-    .card .bd{ padding: 14px 16px 16px; }
+
+    .spacer{ margin-right:auto; }
 
     .grid2{
       display:grid;
       grid-template-columns: 1fr;
-      gap:10px;
+      gap: .8rem;
     }
     @media (min-width: 720px){
       .grid2{ grid-template-columns: 1fr 1fr; }
     }
 
     .field{
-      padding: 12px;
-      border-radius: 14px;
-      background: rgba(70,53,40,.55);
-      border:1px solid rgba(90,70,54,.85);
+      padding: 1rem;
+      border-radius: 22px;
+      background: rgba(245,239,230,0.7);
+      border: 1.5px solid rgba(166,124,82,0.22);
+      box-shadow: 0 2px 1px rgba(255,248,235,0.9) inset;
     }
+
     .field .k{
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 6px;
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: .45rem;
     }
+
     .field .v{
-      font-size: 14px;
-      line-height: 1.7;
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.8;
       word-break: break-word;
     }
 
     .statusRow{
       display:flex;
-      gap:10px;
+      gap:.6rem;
       align-items:center;
       flex-wrap:wrap;
-      margin-top: 12px;
+      margin-top: .9rem;
     }
 
-    select, button{ font: inherit; }
-
     .select{
-      padding: 10px 12px;
-      border-radius: 12px;
-      background: rgba(70,53,40,.55);
-      border:1px solid rgba(90,70,54,.9);
-      color: var(--text);
-      outline:none;
+      height: 50px;
+      padding: 0 1.1rem;
+      border-radius: var(--radius-pill);
+      background: rgba(245,239,230,0.7);
+      border: 1.5px solid rgba(166,124,82,0.22);
+      color: var(--ink);
+      font-weight: 800;
+      outline: none;
       min-width: 260px;
     }
 
-    .btn{
-      cursor:pointer;
-      border:1px solid rgba(90,70,54,.95);
-      background: rgba(74,56,42,.78);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 12px;
-      transition: transform .08s ease, background .15s ease;
+    .hintPill{
       display:inline-flex;
       align-items:center;
-      gap:8px;
-      user-select:none;
-    }
-    .btn:hover{ background: rgba(63,47,36,.95); }
-    .btn:active{ transform: scale(.98); }
-    .btn-accent{
-      border-color: rgba(198,160,106,.6);
-      background: rgba(198,160,106,.18);
-    }
-    .btn-accent:hover{ background: rgba(198,160,106,.26); }
-
-    .badgeStatus{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(90,70,54,.9);
-      background: rgba(58,44,33,.8);
-      color: var(--muted);
-      font-size: 12px;
+      gap:.45rem;
+      padding:.45rem .85rem;
+      border-radius: var(--radius-pill);
+      background: rgba(122,154,106,0.10);
+      border: 1px solid rgba(122,154,106,0.25);
+      color: var(--olive-600);
+      font-weight: 900;
+      font-size:.85rem;
       white-space:nowrap;
     }
-    .dot{
-      width:10px;height:10px;border-radius:50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 4px rgba(198,160,106,.18);
-    }
 
-    /* CENTER stack (video + map) */
     .centerStack{
       max-width: 860px;
       margin: 0 auto;
       display:grid;
-      gap:14px;
+      gap: 1rem;
     }
 
     .placeholder{
       height: 320px;
-      border-radius: 16px;
-      background:
-        linear-gradient(135deg, rgba(214,194,168,.10), rgba(198,160,106,.06)),
-        rgba(43,33,24,.35);
-      border: 1px dashed rgba(90,70,54,.9);
+      border-radius: 22px;
+      background: rgba(245,239,230,0.55);
+      border: 1.5px dashed rgba(166,124,82,0.32);
       display:flex;
       align-items:center;
       justify-content:center;
       text-align:center;
-      padding: 18px;
-      color: var(--muted);
+      padding: 1.1rem;
+      color: var(--ink-muted);
+      font-weight: 800;
+      line-height: 1.8;
     }
-    .placeholder b{ color: var(--text); }
 
     .mapWrap{
       height: 420px;
-      border-radius: 16px;
-      border:1px solid rgba(90,70,54,.95);
-      background: rgba(43,33,24,.35);
+      border-radius: 22px;
+      border: 1.5px solid rgba(166,124,82,0.22);
+      background: rgba(245,239,230,0.55);
       overflow:hidden;
       position: relative;
     }
@@ -237,63 +207,82 @@
       justify-content:space-between;
       pointer-events:none;
     }
+
     .legend{
-      pointer-events:none;
       display:flex;
       gap:8px;
       flex-wrap:wrap;
       align-items:center;
-    }
-    .legend .item{
       pointer-events:none;
+    }
+
+    .legend .item{
       display:inline-flex;
       align-items:center;
       gap:8px;
       padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(58,44,33,.85);
-      border:1px solid rgba(90,70,54,.9);
-      color: var(--muted);
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(231,221,207,.95);
+      color: var(--ink-muted);
       font-size: 12px;
+      font-weight: 900;
       white-space:nowrap;
+      box-shadow: 0 8px 18px rgba(42,36,28,.08);
     }
+
     .sw{ width:10px;height:10px;border-radius:50%; display:inline-block; }
 
     canvas{ width:100%; height:100%; display:block; }
 
-    /* Modal */
     .modal-backdrop{
       position:fixed;
       inset:0;
-      background: rgba(0,0,0,.6);
+      background: rgba(0,0,0,.55);
       display:none;
       align-items:center;
       justify-content:center;
       padding: 18px;
-      z-index: 100;
+      z-index: 1000;
     }
+
     .modal{
-      width: min(880px, 100%);
-      background: rgba(58,44,33,.98);
-      border:1px solid rgba(90,70,54,.95);
-      border-radius: 18px;
-      box-shadow: 0 20px 70px rgba(0,0,0,.60);
+      width: min(900px, 100%);
+      background: var(--glass);
+      border: 1px solid var(--glass-edge);
+      border-radius: var(--radius-card);
+      box-shadow: 0 22px 70px rgba(42,36,28,.18);
       overflow:hidden;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      animation: fadeUp .25s var(--ease-out) both;
     }
-    .modal .mhd{
-      padding: 14px 16px;
+
+    .mhd{
+      padding: 1rem 1.1rem;
       display:flex;
       align-items:center;
-      gap:10px;
-      border-bottom: 1px solid rgba(90,70,54,.75);
+      gap:.75rem;
+      border-bottom: 1px solid rgba(231,221,207,.95);
       flex-wrap:wrap;
     }
-    .modal .mhd h3{ margin:0; font-size: 15px; }
-    .modal .mbd{ padding: 14px 16px 16px; display:grid; gap:12px; }
+
+    .mhd h3{
+      margin:0;
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .mbd{
+      padding: 1.1rem;
+      display:grid;
+      gap: 1rem;
+    }
 
     .mgrid{
       display:grid;
-      gap:12px;
+      gap: 1rem;
       grid-template-columns: 1fr;
       align-items:start;
     }
@@ -303,11 +292,12 @@
 
     .imgBox{
       width:100%;
-      border-radius: 16px;
-      border:1px solid rgba(90,70,54,.9);
-      background: rgba(43,33,24,.35);
+      border-radius: 22px;
+      border: 1.5px solid rgba(166,124,82,0.22);
+      background: rgba(245,239,230,0.55);
       overflow:hidden;
     }
+
     .imgBox img{
       display:block;
       width:100%;
@@ -323,168 +313,196 @@
       display:flex;
       justify-content:center;
       pointer-events:none;
-      z-index: 120;
+      z-index: 1200;
     }
-    .toast .box{
+
+    .toastBox{
       pointer-events:auto;
-      background: rgba(58,44,33,.96);
-      border:1px solid rgba(90,70,54,.95);
-      border-radius: 999px;
-      box-shadow: var(--shadow);
-      padding: 10px 14px;
-      color: var(--text);
-      font-size: 13px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(231,221,207,.95);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 14px 36px rgba(42,36,28,.16);
+      padding: .65rem .9rem;
+      color: var(--ink);
+      font-size: .9rem;
+      font-weight: 900;
       display:none;
-      gap:10px;
+      gap:.55rem;
       align-items:center;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
     }
+
     .toastDot{
-      width:10px;height:10px;border-radius:50%;
-      background: var(--accent2);
-      box-shadow: 0 0 0 4px rgba(224,178,107,.18);
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background: var(--olive-500);
+      box-shadow: 0 0 0 4px rgba(122,154,106,0.14);
       flex: 0 0 auto;
+    }
+
+    @media (max-width:680px){
+      .select{ width:100%; min-width: unset; }
+      .statusRow .btn{ width:100%; justify-content:center; }
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <div class="wrap">
-      <div class="topbar">
-        <h1>بلاغ مفقود — التفاصيل وتتبع الدرون</h1>
-        <span class="pill">رقم البلاغ: <b id="reportId">—</b></span>
-        <span class="pill">تنبيهات غير مقروءة: <b id="unreadCount">0</b></span>
-        <div class="spacer"></div>
-        <span class="badgeStatus" title="الحالة الحالية">
-          <span class="dot" id="statusDot"></span>
-          <span id="statusText">—</span>
-        </span>
-      </div>
+
+  <header class="page-header">
+    <div class="header-logo-mark" aria-hidden="true">
+      <img src="../assest/New-logo.JPG.jpeg" alt="شعار راصد" />
     </div>
+    <div class="header-brand">
+      <h1>راصد</h1>
+      <p>عين الصحراء - بلاغ مفقود</p>
+    </div>
+    <nav class="header-nav" aria-label="تنقل سريع">
+      <div class="user-chip" title="حسابي">
+        <span class="avatar" id="userInitial">ي</span>
+        <span class="name" id="userName">يوسف</span>
+      </div>
+    </nav>
   </header>
 
-  <main>
-    <div class="wrap">
+  <main class="page-body">
 
-      <!-- تفاصيل البلاغ -->
-      <section class="card">
-        <div class="hd">
-          <h2>تفاصيل البلاغ</h2>
-          <div class="spacer"></div>
-          <span class="pill">آخر تحديث: <b id="lastUpdated">—</b></span>
-        </div>
-
-        <div class="bd">
-          <div class="grid2">
-            <div class="field">
-              <div class="k">اسم المفقود</div>
-              <div class="v" id="missingName">—</div>
-            </div>
-            <div class="field">
-              <div class="k">العمر</div>
-              <div class="v" id="missingAge">—</div>
-            </div>
-            <div class="field">
-              <div class="k">المدينة / المنطقة</div>
-              <div class="v" id="missingArea">—</div>
-            </div>
-            <div class="field">
-              <div class="k">وقت البلاغ</div>
-              <div class="v" id="reportTime">—</div>
-            </div>
-          </div>
-
-          <div style="height:10px"></div>
-
-          <div class="field">
-            <div class="k">وصف و تفاصيل البلاغ</div>
-            <div class="v" id="reportDetails">—</div>
-          </div>
-
-          <div class="statusRow">
-            <label class="pill" style="background:rgba(70,53,40,.55);border-color:rgba(90,70,54,.9);">
-              الحالة:
-              <select id="statusSelect" class="select" aria-label="تغيير حالة البلاغ">
-                <option value="accepted">مقبول</option>
-                <option value="searching">جاري البحث</option>
-                <option value="found">تم العثور</option>
-                <option value="rescued">تم الإنقاذ</option>
-              </select>
-            </label>
-
-            <button class="btn btn-accent" id="saveStatusBtn" type="button">حفظ الحالة</button>
-            <span class="pill" id="statusSavedHint" style="display:none;">تم حفظ الحالة ✅</span>
-          </div>
-        </div>
-      </section>
-
-      <div style="height:14px"></div>
-
-      <!-- وسط الصفحة: فيديو + خريطة (بوكسين تحت بعض) -->
-      <section class="centerStack">
-
-        <div class="card">
-          <div class="hd">
-            <h2>Live Video (من الدرون)</h2>
-            <div class="spacer"></div>
-            <span class="pill">مصدر: <b id="videoSource">—</b></span>
-          </div>
-          <div class="bd">
-            <!-- Dynamic box: replace with real stream -->
-            <div class="placeholder" id="liveVideoBox">
-              <div>
-                <div style="font-size:14px;"><b>منطقة عرض الفيديو المباشر</b></div>
-                <div style="margin-top:8px;font-size:13px;line-height:1.7;">
-                  اربط هنا بث الدرون لاحقًا (HLS / WebRTC / أي Player).<br/>
-                  حالياً Placeholder دينمك.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="hd">
-            <h2>خريطة تتبع الدرون</h2>
-            <div class="spacer"></div>
-            <span class="pill">اضغط على نقطة التنبيه لعرض التفاصيل</span>
-          </div>
-          <div class="bd">
-            <div class="mapWrap">
-              <div class="mapHeader">
-                <div class="legend">
-                  <span class="item"><span class="sw" style="background:var(--blue)"></span> موقع الدرون</span>
-                  <span class="item"><span class="sw" style="background:var(--red)"></span> تنبيه (غير مقروء)</span>
-                  <span class="item"><span class="sw" style="background:var(--green)"></span> تنبيه (مقروء)</span>
-                </div>
-              </div>
-              <canvas id="mapCanvas" width="1100" height="650" aria-label="خريطة دينمك للدرون"></canvas>
-            </div>
-
-            <div style="height:12px"></div>
-
-            <div class="field">
-              <div class="k">ملاحظة</div>
-              <div class="v" style="color:var(--muted);font-size:13px;">
-                هذه خريطة Canvas تجريبية. لاحقًا استبدلها بخريطة حقيقية (Google/Mapbox)
-                وخلي نفس بيانات التنبيهات/المسار/موقع الدرون.
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </section>
-
+    <div class="page-heading">
+      <div class="page-heading-eyebrow" aria-hidden="true">
+        <span></span>
+        البلاغات
+        <span></span>
+      </div>
+      <h2>بلاغ مفقود — التفاصيل وتتبع الدرون</h2>
     </div>
+
+    <section class="toolbar" aria-label="شريط الملخص">
+      <span class="pill">رقم البلاغ: <span id="reportId">—</span></span>
+      <span class="pill">تنبيهات غير مقروءة: <span id="unreadCount">0</span></span>
+      <span class="badgeStatus" title="الحالة الحالية">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">—</span>
+      </span>
+    </section>
+
+    <section class="section">
+      <article class="card cardWide">
+        <div class="cardHd">
+          <h3>تفاصيل البلاغ</h3>
+          <div class="spacer"></div>
+          <span class="pill">آخر تحديث: <span id="lastUpdated">—</span></span>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <div class="k">اسم المفقود</div>
+            <div class="v" id="missingName">—</div>
+          </div>
+          <div class="field">
+            <div class="k">العمر</div>
+            <div class="v" id="missingAge">—</div>
+          </div>
+          <div class="field">
+            <div class="k">المدينة / المنطقة</div>
+            <div class="v" id="missingArea">—</div>
+          </div>
+          <div class="field">
+            <div class="k">وقت البلاغ</div>
+            <div class="v" id="reportTime">—</div>
+          </div>
+        </div>
+
+        <div style="height:.8rem"></div>
+
+        <div class="field">
+          <div class="k">وصف وتفاصيل البلاغ</div>
+          <div class="v" id="reportDetails">—</div>
+        </div>
+
+        <div class="statusRow">
+          <select id="statusSelect" class="select" aria-label="تغيير حالة البلاغ">
+            <option value="accepted">مقبول</option>
+            <option value="searching">جاري البحث</option>
+            <option value="found">تم العثور</option>
+            <option value="rescued">تم الإنقاذ</option>
+          </select>
+
+          <button class="btn" id="saveStatusBtn" type="button">
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+            <span class="btn-label">حفظ الحالة</span>
+          </button>
+
+          <span class="hintPill" id="statusSavedHint" style="display:none;">
+            <i class="fa-solid fa-check" aria-hidden="true"></i>
+            تم حفظ الحالة
+          </span>
+        </div>
+      </article>
+    </section>
+
+    <div style="height:1rem"></div>
+
+    <section class="centerStack">
+
+      <article class="card cardWide">
+        <div class="cardHd">
+          <h3>البث المباشر (من الدرون)</h3>
+          <div class="spacer"></div>
+          <span class="pill">مصدر: <span id="videoSource">—</span></span>
+        </div>
+        <div class="placeholder" id="liveVideoBox">
+          <div>
+            <div style="font-size:1rem;color:var(--ink);font-weight:900;">منطقة عرض الفيديو المباشر</div>
+            <div style="margin-top:.5rem;font-size:.92rem;line-height:1.8;">
+              اربط هنا بث الدرون لاحقًا (HLS / WebRTC / أي Player).
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card cardWide">
+        <div class="cardHd">
+          <h3>خريطة تتبع الدرون</h3>
+          <div class="spacer"></div>
+          <span class="pill">اضغط على نقطة التنبيه لعرض التفاصيل</span>
+        </div>
+
+        <div class="mapWrap">
+          <div class="mapHeader">
+            <div class="legend">
+              <span class="item"><span class="sw" style="background:#3b82f6"></span> موقع الدرون</span>
+              <span class="item"><span class="sw" style="background:#ef4444"></span> تنبيه (غير مقروء)</span>
+              <span class="item"><span class="sw" style="background:#22c55e"></span> تنبيه (مقروء)</span>
+            </div>
+          </div>
+          <canvas id="mapCanvas" width="1100" height="650" aria-label="خريطة ديناميكية للدرون"></canvas>
+        </div>
+
+        <div style="height:.8rem"></div>
+
+        <div class="field">
+          <div class="k">ملاحظة</div>
+          <div class="v" style="color:var(--ink-muted);font-size:.92rem;">
+            هذه خريطة Canvas تجريبية. لاحقًا استبدلها بخريطة حقيقية (Google/Mapbox) وخلي نفس بيانات التنبيهات/المسار/موقع الدرون.
+          </div>
+        </div>
+      </article>
+
+    </section>
+
   </main>
 
-  <!-- Alert details modal (ONLY تظهر عند الضغط على نقطة بالخريطة) -->
-  <div id="alertModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+  <div id="alertModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle">
     <div class="modal">
       <div class="mhd">
         <h3 id="alertModalTitle">تفاصيل تنبيه الذكاء الاصطناعي</h3>
         <div class="spacer"></div>
-        <button class="btn" id="closeAlertModalBtn" type="button">إغلاق ✕</button>
+        <button class="btn" id="closeAlertModalBtn" type="button">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          <span class="btn-label">إغلاق</span>
+        </button>
       </div>
 
       <div class="mbd">
@@ -499,60 +517,80 @@
               <div class="v" id="alertTime">—</div>
             </div>
 
-            <div style="height:10px"></div>
+            <div style="height:.7rem"></div>
 
             <div class="field">
-              <div class="k">الموقع (Location)</div>
+              <div class="k">الموقع</div>
               <div class="v" id="alertLocation">—</div>
             </div>
 
-            <div style="height:10px"></div>
+            <div style="height:.7rem"></div>
 
             <div class="field">
               <div class="k">الوصف</div>
               <div class="v" id="alertDesc">—</div>
             </div>
 
-            <div style="height:10px"></div>
+            <div style="height:.8rem"></div>
 
-            <button class="btn btn-accent" id="markReadBtn" type="button">تعليم كمقروء</button>
+            <button class="btn" id="markReadBtn" type="button">
+              <i class="fa-solid fa-check-double" aria-hidden="true"></i>
+              <span class="btn-label">تعليم كمقروء</span>
+            </button>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" aria-live="polite" aria-atomic="true">
-    <div id="toastBox" class="box">
+    <div id="toastBox" class="toastBox">
       <span class="toastDot" aria-hidden="true"></span>
       <span id="toastText"></span>
     </div>
   </div>
 
-  <script>
-    /***************************************
-     * ✅ حسب طلبك:
-     * 1) التنبيهات ما تنضاف يدوي (لا زر إضافة)
-     *    -> هنا ديمو: جايه تلقائي من "model feed" (محاكاة بتحديث كل 8 ثواني)
-     * 2) التفاصيل تظهر من الضغط على نقطة بالخريطة فقط (Modal)
-     * 3) الفيديو والخريطة بوكسين بالمنتصف تحت بعض (centerStack)
-     * 4) بيانات كذبية للاسم/العمر/المدينة
-     * 5) الاحداثيات تكون Location (lat,lng)
-     ***************************************/
+  <footer>
+    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"></path>
+      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"></path>
+    </svg>
+    <div class="footer-inner">
+      <div class="f-brand">
+        <div class="f-logo">راصد<span>RASID</span></div>
+        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
+      </div>
 
+      <div class="f-col">
+        <h4>روابط سريعة</h4>
+        <ul>
+          <li><a href="index.html">الصفحة الرئيسية</a></li>
+          <li><a href="login.html">تسجيل الدخول</a></li>
+          <li><a href="Regester.html">انضم كمتطوع</a></li>
+          <li><a href="track-report.html">تتبع البلاغ</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h4>أرقام الطوارئ</h4>
+        <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+        <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+      </div>
+    </div>
+    <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+    <div class="footer-dune"></div>
+  </footer>
+
+  <script>
     const STORAGE_KEY = "missing_report_page_v2";
 
     const STATUSES = {
-      accepted:  { label: "مقبول",     dot: "var(--accent)" },
-      searching: { label: "جاري البحث", dot: "var(--accent2)" },
-      found:     { label: "تم العثور", dot: "var(--green)" },
-      rescued:   { label: "تم الإنقاذ", dot: "var(--blue)" },
+      accepted:  { label: "مقبول",     dot: "var(--oak-400)" },
+      searching: { label: "جاري البحث", dot: "var(--oak-500)" },
+      found:     { label: "تم العثور", dot: "var(--olive-500)" },
+      rescued:   { label: "تم الإنقاذ", dot: "#3b82f6" },
     };
 
-    // ============= DEMO STATE =============
-    // alerts are "model output" points with lat/lng
-    // For drawing on canvas, we project lat/lng to canvas using bounds (min/max).
     const DEFAULT_STATE = {
       report: {
         id: "BLG-0002",
@@ -564,8 +602,6 @@
         status: "searching",
         videoSource: "Drone-01"
       },
-
-      // Drone location + path as lat/lng
       drone: {
         pos: { lat: 24.9950, lng: 46.7400 },
         path: [
@@ -579,14 +615,13 @@
           { lat: 24.9960, lng: 46.7640 }
         ]
       },
-
       alerts: [
         {
           id: crypto.randomUUID(),
           lat: 24.9942, lng: 46.7240,
           ts: new Date(Date.now() - 1000*60*18).toISOString(),
           desc: "اشتباه وجود بشري بالقرب من كثبان منخفضة.",
-          imgDataUrl: demoImg("AI Alert #1"),
+          imgDataUrl: null,
           read: false
         },
         {
@@ -594,18 +629,21 @@
           lat: 24.9958, lng: 46.7480,
           ts: new Date(Date.now() - 1000*60*9).toISOString(),
           desc: "رصد حركة محتملة بجانب مسار رملي.",
-          imgDataUrl: demoImg("AI Alert #2"),
+          imgDataUrl: null,
           read: false
         }
       ]
     };
+
+    const $ = (s) => document.querySelector(s);
+    let state = null;
+    let activeAlertId = null;
 
     function loadState(){
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return structuredClone(DEFAULT_STATE);
       try{
         const s = JSON.parse(raw);
-        // merge shallow
         return {
           report: { ...structuredClone(DEFAULT_STATE.report), ...(s.report||{}) },
           drone:  { ...structuredClone(DEFAULT_STATE.drone), ...(s.drone||{}) },
@@ -615,49 +653,50 @@
         return structuredClone(DEFAULT_STATE);
       }
     }
+
     function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-    // Demo image (data URL)
     function demoImg(label){
       const c = document.createElement("canvas");
       c.width = 960; c.height = 540;
       const g = c.getContext("2d");
       const grd = g.createLinearGradient(0,0,c.width,c.height);
-      grd.addColorStop(0, "rgba(214,194,168,0.35)");
-      grd.addColorStop(1, "rgba(198,160,106,0.18)");
+      grd.addColorStop(0, "rgba(166,124,82,0.14)");
+      grd.addColorStop(1, "rgba(122,154,106,0.10)");
       g.fillStyle = grd; g.fillRect(0,0,c.width,c.height);
 
-      g.strokeStyle = "rgba(90,70,54,0.9)";
+      g.strokeStyle = "rgba(166,124,82,0.55)";
       g.lineWidth = 10;
       g.strokeRect(20,20,c.width-40,c.height-40);
 
-      g.fillStyle = "rgba(244,231,214,0.95)";
-      g.font = "bold 54px system-ui";
+      g.fillStyle = "rgba(42,31,18,0.90)";
+      g.font = "900 54px Tajawal, sans-serif";
       g.fillText("AI Capture", 60, 110);
 
-      g.fillStyle = "rgba(214,194,168,0.95)";
-      g.font = "28px system-ui";
+      g.fillStyle = "rgba(74,56,40,0.80)";
+      g.font = "700 28px Tajawal, sans-serif";
       g.fillText(label, 60, 160);
 
-      g.fillStyle = "rgba(244,231,214,0.85)";
-      g.font = "22px system-ui";
+      g.fillStyle = "rgba(74,56,40,0.75)";
+      g.font = "600 22px Tajawal, sans-serif";
       g.fillText("Demo frame - replace with real snapshot", 60, 210);
 
       g.beginPath();
-      g.fillStyle = "rgba(239,68,68,0.55)";
+      g.fillStyle = "rgba(194,59,46,0.35)";
       g.arc(720, 260, 44, 0, Math.PI*2);
       g.fill();
-      g.fillStyle = "rgba(244,231,214,0.95)";
-      g.font = "bold 22px system-ui";
+      g.fillStyle = "rgba(42,31,18,0.90)";
+      g.font = "900 22px Tajawal, sans-serif";
       g.fillText("?", 712, 268);
 
       return c.toDataURL("image/jpeg", 0.85);
     }
 
-    // ============= UI =============
-    const $ = (s) => document.querySelector(s);
-    let state = loadState();
-    let activeAlertId = null;
+    function ensureImages(){
+      for(const a of state.alerts){
+        if(!a.imgDataUrl) a.imgDataUrl = demoImg("AI Alert");
+      }
+    }
 
     function showToast(msg){
       const box = $("#toastBox");
@@ -699,7 +738,6 @@
       setTimeout(()=> $("#statusSavedHint").style.display = "none", 1600);
     });
 
-    // ============= MAP CANVAS (lat/lng projection) =============
     const canvas = $("#mapCanvas");
     const ctx = canvas.getContext("2d");
 
@@ -716,7 +754,6 @@
         minLng = Math.min(minLng, p.lng);
         maxLng = Math.max(maxLng, p.lng);
       }
-      // padding صغير
       const padLat = (maxLat - minLat || 0.01) * 0.25;
       const padLng = (maxLng - minLng || 0.01) * 0.25;
       return {
@@ -728,38 +765,36 @@
     }
 
     function project(p, b){
-      // lng -> x , lat -> y (نعكس y)
       const w = canvas.width, h = canvas.height;
       const x = ((p.lng - b.minLng) / (b.maxLng - b.minLng)) * w;
       const y = (1 - (p.lat - b.minLat) / (b.maxLat - b.minLat)) * h;
       return { x, y };
     }
 
-    function hexToRgba(color, a){
-      if(color.startsWith("rgb(") || color.startsWith("rgba(")){
-        return color.replace("rgb(", "rgba(").replace(")", `, ${a})`);
-      }
-      if(!color.startsWith("#")) return `rgba(255,255,255,${a})`;
-      const hex = color.replace("#","").trim();
-      const n = parseInt(hex.length===3 ? hex.split("").map(c=>c+c).join("") : hex, 16);
-      const r = (n>>16)&255, g=(n>>8)&255, b=n&255;
-      return `rgba(${r},${g},${b},${a})`;
+    function rgba(r,g,b,a){ return `rgba(${r},${g},${b},${a})`; }
+
+    function parseCssColorToRgb(css){
+      const tmp = document.createElement("div");
+      tmp.style.color = css;
+      document.body.appendChild(tmp);
+      const out = getComputedStyle(tmp).color;
+      tmp.remove();
+      const m = out.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+      if(!m) return {r:0,g:0,b:0};
+      return { r: +m[1], g: +m[2], b: +m[3] };
     }
 
     function draw(){
       const b = boundsFromState();
-
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
-      // background
       const bg = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
-      bg.addColorStop(0, "rgba(214,194,168,0.12)");
-      bg.addColorStop(1, "rgba(198,160,106,0.06)");
+      bg.addColorStop(0, "rgba(166,124,82,0.10)");
+      bg.addColorStop(1, "rgba(122,154,106,0.07)");
       ctx.fillStyle = bg;
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      // soft topo lines
-      ctx.strokeStyle = "rgba(90,70,54,0.25)";
+      ctx.strokeStyle = "rgba(166,124,82,0.22)";
       ctx.lineWidth = 2;
       for(let i=0;i<9;i++){
         ctx.beginPath();
@@ -769,32 +804,33 @@
         ctx.stroke();
       }
 
-      // drone path
       const pathPx = state.drone.path.map(p => project(p,b));
       ctx.setLineDash([10,10]);
-      ctx.strokeStyle = "rgba(244,231,214,0.35)";
+      ctx.strokeStyle = "rgba(74,56,40,0.28)";
       ctx.lineWidth = 4;
       ctx.beginPath();
       pathPx.forEach((p,i)=> i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // small nodes along path
-      ctx.fillStyle = "rgba(244,231,214,0.25)";
+      ctx.fillStyle = "rgba(74,56,40,0.18)";
       for(const p of pathPx){
         ctx.beginPath();
         ctx.arc(p.x,p.y,5,0,Math.PI*2);
         ctx.fill();
       }
 
-      // alerts points
+      const blue = "#3b82f6";
+      const red = "#ef4444";
+      const green = "#22c55e";
+
       for(const a of state.alerts){
         const p = project({lat:a.lat,lng:a.lng}, b);
-        const color = getComputedStyle(document.documentElement)
-          .getPropertyValue(a.read ? "--green" : "--red").trim();
+        const color = a.read ? green : red;
+        const rgb = parseCssColorToRgb(color);
 
         ctx.beginPath();
-        ctx.fillStyle = hexToRgba(color, 0.18);
+        ctx.fillStyle = rgba(rgb.r,rgb.g,rgb.b,0.16);
         ctx.arc(p.x,p.y,18,0,Math.PI*2);
         ctx.fill();
 
@@ -804,34 +840,35 @@
         ctx.fill();
 
         ctx.beginPath();
-        ctx.strokeStyle = "rgba(90,70,54,0.75)";
+        ctx.strokeStyle = "rgba(166,124,82,0.55)";
         ctx.lineWidth = 2;
         ctx.arc(p.x,p.y,8,0,Math.PI*2);
         ctx.stroke();
       }
 
-      // drone pos
       const dp = project(state.drone.pos, b);
-      const blue = getComputedStyle(document.documentElement).getPropertyValue("--blue").trim();
-      ctx.beginPath();
-      ctx.fillStyle = hexToRgba(blue, 0.20);
-      ctx.arc(dp.x, dp.y, 22, 0, Math.PI*2);
-      ctx.fill();
+      {
+        const rgb = parseCssColorToRgb(blue);
+        ctx.beginPath();
+        ctx.fillStyle = rgba(rgb.r,rgb.g,rgb.b,0.16);
+        ctx.arc(dp.x, dp.y, 22, 0, Math.PI*2);
+        ctx.fill();
 
-      ctx.beginPath();
-      ctx.fillStyle = blue;
-      ctx.arc(dp.x, dp.y, 10, 0, Math.PI*2);
-      ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle = blue;
+        ctx.arc(dp.x, dp.y, 10, 0, Math.PI*2);
+        ctx.fill();
 
-      ctx.beginPath();
-      ctx.strokeStyle = "rgba(90,70,54,0.85)";
-      ctx.lineWidth = 2;
-      ctx.arc(dp.x, dp.y, 10, 0, Math.PI*2);
-      ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(166,124,82,0.55)";
+        ctx.lineWidth = 2;
+        ctx.arc(dp.x, dp.y, 10, 0, Math.PI*2);
+        ctx.stroke();
 
-      ctx.fillStyle = "rgba(244,231,214,0.85)";
-      ctx.font = "bold 16px system-ui";
-      ctx.fillText("DRONE", dp.x + 14, dp.y - 14);
+        ctx.fillStyle = "rgba(42,31,18,0.82)";
+        ctx.font = "900 16px Tajawal, sans-serif";
+        ctx.fillText("DRONE", dp.x + 14, dp.y - 14);
+      }
     }
 
     function pickAlertAt(mx,my){
@@ -851,12 +888,10 @@
       const sy = canvas.height / rect.height;
       const mx = (e.clientX - rect.left) * sx;
       const my = (e.clientY - rect.top) * sy;
-
       const a = pickAlertAt(mx,my);
       if(a) openAlert(a.id);
     });
 
-    // ============= ALERT MODAL =============
     function formatAr(tsIso){
       const d = new Date(tsIso);
       return d.toLocaleString("ar-SA", { dateStyle:"medium", timeStyle:"short" });
@@ -895,7 +930,7 @@
       const a = state.alerts.find(x => x.id === activeAlertId);
       if(!a) return;
 
-      a.read = true; // يتحول من الأحمر للأخضر
+      a.read = true;
       saveState();
       setHeader();
       draw();
@@ -903,11 +938,7 @@
       closeAlert();
     });
 
-    // ============= MODEL FEED (محاكاة) =============
-    // لاحقًا: استبدلها ب WebSocket / SSE / Polling من السيرفر
-    // وتستدعي applyModelEvent(event)
     function applyModelEvent(event){
-      // event = { type:"human_detected", lat,lng, ts, desc, imgDataUrl }
       if(event?.type !== "human_detected") return;
 
       state.alerts.unshift({
@@ -920,22 +951,18 @@
         read: false
       });
 
-      // أبقِ آخر 50 تنبيه
       state.alerts = state.alerts.slice(0, 50);
 
       saveState();
       setHeader();
       draw();
-      showToast("وصل تنبيه جديد من المودل");
+      showToast("وصل تنبيه جديد");
     }
 
-    // محاكاة وصول تنبيهات تلقائية (مو زر)
-    // تقدر تحذف هذا الجزء لما تربط المصدر الحقيقي
     setInterval(()=>{
-      // احتمال وصول تنبيه
       if(Math.random() < 0.35){
         const base = state.drone.pos;
-        const jitter = () => (Math.random() - 0.5) * 0.02; // ~±0.01
+        const jitter = () => (Math.random() - 0.5) * 0.02;
         applyModelEvent({
           type:"human_detected",
           lat: base.lat + jitter(),
@@ -947,11 +974,13 @@
       }
     }, 8000);
 
-    // ============= INIT =============
     function init(){
+      state = loadState();
+      ensureImages();
       setReport();
       draw();
     }
+
     init();
   </script>
 </body>
