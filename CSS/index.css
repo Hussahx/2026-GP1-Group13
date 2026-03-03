@@ -2324,3 +2324,18 @@ input[type="file"] {
 .form-success[hidden] {
   display: none !important;
 }
+.track-link {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #777;
+}
+
+.track-link a {
+  color: #A67C52;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.track-link a:hover {
+  text-decoration: underline;
+}

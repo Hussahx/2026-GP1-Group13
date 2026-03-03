@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F5EFE6" />
+  <title>راصد — تتبع البلاغ</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+
+    /* ═══════════════════════════════════════════════
+       TOKENS
+    ═══════════════════════════════════════════════ */
+    :root {
+      --sand-50:    #FAF6EF;
+      --sand-100:   #F5EFE6;
+      --sand-200:   #EDE4D3;
+      --sand-300:   #D9C9AE;
+
+      --oak-400:    #A67C52;
+      --oak-500:    #8B6B47;
+      --oak-600:    #7A5C38;
+      --oak-700:    #5C4025;
+
+      --olive-400:  #7A9A6A;
+      --olive-500:  #5C7A4A;
+      --olive-600:  #3E5C32;
+
+      --ink:        #2A1F12;
+      --ink-mid:    #4A3828;
+      --ink-muted:  #7A6245;
+
+      --glass:      rgba(255, 252, 246, 0.92);
+      --glass-edge: rgba(255, 248, 235, 0.65);
+
+      --radius-card: 24px;
+      --radius-pill: 100px;
+
+      --font: 'Tajawal', sans-serif;
+      --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ═══════════════════════════════════════════════
+       RESET
+    ═══════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; overflow-x: hidden; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--sand-100);
+      color: var(--ink);
+      direction: rtl;
+      text-align: right;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 10% 0%, rgba(166,124,82,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(122,154,106,0.07) 0%, transparent 55%),
+        repeating-linear-gradient(45deg, transparent 0px, transparent 40px,
+          rgba(166,124,82,0.025) 40px, rgba(166,124,82,0.025) 41px);
+    }
+
+    button, input { font-family: var(--font); }
+    a { color: var(--oak-400); text-decoration: none; }
+    ul { list-style: none; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    /* ═══════════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════════ */
+    .page-header {
+      position: relative;
+      background: linear-gradient(138deg, var(--oak-500) 0%, var(--oak-600) 100%);
+      padding: clamp(1rem, 3vw, 1.6rem) clamp(1.25rem, 4vw, 2rem);
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      border-radius: 0 0 clamp(22px, 5vw, 36px) clamp(22px, 5vw, 36px);
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .page-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 80% 40%, rgba(255,255,255,0.07) 0%, transparent 55%),
+        repeating-linear-gradient(45deg, transparent 0px, transparent 28px,
+          rgba(255,255,255,0.025) 28px, rgba(255,255,255,0.025) 29px);
+      pointer-events: none;
+    }
+
+    .header-logo-mark {
+      position: relative;
+      z-index: 1;
+      width: clamp(40px, 7vw, 50px);
+      height: clamp(40px, 7vw, 50px);
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .header-logo-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 12px;
+    }
+
+    .header-brand { position: relative; z-index: 1; }
+
+    .header-brand h1 {
+      font-size: clamp(1.2rem, 3vw, 1.55rem);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+    }
+
+    .header-brand p {
+      font-size: clamp(0.72rem, 1.3vw, 0.82rem);
+      color: rgba(255,255,255,0.62);
+      margin-top: 2px;
+    }
+
+    .header-nav { position: relative; z-index: 1; margin-right: auto; }
+
+    .header-nav a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.3rem 0.8rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255,255,255,0.18);
+      transition: all 0.22s ease;
+    }
+
+    .header-nav a:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.32);
+    }
+
+    /* ═══════════════════════════════════════════════
+       PAGE BODY
+    ═══════════════════════════════════════════════ */
+    .page-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: clamp(2.5rem, 6vw, 4rem) clamp(1rem, 4vw, 2rem) 3rem;
+      gap: clamp(1.75rem, 4vw, 2.5rem);
+    }
+
+    /* ═══════════════════════════════════════════════
+       PAGE HEADING
+    ═══════════════════════════════════════════════ */
+    .page-heading {
+      text-align: center;
+      max-width: 520px;
+      width: 100%;
+      animation: fadeUp 0.7s var(--ease-out) both;
+    }
+
+    .page-heading-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--oak-400);
+      margin-bottom: 0.9rem;
+      opacity: 0.85;
+    }
+
+    .page-heading-eyebrow span {
+      display: inline-block;
+      width: 20px;
+      height: 1px;
+      background: var(--oak-400);
+      opacity: 0.5;
+    }
+
+    .page-heading h2 {
+      font-size: clamp(1.65rem, 4.5vw, 2.4rem);
+      font-weight: 900;
+      color: var(--ink);
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.7rem;
+    }
+
+    .page-heading p {
+      font-size: clamp(0.86rem, 1.5vw, 0.96rem);
+      color: var(--ink-muted);
+      line-height: 1.8;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SEARCH CARD
+    ═══════════════════════════════════════════════ */
+    .search-card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-edge);
+      border-radius: var(--radius-card);
+      box-shadow: 0 2px 1px rgba(255,248,235,0.9) inset,
+                  0 20px 60px rgba(62,47,28,0.10),
+                  0 4px 16px rgba(62,47,28,0.06);
+      padding: clamp(1.5rem, 4vw, 2rem);
+      animation: fadeUp 0.7s 0.1s var(--ease-out) both;
+    }
+
+    .search-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--ink-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 0.65rem;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 0.55rem;
+    }
+
+    .search-input {
+      flex: 1;
+      height: 50px;
+      border: 1.5px solid rgba(166,124,82,0.22);
+      border-radius: var(--radius-pill);
+      background: rgba(245,239,230,0.7);
+      color: var(--ink);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0 1.2rem;
+      direction: ltr;
+      text-align: center;
+      letter-spacing: 2px;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .search-input::placeholder {
+      letter-spacing: 0.5px;
+      font-weight: 400;
+      color: var(--ink-muted);
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    .search-input:focus {
+      border-color: rgba(166,124,82,0.55);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(166,124,82,0.09);
+    }
+
+    .search-input.invalid {
+      border-color: rgba(155,58,58,0.45);
+      background: rgba(155,58,58,0.04);
+    }
+
+    .search-btn {
+      height: 50px;
+      padding: 0 1.4rem;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(135deg, var(--oak-400), var(--oak-600));
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: 0 4px 18px rgba(139,107,71,0.30);
+      transition: all 0.25s var(--ease-out);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .search-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .search-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(139,107,71,0.38); }
+    .search-btn:active { transform: translateY(0); }
+    .search-btn.loading { pointer-events: none; opacity: 0.8; }
+
+    .btn-spinner {
+      display: none;
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+
+    .search-btn.loading .btn-label { display: none; }
+    .search-btn.loading .btn-spinner { display: block; }
+
+    .search-error {
+      font-size: 0.74rem;
+      color: #9B3A3A;
+      margin-top: 0.5rem;
+      padding-right: 0.2rem;
+      min-height: 1em;
+    }
+
+    .sample-row {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin-top: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .sample-row-label {
+      font-size: 0.68rem;
+      color: var(--ink-muted);
+      font-weight: 600;
+      opacity: 0.7;
+    }
+
+    .sample-chips { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+
+    .sample-chip {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.18rem 0.6rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(166,124,82,0.28);
+      color: var(--oak-500);
+      background: rgba(166,124,82,0.06);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+
+    .sample-chip:hover { background: rgba(166,124,82,0.13); border-color: var(--oak-400); }
+
+    /* ═══════════════════════════════════════════════
+       RESULTS WRAPPER
+    ═══════════════════════════════════════════════ */
+    .results-wrap {
+      width: 100%;
+      max-width: 860px;
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+      transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
+    }
+
+    .results-wrap.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+    /* ═══════════════════════════════════════════════
+       REPORT ID BAR
+    ═══════════════════════════════════════════════ */
+    .report-id-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: clamp(1.25rem, 3vw, 1.75rem);
+      padding: 0 0.2rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .report-id-group { display: flex; flex-direction: column; gap: 0.2rem; }
+
+    .report-id-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      opacity: 0.55;
+    }
+
+    .report-id-number {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      font-weight: 900;
+      color: var(--ink);
+      letter-spacing: 1px;
+      direction: ltr;
+    }
+
+    .report-id-title {
+      font-size: clamp(0.76rem, 1.2vw, 0.85rem);
+      color: var(--ink-muted);
+      margin-top: 0.1rem;
+    }
+
+    .report-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42rem;
+      padding: 0.35rem 0.95rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.76rem;
+      font-weight: 800;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .report-status-pill::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .pill-active   { background: rgba(92,122,74,0.10); color: var(--olive-500); border: 1px solid rgba(92,122,74,0.22); }
+    .pill-active::before { background: var(--olive-400); animation: dotPulse 2s ease-in-out infinite; }
+
+    .pill-closed   { background: rgba(166,124,82,0.09); color: var(--oak-500); border: 1px solid rgba(166,124,82,0.22); }
+    .pill-closed::before { background: var(--oak-400); }
+
+    .pill-pending  { background: rgba(194,164,119,0.10); color: var(--oak-600); border: 1px solid rgba(166,124,82,0.18); }
+    .pill-pending::before { background: var(--sand-300); animation: dotPulse 2.5s ease-in-out infinite; }
+
+    @keyframes dotPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    /* ═══════════════════════════════════════════════
+       TIMELINE CARD
+    ═══════════════════════════════════════════════ */
+    .timeline-card {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-edge);
+      border-radius: var(--radius-card);
+      box-shadow: 0 2px 1px rgba(255,248,235,0.9) inset,
+                  0 20px 60px rgba(62,47,28,0.09),
+                  0 4px 16px rgba(62,47,28,0.05);
+      padding: clamp(2rem, 5vw, 3rem) clamp(1.5rem, 5vw, 3.5rem);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .timeline-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%, rgba(166,124,82,0.3) 30%,
+        rgba(166,124,82,0.45) 50%, rgba(166,124,82,0.3) 70%, transparent 100%);
+    }
+
+    /* ─── THE TRACK ─── */
+    .tl-track {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    /* Base rail */
+    .tl-track::before {
+      content: '';
+      position: absolute;
+      top: 36px;
+      right: 36px;
+      left: 36px;
+      height: 1.5px;
+      background: rgba(166,124,82,0.11);
+      border-radius: 2px;
+      z-index: 0;
+    }
+
+    /* Progress fill */
+    .tl-progress {
+      position: absolute;
+      top: 36px;
+      right: 36px;
+      height: 1.5px;
+      border-radius: 2px;
+      background: linear-gradient(to left, var(--olive-500), var(--oak-400), var(--oak-300, #C2A477));
+      z-index: 1;
+      width: 0%;
+      transition: width 1.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ─── Each step ─── */
+    .tl-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ─── Node — pure circle, no nested container ─── */
+    .tl-node {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 0.45s var(--ease-spring), box-shadow 0.45s ease;
+      cursor: default;
+
+      /* Future: calm muted */
+      background: var(--sand-200);
+      border: 1.5px solid rgba(166,124,82,0.13);
+
+      /* Entrance: starts hidden */
+      opacity: 0;
+      transform: scale(0.75);
+    }
+
+    .tl-node.in {
+      opacity: 1;
+      transform: scale(1);
+      transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-spring),
+                  background 0.5s ease, box-shadow 0.45s ease, border-color 0.4s ease;
+    }
+
+    /* Central dot — pure circle, zero geometric clash */
+    .tl-node::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(166,124,82,0.22);
+      transition: all 0.45s var(--ease-out);
+      pointer-events: none;
+    }
+
+    /* Hide FontAwesome icons — nodes are dot-only */
+    .tl-node-icon { display: none; }
+
+    /* Hover on any non-future step */
+    .tl-step.done:hover .tl-node,
+    .tl-step.live:hover .tl-node {
+      transform: scale(1.07) translateY(-3px);
+    }
+
+    /* ─── DONE ─── */
+    .tl-step.done .tl-node {
+      background: linear-gradient(145deg, var(--olive-400), var(--olive-600));
+      border-color: transparent;
+      box-shadow: 0 8px 24px rgba(62,122,50,0.26), 0 2px 6px rgba(62,122,50,0.14);
+    }
+
+    .tl-step.done .tl-node::before {
+      background: rgba(255,255,255,0.75);
+      width: 8px;
+      height: 8px;
+    }
+
+    .tl-step.done:hover .tl-node {
+      box-shadow: 0 12px 32px rgba(62,122,50,0.34), 0 4px 10px rgba(62,122,50,0.18);
+    }
+
+    /* ─── LIVE (active) ─── */
+    .tl-step.live .tl-node {
+      background: linear-gradient(145deg, var(--oak-400), var(--oak-600));
+      border-color: transparent;
+      box-shadow: 0 8px 28px rgba(139,107,71,0.36), 0 2px 8px rgba(139,107,71,0.20);
+      animation: breatheNode 3.2s ease-in-out infinite;
+    }
+
+    .tl-step.live .tl-node::before {
+      background: rgba(255,255,255,0.82);
+      width: 9px;
+      height: 9px;
+    }
+
+    /* Breathing glow ring — pseudo only, no child element */
+    .tl-step.live .tl-node::after {
+      content: '';
+      position: absolute;
+      inset: -7px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(166,124,82,0.3);
+      pointer-events: none;
+      animation: ringPulse 3.2s ease-in-out infinite;
+    }
+
+    @keyframes breatheNode {
+      0%, 100% { box-shadow: 0 8px 28px rgba(139,107,71,0.36), 0 2px 8px rgba(139,107,71,0.20); }
+      50%       { box-shadow: 0 10px 36px rgba(139,107,71,0.52), 0 4px 12px rgba(139,107,71,0.26), 0 0 0 10px rgba(166,124,82,0.05); }
+    }
+
+    @keyframes ringPulse {
+      0%   { inset: -7px;  opacity: 0.7; }
+      50%  { inset: -16px; opacity: 0; }
+      100% { inset: -7px;  opacity: 0.7; }
+    }
+
+    .tl-step.live:hover .tl-node { animation-play-state: paused; }
+
+    /* ─── Labels ─── */
+    .tl-label {
+      margin-top: 1rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.22rem;
+    }
+
+    .tl-title {
+      font-size: clamp(0.7rem, 1.05vw, 0.8rem);
+      font-weight: 800;
+      color: var(--ink-muted);
+      line-height: 1.25;
+      transition: color 0.35s ease;
+    }
+
+    .tl-date {
+      font-size: clamp(0.58rem, 0.82vw, 0.66rem);
+      color: rgba(122,98,69,0.4);
+      font-weight: 500;
+      min-height: 1em;
+      transition: color 0.35s ease;
+    }
+
+    .tl-step.done .tl-title { color: var(--olive-500); }
+    .tl-step.live .tl-title { color: var(--oak-500); }
+    .tl-step.done .tl-date  { color: rgba(62,92,50,0.55); }
+    .tl-step.live .tl-date  { color: rgba(139,107,71,0.6); }
+
+    .tl-live-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+      font-size: 0.56rem;
+      font-weight: 800;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--oak-500);
+      opacity: 0.75;
+      margin-top: 0.1rem;
+      animation: tagBlink 2.8s ease-in-out infinite;
+    }
+
+    .tl-live-tag::before {
+      content: '';
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--oak-400);
+      animation: dotPulse 2.8s ease-in-out infinite;
+    }
+
+    @keyframes tagBlink {
+      0%, 100% { opacity: 0.75; }
+      50%       { opacity: 0.38; }
+    }
+
+    /* ═══════════════════════════════════════════════
+       INFO STRIP — clean typographic columns
+    ═══════════════════════════════════════════════ */
+    .info-strip {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-top: clamp(2rem, 4vw, 2.75rem);
+      padding-top: clamp(1.5rem, 3vw, 2rem);
+      border-top: 1px solid rgba(166,124,82,0.09);
+      flex-wrap: wrap;
+      row-gap: 1.5rem;
+    }
+
+    .info-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      flex: 1;
+      min-width: 110px;
+      padding: 0 1.1rem;
+      border-left: 1px solid rgba(166,124,82,0.09);
+
+      /* Entrance */
+      opacity: 0;
+      transform: translateY(7px);
+    }
+
+    .info-col:last-child { border-left: none; }
+
+    .info-col.in {
+      animation: colIn 0.4s var(--ease-out) both;
+    }
+
+    @keyframes colIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .info-col-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      opacity: 0.5;
+    }
+
+    .info-col-value {
+      font-size: clamp(0.8rem, 1.3vw, 0.9rem);
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .info-col-value.warm   { color: var(--oak-500); }
+    .info-col-value.green  { color: var(--olive-500); }
+
+    /* ═══════════════════════════════════════════════
+       UPDATE LOG
+    ═══════════════════════════════════════════════ */
+    .log-wrap {
+      margin-top: clamp(1.5rem, 3vw, 2rem);
+    }
+
+    .log-heading {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      opacity: 0.45;
+      margin-bottom: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .log-heading::after { content: ''; flex: 1; height: 1px; background: rgba(166,124,82,0.09); }
+
+    .log-entry {
+      display: grid;
+      grid-template-columns: 8px auto 1fr;
+      column-gap: 0.85rem;
+      align-items: start;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid rgba(166,124,82,0.055);
+
+      /* Entrance */
+      opacity: 0;
+      transform: translateX(5px);
+    }
+
+    .log-entry:last-child { border-bottom: none; }
+
+    .log-entry.in {
+      animation: entryIn 0.38s var(--ease-out) both;
+    }
+
+    @keyframes entryIn {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .log-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+    }
+
+    .log-dot.done   { background: var(--olive-400); opacity: 0.65; }
+    .log-dot.active { background: var(--oak-400); animation: dotPulse 2s ease-in-out infinite; }
+
+    .log-time {
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: var(--ink-muted);
+      opacity: 0.5;
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+
+    .log-text {
+      font-size: clamp(0.78rem, 1.2vw, 0.86rem);
+      color: var(--ink-mid);
+      line-height: 1.62;
+    }
+
+    /* ═══════════════════════════════════════════════
+       NOT-FOUND STATE
+    ═══════════════════════════════════════════════ */
+    .not-found {
+      display: none;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-edge);
+      border-radius: var(--radius-card);
+      padding: clamp(2.5rem, 6vw, 3.5rem);
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(62,47,28,0.08);
+    }
+
+    .not-found.visible { display: block; }
+
+    .not-found-icon { font-size: 2rem; color: rgba(155,58,58,0.32); margin-bottom: 1rem; }
+    .not-found h3   { font-size: 1rem; font-weight: 800; color: var(--ink); margin-bottom: 0.45rem; }
+    .not-found p    { font-size: 0.84rem; color: var(--ink-muted); line-height: 1.75; }
+
+    .found-content { display: none; }
+    .found-content.visible { display: block; }
+
+    /* ═══════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════ */
+    footer {
+      position: relative;
+      background: linear-gradient(180deg,
+        #f5efe5 0%, #f4ead8 18%, #e8d4b4 34%,
+        #d8bc90 50%, #c4a070 64%, #9e7449 78%, #614426 100%);
+      overflow: hidden;
+      margin-top: auto;
+    }
+
+    .footer-wave { display: block; width: 100%; height: 60px; position: relative; z-index: 2; }
+
+    .footer-inner {
+      position: relative; z-index: 3;
+      max-width: 1100px; margin: 0 auto;
+      padding: 0 2rem 3.5rem;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 3rem;
+    }
+
+    .f-logo { font-size: 1.7rem; font-weight: 900; color: rgba(255,255,255,0.92); line-height: 1; }
+    .f-logo span { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 4px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .f-brand p { font-size: 12.5px; color: rgba(255,255,255,0.46); line-height: 1.85; margin-top: 10px; }
+
+    .f-col h4 { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.36); margin-bottom: 14px; font-weight: 700; }
+    .f-col ul li { margin-bottom: 8px; }
+    .f-col ul li a { color: rgba(255,255,255,0.56); font-size: 13px; transition: color 0.2s; }
+    .f-col ul li a:hover { color: #fff; }
+
+    .f-emergency { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.11); border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 8px; transition: background 0.2s; }
+    .f-emergency:hover { background: rgba(255,255,255,0.12); }
+    .f-emergency .num { font-size: 1.85rem; font-weight: 900; color: #fff; line-height: 1; }
+    .f-emergency small { display: block; font-size: 9.5px; letter-spacing: 2px; color: rgba(255,255,255,0.36); margin-top: 3px; text-transform: uppercase; }
+
+    .footer-bar { position: relative; z-index: 3; text-align: center; padding: 12px 24px 14px; font-size: 10.5px; color: rgba(255,255,255,0.2); letter-spacing: 2px; border-top: 1px solid rgba(255,255,255,0.06); }
+    .footer-dune { position: absolute; bottom: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #7a5028, #9a6838, #836030, #a87848, #7c5830); }
+
+    /* ═══════════════════════════════════════════════
+       UTILITIES
+    ═══════════════════════════════════════════════ */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 680px) {
+      .tl-node { width: 54px; height: 54px; }
+      .tl-node-icon { font-size: 1rem; }
+      .tl-track::before, .tl-progress { top: 27px; }
+      .tl-track::before { right: 27px; left: 27px; }
+      .tl-progress { right: 27px; }
+      .tl-step.live .tl-node::after { display: none; }
+      .info-strip { flex-direction: row; flex-wrap: wrap; }
+      .info-col { min-width: calc(50% - 1.1rem); border-left: none; padding: 0; padding-bottom: 1rem; border-bottom: 1px solid rgba(166,124,82,0.07); }
+      .info-col:nth-last-child(-n+2) { border-bottom: none; }
+      .footer-inner { grid-template-columns: 1fr; gap: 1.5rem; }
+    }
+
+    @media (max-width: 440px) {
+      .tl-node { width: 46px; height: 46px; }
+      .tl-node-icon { font-size: 0.88rem; }
+      .tl-track::before, .tl-progress { top: 23px; }
+      .tl-track::before { right: 23px; left: 23px; }
+      .tl-progress { right: 23px; }
+      .tl-date { display: none; }
+      .search-row { flex-direction: column; }
+      .search-btn { width: 100%; justify-content: center; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div class="header-logo-mark" aria-hidden="true">
+      <img src="../assest/New-logo.JPG.jpeg" alt="شعار راصد" />
+    </div>
+    <div class="header-brand">
+      <h1>راصد</h1>
+      <p>عيون الصحراء — متابعة البلاغات</p>
+    </div>
+    <nav class="header-nav" aria-label="تنقل سريع">
+      <a href="index.html">
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+        الرئيسية
+      </a>
+    </nav>
+  </header>
+
+  <main class="page-body">
+
+    <div class="page-heading">
+      <div class="page-heading-eyebrow" aria-hidden="true">
+        <span></span>
+        تتبع البلاغ
+        <span></span>
+      </div>
+      <h2>الوضع الحالي للبلاغ</h2>
+      <p>أدخل رقم البلاغ لمعرفة آخر تحديثات عملية البحث والإنقاذ بشكل فوري.</p>
+    </div>
+
+    <section class="search-card" aria-label="بحث عن بلاغ">
+      <div class="search-label">رقم البلاغ</div>
+      <div class="search-row">
+        <input
+          id="reportInput"
+          type="text"
+          class="search-input"
+          placeholder="RSD-2025-XXXXX"
+          maxlength="20"
+          autocomplete="off"
+          aria-label="أدخل رقم البلاغ"
+          aria-describedby="search-err"
+        />
+        <button class="search-btn" id="btnTrack" aria-label="تتبع البلاغ">
+          <span class="btn-label">تتبع</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="search-error" id="search-err" role="alert" aria-live="polite"></div>
+      <div class="sample-row">
+        <span class="sample-row-label">أمثلة:</span>
+        <div class="sample-chips">
+          <span class="sample-chip" role="button" tabindex="0">RSD-2025-00142</span>
+          <span class="sample-chip" role="button" tabindex="0">RSD-2025-00089</span>
+          <span class="sample-chip" role="button" tabindex="0">RSD-2025-00201</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="results-wrap" id="resultsWrap" aria-live="polite" aria-atomic="false">
+
+      <div class="not-found" id="notFound" role="status">
+        <div class="not-found-icon" aria-hidden="true"><i class="fas fa-circle-exclamation"></i></div>
+        <h3>لم يُعثر على البلاغ</h3>
+        <p>تأكد من رقم البلاغ وأعد المحاولة، أو تواصل مع الجهة المختصة.</p>
+      </div>
+
+      <div class="found-content" id="foundContent">
+
+        <div class="report-id-bar">
+          <div class="report-id-group">
+            <div class="report-id-label">رقم البلاغ</div>
+            <div class="report-id-number" id="idNumber">—</div>
+            <div class="report-id-title" id="idTitle">—</div>
+          </div>
+          <span class="report-status-pill" id="statusPill">—</span>
+        </div>
+
+        <section class="timeline-card" aria-label="مراحل معالجة البلاغ">
+
+          <div class="tl-track" id="tlTrack" role="list">
+            <div class="tl-progress" id="tlProgress" aria-hidden="true"></div>
+
+            <div class="tl-step" id="tls1" role="listitem">
+              <div class="tl-node" id="tln1">
+                <i class="tl-node-icon fas fa-inbox" aria-hidden="true"></i>
+              </div>
+              <div class="tl-label">
+                <div class="tl-title">تم استلام البلاغ</div>
+                <div class="tl-date" id="tld1"></div>
+              </div>
+            </div>
+
+            <div class="tl-step" id="tls2" role="listitem">
+              <div class="tl-node" id="tln2">
+                <i class="tl-node-icon fas fa-eye" aria-hidden="true"></i>
+              </div>
+              <div class="tl-label">
+                <div class="tl-title">قيد المراجعة</div>
+                <div class="tl-date" id="tld2"></div>
+              </div>
+            </div>
+
+            <div class="tl-step" id="tls3" role="listitem">
+              <div class="tl-node" id="tln3">
+                <i class="tl-node-icon fas fa-compass" aria-hidden="true"></i>
+              </div>
+              <div class="tl-label">
+                <div class="tl-title">جاري البحث</div>
+                <div class="tl-date" id="tld3"></div>
+              </div>
+            </div>
+
+            <div class="tl-step" id="tls4" role="listitem">
+              <div class="tl-node" id="tln4">
+                <i class="tl-node-icon fas fa-circle-check" aria-hidden="true"></i>
+              </div>
+              <div class="tl-label">
+                <div class="tl-title">تم إغلاق البلاغ</div>
+                <div class="tl-date" id="tld4"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="info-strip" id="infoStrip">
+            <div class="info-col" id="ic1">
+              <div class="info-col-label">تاريخ البلاغ</div>
+              <div class="info-col-value" id="icDate">—</div>
+            </div>
+            <div class="info-col" id="ic2">
+              <div class="info-col-label">المنطقة</div>
+              <div class="info-col-value warm" id="icLoc">—</div>
+            </div>
+            <div class="info-col" id="ic3">
+              <div class="info-col-label">المتطوعون</div>
+              <div class="info-col-value" id="icVol">—</div>
+            </div>
+            <div class="info-col" id="ic4">
+              <div class="info-col-label">آخر تحديث</div>
+              <div class="info-col-value" id="icUpd">—</div>
+            </div>
+            <div class="info-col" id="ic5">
+              <div class="info-col-label">الحالة</div>
+              <div class="info-col-value green" id="icStatus">—</div>
+            </div>
+          </div>
+
+          <div class="log-wrap">
+            <div class="log-heading">سجل التحديثات</div>
+            <div id="logList"></div>
+          </div>
+
+        </section>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
+    </svg>
+    <div class="footer-inner">
+      <div class="f-brand">
+        <div class="f-logo">راصد<span>RASID</span></div>
+        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
+      </div>
+      <div class="f-col">
+        <h4>روابط سريعة</h4>
+        <ul>
+          <li><a href="index.html">الصفحة الرئيسية</a></li>
+          <li><a href="login.html">تسجيل الدخول</a></li>
+          <li><a href="Regester.html">انضم كمتطوع</a></li>
+          <li><a href="track-report.html">تتبع البلاغ</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h4>أرقام الطوارئ</h4>
+        <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+        <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+      </div>
+    </div>
+    <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+    <div class="footer-dune"></div>
+  </footer>
+
+  <script>
+    'use strict';
+
+    const DB = {
+      'RSD-2025-00142': {
+        title: 'بلاغ مفقود — منطقة الربع الخالي',
+        date: '١٢ مايو ٢٠٢٥', location: 'نجران — الربع الخالي',
+        volunteers: '٨ متطوعين', updated: 'منذ ٤٥ دقيقة',
+        statusText: 'جاري البحث الميداني',
+        pill: { label: 'نشط', cls: 'pill-active' },
+        step: 3,
+        dates: ['١٠:٢٢ ص', '١١:٠٥ ص', '١٢:٣٠ م', null],
+        log: [
+          { time: '١٢:٣٠ م', text: 'انطلقت عملية البحث الميداني في المنطقة المحددة.', type: 'active' },
+          { time: '١١:٠٥ ص', text: 'تمت مراجعة البلاغ والتحقق من بياناته.', type: 'done' },
+          { time: '١٠:٢٢ ص', text: 'تم استلام البلاغ وتسجيله في النظام.', type: 'done' },
+        ]
+      },
+      'RSD-2025-00089': {
+        title: 'بلاغ مفقود — بادية حائل الشمالية',
+        date: '٣ مارس ٢٠٢٥', location: 'حائل — البادية الشمالية',
+        volunteers: '١٢ متطوعاً', updated: 'منذ ٣ أيام',
+        statusText: 'تم إغلاق البلاغ بنجاح',
+        pill: { label: 'مُغلق', cls: 'pill-closed' },
+        step: 4,
+        dates: ['٨:١٠ ص', '٩:٣٠ ص', '١١:٠٠ ص', '٤:٤٥ م'],
+        log: [
+          { time: '٤:٤٥ م', text: 'تم إغلاق البلاغ بعد العثور على المفقود بحالة جيدة.', type: 'done' },
+          { time: '١١:٠٠ ص', text: 'جارٍ تنفيذ عملية البحث في المنطقة المحددة.', type: 'done' },
+          { time: '٩:٣٠ ص',  text: 'تمت مراجعة البلاغ والتحقق من بياناته.', type: 'done' },
+          { time: '٨:١٠ ص',  text: 'تم استلام البلاغ وتسجيله في النظام.', type: 'done' },
+        ]
+      },
+      'RSD-2025-00201': {
+        title: 'بلاغ مفقود — شمال بادية تبوك',
+        date: '٢٨ مايو ٢٠٢٥', location: 'تبوك — شمال البادية',
+        volunteers: '٥ متطوعين', updated: 'منذ ١٢ دقيقة',
+        statusText: 'قيد المراجعة الأولية',
+        pill: { label: 'تحت المراجعة', cls: 'pill-pending' },
+        step: 2,
+        dates: ['٧:٥٠ ص', '٨:١٠ ص', null, null],
+        log: [
+          { time: '٨:١٠ ص', text: 'البلاغ قيد المراجعة من قِبل الجهة المختصة.', type: 'active' },
+          { time: '٧:٥٠ ص', text: 'تم استلام البلاغ وتسجيله في النظام.', type: 'done' },
+        ]
+      }
+    };
+
+    const input       = document.getElementById('reportInput');
+    const btn         = document.getElementById('btnTrack');
+    const errEl       = document.getElementById('search-err');
+    const resultsWrap = document.getElementById('resultsWrap');
+    const notFound    = document.getElementById('notFound');
+    const foundEl     = document.getElementById('foundContent');
+    const progressEl  = document.getElementById('tlProgress');
+
+    document.querySelectorAll('.sample-chip').forEach(chip => {
+      const fill = () => {
+        input.value = chip.textContent.trim();
+        input.classList.remove('invalid');
+        errEl.textContent = '';
+        input.focus();
+      };
+      chip.addEventListener('click', fill);
+      chip.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fill(); } });
+    });
+
+    input.addEventListener('input', () => { input.classList.remove('invalid'); errEl.textContent = ''; });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } });
+
+    btn.addEventListener('click', () => {
+      const val = input.value.trim().toUpperCase();
+      if (!val) {
+        input.classList.add('invalid');
+        errEl.textContent = 'الرجاء إدخال رقم البلاغ.';
+        input.focus();
+        return;
+      }
+      btn.classList.add('loading');
+      resultsWrap.classList.remove('visible');
+      notFound.classList.remove('visible');
+      foundEl.classList.remove('visible');
+
+      setTimeout(() => {
+        btn.classList.remove('loading');
+        const report = DB[val];
+        report ? renderReport(val, report) : renderNotFound();
+      }, 750);
+    });
+
+    function renderNotFound() {
+      notFound.classList.add('visible');
+      foundEl.classList.remove('visible');
+      resultsWrap.classList.add('visible');
+      scrollTo();
+    }
+
+    function renderReport(id, r) {
+      document.getElementById('idNumber').textContent  = id;
+      document.getElementById('idTitle').textContent   = r.title;
+      const pill = document.getElementById('statusPill');
+      pill.textContent = r.pill.label;
+      pill.className   = 'report-status-pill ' + r.pill.cls;
+
+      document.getElementById('icDate').textContent   = r.date;
+      document.getElementById('icLoc').textContent    = r.location;
+      document.getElementById('icVol').textContent    = r.volunteers;
+      document.getElementById('icUpd').textContent    = r.updated;
+      document.getElementById('icStatus').textContent = r.statusText;
+
+      document.getElementById('logList').innerHTML = r.log.map(e => `
+        <div class="log-entry">
+          <div class="log-dot ${e.type}"></div>
+          <div class="log-time">${e.time}</div>
+          <div class="log-text">${e.text}</div>
+        </div>
+      `).join('');
+
+      foundEl.classList.add('visible');
+      notFound.classList.remove('visible');
+      resultsWrap.classList.add('visible');
+
+      setTimeout(() => animateTimeline(r.step, r.dates), 280);
+      stagger('.info-col',  600, 75);
+      stagger('.log-entry', 950, 85);
+      scrollTo();
+    }
+
+    function animateTimeline(activeStep, dates) {
+      /* Reset progress */
+      progressEl.style.transition = 'none';
+      progressEl.style.width = '0%';
+      void progressEl.offsetWidth;
+      progressEl.style.transition = 'width 1.3s cubic-bezier(0.4,0,0.2,1)';
+
+      /* Reset all nodes */
+      for (let i = 1; i <= 4; i++) {
+        const s = document.getElementById('tls' + i);
+        const n = document.getElementById('tln' + i);
+        const d = document.getElementById('tld' + i);
+        s.className = 'tl-step';
+        n.className = 'tl-node';
+        if (d) d.innerHTML = '';
+      }
+
+      /* Stagger each step in */
+      for (let i = 1; i <= 4; i++) {
+        (function(s) {
+          setTimeout(() => {
+            const step = document.getElementById('tls' + s);
+            const node = document.getElementById('tln' + s);
+            const date = document.getElementById('tld' + s);
+
+            node.classList.add('in');
+
+            if (s < activeStep) {
+              step.classList.add('done');
+              if (date && dates[s-1]) date.textContent = dates[s-1];
+            } else if (s === activeStep) {
+              step.classList.add('live');
+              if (date) {
+                if (dates[s-1]) {
+                  date.textContent = dates[s-1];
+                } else {
+                  const tag = document.createElement('span');
+                  tag.className = 'tl-live-tag';
+                  tag.textContent = 'الحالة الراهنة';
+                  date.appendChild(tag);
+                }
+              }
+            } else {
+              step.classList.add('future');
+            }
+          }, (i - 1) * 150);
+        })(i);
+      }
+
+      const pct = [0, 0, 33.3, 66.6, 100][activeStep];
+      setTimeout(() => { progressEl.style.width = pct + '%'; }, 100);
+    }
+
+    function stagger(sel, base, step) {
+      document.querySelectorAll(sel).forEach((el, i) => {
+        el.classList.remove('in');
+        void el.offsetWidth;
+        setTimeout(() => {
+          el.style.animationDelay = '0ms';
+          el.classList.add('in');
+        }, base + i * step);
+      });
+    }
+
+    function scrollTo() {
+      setTimeout(() => resultsWrap.scrollIntoView({ behavior: 'smooth', block: 'start' }), 110);
+    }
+
+  </script>
+
+</body>
+</html>
