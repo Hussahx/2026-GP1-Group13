@@ -1,404 +1,434 @@
-<!doctype html>
+```html
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>لوحة التحكم - طلبات التسجيل</title>
-<style>
-  :root{
-    /* Desert / Sand Brown theme */
-    --bg:#2b2118;           /* خلفية بني غامق */
-    --card:#3a2c21;         /* كروت */
-    --muted:#d6c2a8;        /* نص ثانوي رملي */
-    --text:#f4e7d6;         /* نص أساسي رملي فاتح */
-    --line:#5a4636;         /* حدود */
-    --ok:#c6a06a;           /* قبول (ذهبي رملي) */
-    --bad:#b36b4a;          /* حذف (بني محمر) */
-    --warn:#e0b26b;         /* تحذير */
-    --btn:#4a382a;          /* زر */
-    --btn2:#3f2f24;         /* زر hover */
-    --shadow: 0 10px 30px rgba(0,0,0,.45);
-    --radius: 16px;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Kufi Arabic", "Noto Sans Arabic", Arial, sans-serif;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F5EFE6" />
+  <title>راصد — لوحة التحكم (طلبات التسجيل)</title>
+  <link rel="icon" href="../assest/logo.PNG" type="image/png" />
 
-  body{
-    margin:0;
-    background:
-      radial-gradient(1200px 600px at 20% 0%, rgba(214,194,168,.18), transparent 60%),
-      radial-gradient(900px 500px at 90% 10%, rgba(198,160,106,.14), transparent 55%),
-      var(--bg);
-    color:var(--text);
-    min-height:100vh;
-  }
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="../CSS/Rasid.css" />
 
-  header{
-    position: sticky;
-    top:0;
-    z-index: 10;
-    backdrop-filter: blur(10px);
-    background: rgba(43,33,24,.75);
-    border-bottom: 1px solid rgba(90,70,54,.65);
-  }
+  <style>
+    .page-body{
+      width:100%;
+      max-width:1100px;
+      margin:0 auto;
+      padding:0 1rem 2.5rem;
+    }
 
-  .wrap{
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 18px 16px;
-  }
+    .admin-toolbar{
+      max-width: 860px;
+      margin: 0 auto 1.1rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.8rem;
+      flex-wrap:wrap;
+      animation: fadeUp .7s var(--ease-out) both;
+    }
 
-  .row{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-  }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:.45rem;
+      padding:.45rem .85rem;
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(231,221,207,.95);
+      box-shadow: 0 8px 18px rgba(42,36,28,.08);
+      color: var(--ink-mid);
+      font-size:.85rem;
+      font-weight:800;
+      white-space:nowrap;
+    }
 
-  h1{
-    font-size: 18px;
-    margin:0;
-    letter-spacing:.2px;
-  }
+    .admin-search{
+      flex:1;
+      min-width: 240px;
+      display:flex;
+      gap:.55rem;
+      align-items:center;
+    }
+    .admin-search .input{
+      direction: rtl;
+      text-align: right;
+      letter-spacing: .2px;
+    }
 
-  .pill{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    background: rgba(58,44,33,.92);
-    border:1px solid rgba(90,70,54,.9);
-    padding: 8px 12px;
-    border-radius: 999px;
-    color: var(--muted);
-    font-size: 13px;
-  }
-  .pill b{ color: var(--text); }
-  .spacer{ flex:1; }
+    .admin-grid{
+      max-width: 860px;
+      margin: 0 auto;
+      display:grid;
+      gap: .85rem;
+    }
 
-  .search{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background: rgba(58,44,33,.94);
-    border:1px solid rgba(90,70,54,.9);
-    border-radius: 999px;
-    padding: 10px 12px;
-    min-width: 260px;
-    box-shadow: var(--shadow);
-  }
-  .search input{
-    border:0;
-    outline:none;
-    background: transparent;
-    color: var(--text);
-    width: 100%;
-    font-size: 14px;
-  }
-  .search svg{ opacity:.9; }
+    .request-card{
+      width:100%;
+      max-width: unset;
+      padding: 1.1rem 1.1rem;
+      display:flex;
+      align-items:stretch;
+      gap: .9rem;
+    }
 
-  main .wrap{ padding-top: 14px; padding-bottom: 28px; }
+    .req-avatar{
+      width:46px;
+      height:46px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(166,124,82,0.22), rgba(122,154,106,0.12));
+      border: 1px solid rgba(166,124,82,0.22);
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      color: var(--ink);
+      flex: 0 0 auto;
+    }
 
-  .grid{
-    display:grid;
-    grid-template-columns: 1fr;
-    gap:12px;
-    margin-top: 14px;
-  }
+    .req-meta{
+      flex:1;
+      min-width: 220px;
+      display:flex;
+      flex-direction:column;
+      gap:.35rem;
+    }
 
-  .card{
-    background: rgba(58,44,33,.94);
-    border:1px solid rgba(90,70,54,.95);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 14px;
-    display:flex;
-    gap:12px;
-    align-items: stretch;
-  }
+    .req-title{
+      display:flex;
+      gap:.6rem;
+      align-items:center;
+      flex-wrap:wrap;
+      font-weight: 900;
+      color: var(--ink);
+      line-height: 1.4;
+    }
 
-  .avatar{
-    width:44px;height:44px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, rgba(198,160,106,.55), rgba(214,194,168,.25));
-    border:1px solid rgba(90,70,54,.9);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex:0 0 auto;
-    font-weight:700;
-    letter-spacing:.5px;
-    color: rgba(244,231,214,.98);
-  }
+    .req-sub{
+      display:flex;
+      gap:.75rem;
+      flex-wrap:wrap;
+      color: var(--ink-muted);
+      font-weight: 700;
+      font-size: .88rem;
+      line-height: 1.6;
+    }
 
-  .meta{ flex:1; min-width: 240px; }
-  .meta .name{
-    font-size: 15px;
-    margin:0 0 4px 0;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-  .meta .sub{
-    color: var(--muted);
-    font-size: 13px;
-    margin:0;
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-  }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:.35rem;
+      padding:.22rem .65rem;
+      border-radius: var(--radius-pill);
+      background: rgba(166,124,82,0.08);
+      border: 1px solid rgba(166,124,82,0.20);
+      color: var(--oak-500);
+      font-weight: 900;
+      font-size: .72rem;
+      white-space:nowrap;
+    }
 
-  .tag{
-    font-size: 12px;
-    color: var(--muted);
-    border:1px solid rgba(90,70,54,.9);
-    background: rgba(74,56,42,.55);
-    padding: 4px 10px;
-    border-radius: 999px;
-  }
+    .req-actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:.55rem;
+      flex-wrap:wrap;
+      flex: 0 0 auto;
+    }
 
-  .actions{
-    display:flex;
-    gap:10px;
-    flex:0 0 auto;
-    align-items:center;
-    justify-content:flex-end;
-    flex-wrap:wrap;
-  }
+    .btn.secondary{
+      background: rgba(245,239,230,0.9);
+      color: var(--ink);
+      border: 1.5px solid rgba(166,124,82,0.22);
+      box-shadow: 0 4px 14px rgba(62,47,28,0.06);
+    }
+    .btn.secondary:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(62,47,28,0.10);
+    }
 
-  button{
-    cursor:pointer;
-    border:1px solid rgba(90,70,54,.95);
-    background: rgba(74,56,42,.78);
-    color: var(--text);
-    padding: 10px 12px;
-    border-radius: 12px;
-    font-size: 13px;
-    transition: transform .08s ease, background .15s ease, border-color .15s ease;
-    display:inline-flex;
-    gap:8px;
-    align-items:center;
-    user-select:none;
-  }
-  button:hover{ background: rgba(63,47,36,.95); }
-  button:active{ transform: scale(.98); }
+    .btn.danger{
+      background: linear-gradient(135deg, #C23B2E, #9B3A3A);
+      box-shadow: 0 4px 18px rgba(194,59,46,0.22);
+    }
+    .btn.danger:hover{
+      box-shadow: 0 8px 28px rgba(194,59,46,0.30);
+    }
 
-  .btn-ok{
-    border-color: rgba(198,160,106,.55);
-    background: rgba(198,160,106,.18);
-  }
-  .btn-ok:hover{ background: rgba(198,160,106,.26); }
+    .empty-state{
+      max-width: 860px;
+      margin: 0 auto;
+      background: rgba(255,255,255,.70);
+      border: 1px dashed rgba(166,124,82,0.32);
+      border-radius: var(--radius-card);
+      padding: 1.2rem 1.25rem;
+      color: var(--ink-muted);
+      font-weight: 800;
+      text-align:center;
+      animation: fadeUp .7s var(--ease-out) both;
+    }
 
-  .btn-bad{
-    border-color: rgba(179,107,74,.55);
-    background: rgba(179,107,74,.18);
-  }
-  .btn-bad:hover{ background: rgba(179,107,74,.26); }
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 1000;
+    }
 
-  .btn-ghost{
-    background: rgba(74,56,42,.55);
-  }
-  .btn-ghost:hover{
-    background: rgba(63,47,36,.85);
-  }
+    .modal{
+      width: min(720px, 100%);
+      background: var(--glass);
+      border: 1px solid var(--glass-edge);
+      border-radius: var(--radius-card);
+      box-shadow: 0 22px 70px rgba(42,36,28,.18);
+      overflow:hidden;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      animation: fadeUp .25s var(--ease-out) both;
+    }
 
-  .empty{
-    margin-top: 20px;
-    padding: 18px;
-    border:1px dashed rgba(90,70,54,.9);
-    background: rgba(58,44,33,.55);
-    border-radius: var(--radius);
-    color: var(--muted);
-    text-align:center;
-  }
+    .modal-head{
+      padding: 1rem 1.1rem;
+      display:flex;
+      align-items:center;
+      gap:.75rem;
+      border-bottom: 1px solid rgba(231,221,207,.95);
+    }
 
-  /* Modal */
-  .modal-backdrop{
-    position:fixed;
-    inset:0;
-    background: rgba(0,0,0,.6);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding: 18px;
-    z-index: 100;
-  }
-  .modal{
-    width: min(680px, 100%);
-    background: rgba(58,44,33,.98);
-    border:1px solid rgba(90,70,54,.95);
-    border-radius: 18px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.55);
-    overflow:hidden;
-  }
-  .modal header{
-    position:unset;
-    background: transparent;
-    border-bottom: 1px solid rgba(90,70,54,.85);
-  }
-  .modal .content{
-    padding: 14px 16px 16px;
-    display:grid;
-    gap:10px;
-  }
-  .modal label{
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .modal textarea{
-    width:100%;
-    min-height: 110px;
-    resize: vertical;
-    border-radius: 14px;
-    padding: 12px 12px;
-    border:1px solid rgba(90,70,54,.95);
-    background: rgba(74,56,42,.55);
-    color: var(--text);
-    outline:none;
-    font-size: 14px;
-    line-height: 1.55;
-  }
-  .modal .footer{
-    padding: 12px 16px 16px;
-    display:flex;
-    gap:10px;
-    justify-content:flex-end;
-    border-top: 1px solid rgba(90,70,54,.85);
-    flex-wrap:wrap;
-  }
-  .hint{
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.55;
-  }
+    .modal-head h3{
+      margin:0;
+      font-size:1.05rem;
+      font-weight: 900;
+      color: var(--ink);
+    }
 
-  /* Toast */
-  .toast{
-    position: fixed;
-    bottom: 16px;
-    inset-inline: 16px;
-    display:flex;
-    justify-content:center;
-    pointer-events:none;
-    z-index: 120;
-  }
-  .toast .box{
-    pointer-events:auto;
-    background: rgba(58,44,33,.96);
-    border:1px solid rgba(90,70,54,.95);
-    border-radius: 999px;
-    box-shadow: var(--shadow);
-    padding: 10px 14px;
-    color: var(--text);
-    font-size: 13px;
-    display:none;
-    gap:10px;
-    align-items:center;
-  }
-  .dot{
-    width:10px;height:10px;border-radius:50%;
-    background: var(--warn);
-    box-shadow: 0 0 0 4px rgba(224,178,107,.18);
-    flex: 0 0 auto;
-  }
+    .modal-sub{
+      padding: 0 1.1rem .85rem;
+      color: var(--ink-muted);
+      font-weight: 700;
+      font-size: .9rem;
+      line-height: 1.7;
+    }
 
-  @media (min-width: 860px){
-    .grid{ grid-template-columns: 1fr; }
-  }
-</style>
+    .modal-content{
+      padding: 0 1.1rem 1.1rem;
+      display:grid;
+      gap:.55rem;
+    }
+
+    .modal-content label{
+      font-size:.78rem;
+      font-weight:900;
+      letter-spacing:1.2px;
+      text-transform:uppercase;
+      color: var(--ink-muted);
+    }
+
+    .modal-content textarea{
+      width:100%;
+      min-height: 120px;
+      border-radius: 22px;
+      padding: .95rem 1rem;
+      border: 1.5px solid rgba(166,124,82,0.22);
+      background: rgba(245,239,230,0.75);
+      color: var(--ink);
+      outline:none;
+      font-size: .95rem;
+      font-weight: 700;
+      line-height: 1.75;
+      resize: vertical;
+    }
+
+    .modal-footer{
+      padding: 1rem 1.1rem 1.1rem;
+      display:flex;
+      gap:.55rem;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      border-top: 1px solid rgba(231,221,207,.95);
+    }
+
+    .toast{
+      position: fixed;
+      bottom: 16px;
+      inset-inline: 16px;
+      display:flex;
+      justify-content:center;
+      pointer-events:none;
+      z-index: 1200;
+    }
+
+    .toast-box{
+      pointer-events:auto;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(231,221,207,.95);
+      border-radius: var(--radius-pill);
+      box-shadow: 0 14px 36px rgba(42,36,28,.16);
+      padding: .65rem .9rem;
+      color: var(--ink);
+      font-size: .9rem;
+      font-weight: 900;
+      display:none;
+      gap:.55rem;
+      align-items:center;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .toast-dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background: var(--olive-500);
+      box-shadow: 0 0 0 4px rgba(122,154,106,0.14);
+      flex: 0 0 auto;
+    }
+
+    @media (max-width:680px){
+      .request-card{ flex-direction:column; }
+      .req-actions{ justify-content:stretch; }
+      .req-actions .btn{ width:100%; justify-content:center; }
+    }
+  </style>
 </head>
 
 <body>
-  <header>
-    <div class="wrap">
-      <div class="row">
-        <h1>⭐ لوحة التحكم — طلبات التسجيل</h1>
-        <span class="pill">طلبات معلّقة: <b id="pendingCount">0</b></span>
-        <span class="pill">آخر تحديث: <b id="lastUpdated">—</b></span>
-        <div class="spacer"></div>
 
-        <div class="search" title="بحث بالاسم أو الإيميل أو الهاتف">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M21 21l-4.3-4.3m1.8-5.1a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <input id="searchInput" type="search" placeholder="ابحث هنا..." autocomplete="off" />
-        </div>
-
-        <button id="refreshBtn" class="btn-ghost" type="button" title="تحديث القائمة">
-          <span>تحديث</span>
-          <span aria-hidden="true">↻</span>
-        </button>
-      </div>
+  <header class="page-header">
+    <div class="header-logo-mark" aria-hidden="true">
+      <img src="../assest/New-logo.JPG.jpeg" alt="شعار راصد" />
     </div>
+    <div class="header-brand">
+      <h1>راصد</h1>
+      <p>عين الصحراء - لوحة التحكم</p>
+    </div>
+    <nav class="header-nav" aria-label="تنقل سريع">
+      <div class="user-chip" title="حسابي">
+        <span class="avatar" id="userInitial">ي</span>
+        <span class="name" id="userName">يوسف</span>
+      </div>
+    </nav>
   </header>
 
-  <main>
-    <div class="wrap">
-      <div id="list" class="grid"></div>
-      <div id="empty" class="empty" style="display:none;">لايوجد طلبات معلّقة حاليًا.</div>
+  <main class="page-body">
+
+    <div class="page-heading">
+      <div class="page-heading-eyebrow" aria-hidden="true">
+        <span></span>
+        الإدارة
+        <span></span>
+      </div>
+      <h2>طلبات التسجيل</h2>
     </div>
-  </main>
 
-  <!-- Reject Modal -->
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal">
-      <header>
-        <div class="wrap" style="padding:14px 16px;">
-          <div class="row">
-            <h1 id="modalTitle" style="font-size:16px;margin:0;">رفض/حذف الطلب</h1>
-            <div class="spacer"></div>
-            <button id="closeModalBtn" class="btn-ghost" type="button" title="إغلاق">✕</button>
-          </div>
-          <div class="hint" id="modalSubtitle" style="margin-top:8px;"></div>
-        </div>
-      </header>
-
-      <div class="content">
-        <label for="rejectReason">سبب الرفض (اختياري / أو اكتب السبب الذي تريده)</label>
-        <textarea id="rejectReason" placeholder="مثال: بيانات غير مكتملة / رقم غير صحيح / حساب مكرر..."></textarea>
-        <div class="hint">ملاحظة: سيتم حفظ السبب مع عملية الحذف (حسب API الذي ستربطه).</div>
+    <section class="admin-toolbar" aria-label="شريط الأدوات">
+      <div style="display:flex; gap:.55rem; align-items:center; flex-wrap:wrap;">
+        <span class="pill">طلبات معلّقة: <span id="pendingCount">0</span></span>
+        <span class="pill">آخر تحديث: <span id="lastUpdated">—</span></span>
       </div>
 
-      <div class="footer">
-        <button id="confirmRejectBtn" class="btn-bad" type="button">تأكيد الحذف</button>
-        <button id="cancelRejectBtn" class="btn-ghost" type="button">إلغاء</button>
+      <div class="admin-search" title="بحث بالاسم أو الإيميل أو الهاتف">
+        <input id="searchInput" class="input" type="search" placeholder="ابحث هنا..." autocomplete="off" />
+        <button id="refreshBtn" class="btn secondary" type="button">
+          <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+          <span class="btn-label">تحديث</span>
+        </button>
+      </div>
+    </section>
+
+    <section>
+      <div id="list" class="admin-grid" aria-live="polite"></div>
+      <div id="empty" class="empty-state" style="display:none;">لا يوجد طلبات معلّقة حاليًا.</div>
+    </section>
+
+  </main>
+
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="modalTitle">رفض/حذف الطلب</h3>
+        <div style="margin-right:auto;"></div>
+        <button id="closeModalBtn" class="btn secondary" type="button" style="height:44px;padding:0 1rem;">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          <span class="btn-label">إغلاق</span>
+        </button>
+      </div>
+
+      <div class="modal-sub" id="modalSubtitle"></div>
+
+      <div class="modal-content">
+        <label for="rejectReason">سبب الرفض</label>
+        <textarea id="rejectReason" placeholder="مثال: بيانات غير مكتملة / رقم غير صحيح / حساب مكرر..."></textarea>
+        <div style="color:var(--ink-muted); font-weight:700; font-size:.86rem; line-height:1.7;">
+          سيتم حفظ السبب مع عملية الحذف حسب الـ API الذي ستربطه.
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="confirmRejectBtn" class="btn danger" type="button">
+          <span class="btn-spinner" aria-hidden="true"></span>
+          <span class="btn-label">تأكيد الحذف</span>
+        </button>
+        <button id="cancelRejectBtn" class="btn secondary" type="button">
+          <span class="btn-label">إلغاء</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" aria-live="polite" aria-atomic="true">
-    <div id="toastBox" class="box">
-      <span class="dot" aria-hidden="true"></span>
+    <div id="toastBox" class="toast-box">
+      <span class="toast-dot" aria-hidden="true"></span>
       <span id="toastText"></span>
     </div>
   </div>
 
-  <script>
-    /***********************
-     * CONFIG (اربط API هنا)
-     ***********************/
-    const API = {
-      // GET pending requests
-      // getPending: "/api/admin/registrations/pending",
-      // POST accept
-      // accept: (id) => `/api/admin/registrations/${id}/accept`,
-      // POST reject with reason
-      // reject: (id) => `/api/admin/registrations/${id}/reject`,
-      //
-      // لو ما عندك API الآن، الصفحة تشتغل ببيانات تجريبية + localStorage
-    };
+  <footer>
+    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"></path>
+      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"></path>
+    </svg>
+    <div class="footer-inner">
+      <div class="f-brand">
+        <div class="f-logo">راصد<span>RASID</span></div>
+        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
+      </div>
 
-    /***********************
-     * STATE
-     ***********************/
+      <div class="f-col">
+        <h4>روابط سريعة</h4>
+        <ul>
+          <li><a href="index.html">الصفحة الرئيسية</a></li>
+          <li><a href="login.html">تسجيل الدخول</a></li>
+          <li><a href="Regester.html">انضم كمتطوع</a></li>
+          <li><a href="track-report.html">تتبع البلاغ</a></li>
+        </ul>
+      </div>
+
+      <div class="f-col">
+        <h4>أرقام الطوارئ</h4>
+        <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+        <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+      </div>
+    </div>
+    <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+    <div class="footer-dune"></div>
+  </footer>
+
+  <script>
+    const API = {};
+
     const STORAGE_KEY = "admin_pending_requests_v1";
     let requests = [];
     let filtered = [];
     let pendingRejectId = null;
 
-    /***********************
-     * HELPERS
-     ***********************/
     const $ = (sel) => document.querySelector(sel);
 
     function formatDateTime(dt = new Date()){
@@ -460,41 +490,16 @@
       return demo;
     }
 
-    /***********************
-     * API (اختياري)
-     * إذا تبغى تربطها فعليًا:
-     * - فعل دوال fetch... بدل المحلي
-     ***********************/
     async function fetchPendingRequests(){
-      // إذا عندك API فعلي:
-      // const res = await fetch(API.getPending, { headers: { "Accept":"application/json" }});
-      // if(!res.ok) throw new Error("Failed to load");
-      // return await res.json();
-
-      // محلي:
       return seedIfEmpty();
     }
 
     async function acceptRequest(id){
-      // إذا عندك API فعلي:
-      // const res = await fetch(API.accept(id), { method:"POST", headers:{ "Accept":"application/json" }});
-      // if(!res.ok) throw new Error("Accept failed");
-
-      // محلي:
       requests = requests.filter(r => r.id !== id);
       saveLocal();
     }
 
     async function rejectRequest(id, reason){
-      // إذا عندك API فعلي:
-      // const res = await fetch(API.reject(id), {
-      //   method:"POST",
-      //   headers:{ "Content-Type":"application/json", "Accept":"application/json" },
-      //   body: JSON.stringify({ reason })
-      // });
-      // if(!res.ok) throw new Error("Reject failed");
-
-      // محلي: احذف الطلب + خزّن سجل الرفض (اختياري)
       requests = requests.filter(r => r.id !== id);
       saveLocal();
 
@@ -504,9 +509,6 @@
       localStorage.setItem(logKey, JSON.stringify(log.slice(0,200)));
     }
 
-    /***********************
-     * RENDER
-     ***********************/
     function render(){
       const list = $("#list");
       list.innerHTML = "";
@@ -520,30 +522,33 @@
       for(const r of filtered){
         const created = new Date(r.createdAt || Date.now());
         const html = `
-          <div class="card" data-id="${escapeHtml(r.id)}">
-            <div class="avatar" aria-hidden="true">${escapeHtml(initials(r.name))}</div>
+          <article class="card request-card" data-id="${escapeHtml(r.id)}">
+            <div class="req-avatar" aria-hidden="true">${escapeHtml(initials(r.name))}</div>
 
-            <div class="meta">
-              <p class="name">
+            <div class="req-meta">
+              <div class="req-title">
                 <span>${escapeHtml(r.name || "بدون اسم")}</span>
-                <span class="tag">معلّق</span>
-                <span class="tag">تاريخ: ${escapeHtml(formatDateTime(created))}</span>
-              </p>
-              <p class="sub">
-                <span>📧 ${escapeHtml(r.email || "—")}</span>
-                <span>📞 ${escapeHtml(r.phone || "—")}</span>
-              </p>
+                <span class="tag"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>معلّق</span>
+                <span class="tag"><i class="fa-regular fa-calendar" aria-hidden="true"></i>${escapeHtml(formatDateTime(created))}</span>
+              </div>
+
+              <div class="req-sub">
+                <span><i class="fa-regular fa-envelope" aria-hidden="true"></i> ${escapeHtml(r.email || "—")}</span>
+                <span><i class="fa-solid fa-phone" aria-hidden="true"></i> ${escapeHtml(r.phone || "—")}</span>
+              </div>
             </div>
 
-            <div class="actions">
-              <button class="btn-ok" type="button" data-action="accept" title="قبول الطلب">
-                <span aria-hidden="true">✔</span><span>Accept</span>
+            <div class="req-actions">
+              <button class="btn" type="button" data-action="accept" title="قبول الطلب" style="height:44px;">
+                <i class="fa-solid fa-check" aria-hidden="true"></i>
+                <span class="btn-label">قبول</span>
               </button>
-              <button class="btn-bad" type="button" data-action="reject" title="حذف/رفض الطلب مع سبب">
-                <span aria-hidden="true">✖</span><span>Delete</span>
+              <button class="btn danger" type="button" data-action="reject" title="حذف/رفض الطلب مع سبب" style="height:44px;">
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                <span class="btn-label">حذف</span>
               </button>
             </div>
-          </div>
+          </article>
         `;
         list.insertAdjacentHTML("beforeend", html);
       }
@@ -564,9 +569,6 @@
       render();
     }
 
-    /***********************
-     * MODAL
-     ***********************/
     function openRejectModal(id){
       pendingRejectId = id;
       const r = requests.find(x => x.id === id);
@@ -581,9 +583,6 @@
       $("#modalBackdrop").style.display = "none";
     }
 
-    /***********************
-     * EVENTS
-     ***********************/
     $("#searchInput").addEventListener("input", applyFilter);
 
     $("#refreshBtn").addEventListener("click", async ()=>{
@@ -594,13 +593,14 @@
     $("#list").addEventListener("click", async (e)=>{
       const btn = e.target.closest("button[data-action]");
       if(!btn) return;
-      const card = e.target.closest(".card");
+      const card = e.target.closest("[data-id]");
       const id = card?.getAttribute("data-id");
       if(!id) return;
 
       const action = btn.getAttribute("data-action");
       if(action === "accept"){
         btn.disabled = true;
+        btn.classList.add("loading");
         try{
           await acceptRequest(id);
           showToast("تم قبول الطلب");
@@ -609,6 +609,8 @@
           console.error(err);
           showToast("حدث خطأ أثناء القبول");
           btn.disabled = false;
+        }finally{
+          btn.classList.remove("loading");
         }
       } else if(action === "reject"){
         openRejectModal(id);
@@ -626,7 +628,9 @@
       if(!id) return;
 
       const reason = $("#rejectReason").value.trim();
-      $("#confirmRejectBtn").disabled = true;
+      const confirmBtn = $("#confirmRejectBtn");
+      confirmBtn.disabled = true;
+      confirmBtn.classList.add("loading");
 
       try{
         await rejectRequest(id, reason);
@@ -637,7 +641,8 @@
         console.error(err);
         showToast("حدث خطأ أثناء الحذف");
       }finally{
-        $("#confirmRejectBtn").disabled = false;
+        confirmBtn.disabled = false;
+        confirmBtn.classList.remove("loading");
       }
     });
 
@@ -647,14 +652,10 @@
       }
     });
 
-    /***********************
-     * INIT
-     ***********************/
     async function reload(showLoadingToast = false){
       try{
         if(showLoadingToast) showToast("جاري التحميل...");
         requests = await fetchPendingRequests();
-        // لو API يرجّع صيغة مختلفة، عدّل mapping هنا
         applyFilter();
       }catch(err){
         console.error(err);
@@ -669,3 +670,4 @@
   </script>
 </body>
 </html>
+```
