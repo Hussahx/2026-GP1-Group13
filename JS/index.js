@@ -400,23 +400,125 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ============================================================
-     11. Contact Form – Simple Feedback
+     11. Contact Form – Full Validation
      ============================================================ */
   const contactForm = document.querySelector('.contact-form');
+
   if (contactForm) {
-    contactForm.addEventListener('submit', e => {
+
+    // ── Helpers scoped to contact form ────────────────────────
+    const cSetError = (field, msg) => {
+      if (!field) return;
+      let errEl = field.parentElement.querySelector('.c-field-error');
+      if (!errEl) {
+        errEl = document.createElement('small');
+        errEl.className = 'c-field-error field-error';
+        errEl.setAttribute('aria-live', 'polite');
+        field.after(errEl);
+      }
+      if (msg) {
+        field.classList.add('is-invalid');
+        field.setAttribute('aria-invalid', 'true');
+        errEl.textContent = msg;
+      } else {
+        field.classList.remove('is-invalid');
+        field.setAttribute('aria-invalid', 'false');
+        errEl.textContent = '';
+      }
+    };
+
+    const cValidate = () => {
+      let ok = true;
+
+      const nameField  = contactForm.querySelector('#name');
+      const emailField = contactForm.querySelector('#email');
+      const msgField   = contactForm.querySelector('#message');
+
+      const nameVal  = String(nameField?.value  || '').trim();
+      const emailVal = String(emailField?.value || '').trim();
+      const msgVal   = String(msgField?.value   || '').trim();
+
+      if (!nameVal || nameVal.length < 2) {
+        cSetError(nameField, 'الرجاء إدخال اسمك الكامل (حرفين على الأقل).');
+        ok = false;
+      } else {
+        cSetError(nameField, '');
+      }
+
+      if (!emailVal) {
+        cSetError(emailField, 'الرجاء إدخال بريدك الإلكتروني.');
+        ok = false;
+      } else if (!isValidEmail(emailVal)) {
+        cSetError(emailField, 'الرجاء إدخال بريد إلكتروني صحيح.');
+        ok = false;
+      } else {
+        cSetError(emailField, '');
+      }
+
+      if (!msgVal || msgVal.length < 10) {
+        cSetError(msgField, 'الرجاء كتابة رسالتك (10 أحرف على الأقل).');
+        ok = false;
+      } else {
+        cSetError(msgField, '');
+      }
+
+      if (!ok) {
+        const firstInvalid = contactForm.querySelector('.is-invalid');
+        if (firstInvalid) firstInvalid.focus();
+      }
+
+      return ok;
+    };
+
+    // ── Inline validation on blur ─────────────────────────────
+    contactForm.addEventListener('blur', (e) => {
+      const t = e.target;
+      if (!['name', 'email', 'message'].includes(t.id)) return;
+      cValidate();
+    }, true);
+
+    // ── Submit ────────────────────────────────────────────────
+    contactForm.addEventListener('submit', (e) => {
       e.preventDefault();
+
+      if (!cValidate()) return;
+
       const btn = contactForm.querySelector('button[type="submit"]');
       if (!btn) return;
+
+      // Show success state
       const original = btn.innerHTML;
-      btn.innerHTML = '<i class="fas fa-check-circle"></i> تم الإرسال بنجاح!';
+      btn.innerHTML  = '<i class="fas fa-check-circle"></i> تم الإرسال بنجاح!';
       btn.style.background = 'linear-gradient(135deg, #7A9A7A, #4A7A56)';
       btn.disabled = true;
+
+      // Show success message if element exists
+      let successEl = contactForm.querySelector('.contact-success');
+      if (!successEl) {
+        successEl = document.createElement('div');
+        successEl.className = 'contact-success form-success';
+        successEl.innerHTML = `
+          <div class="success-icon"><i class="fas fa-circle-check"></i></div>
+          <div class="success-text">
+            <strong>تم إرسال رسالتك بنجاح</strong>
+            <span>شكرًا لتواصلك — سنرد عليك في أقرب وقت.</span>
+          </div>`;
+        contactForm.appendChild(successEl);
+      }
+      successEl.hidden = false;
+
       setTimeout(() => {
-        btn.innerHTML = original;
+        contactForm.reset();
+        // Clear all inline errors after reset
+        contactForm.querySelectorAll('.c-field-error').forEach(el => { el.textContent = ''; });
+        contactForm.querySelectorAll('.is-invalid').forEach(el => {
+          el.classList.remove('is-invalid');
+          el.setAttribute('aria-invalid', 'false');
+        });
+        successEl.hidden = true;
+        btn.innerHTML  = original;
         btn.style.background = '';
         btn.disabled = false;
-        contactForm.reset();
       }, 3000);
     });
   }
@@ -758,9 +860,7 @@ setTimeout(() => {
   const lEmail = document.getElementById('lEmail');
   const lPass  = document.getElementById('lPass');
 
-  // NEW: Forgot link + inline message
   const forgotLink = document.getElementById('forgotLink');
-  const forgotInlineMsg = document.getElementById('forgotInlineMsg');
 
   // NEW: eye toggle inside password input group
   const toggleLoginPassword = document.getElementById('toggleLoginPassword');
@@ -782,13 +882,7 @@ setTimeout(() => {
     set(lEmail, 'lEmailErr', '');
     set(lPass,  'lPassErr', '');
 
-    // Hide forgot message
-    if (forgotInlineMsg) {
-      forgotInlineMsg.hidden = true;
-      forgotInlineMsg.classList.remove('is-visible');
-    }
-
-    // Default icon: fa-eye-slash (password is hidden → show slash)
+    // Default icon: fa-eye (password is hidden → show eye icon)
     if (toggleLoginPassword) {
       const icon = toggleLoginPassword.querySelector('i');
       if (icon) {
@@ -845,17 +939,20 @@ setTimeout(() => {
   // Track whether the user has attempted to submit the login form
   let loginAttempted = false;
 
-  // Forgot password link: only show inline message if login was attempted
-  if (forgotLink && forgotInlineMsg) {
+  // Forgot password link — completely independent from login form/validation
+  if (forgotLink) {
     forgotLink.addEventListener('click', (e) => {
       e.preventDefault();
-      if (loginAttempted) {
-        forgotInlineMsg.hidden = false;
-        forgotInlineMsg.classList.add('is-visible');
-        // Scroll link into view smoothly
-        forgotLink.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      e.stopPropagation();
+
+      closeModal(loginModal);
+
+      const forgotModal = document.getElementById('forgotModal');
+      if (forgotModal) {
+        // Dispatch custom event so forgot-flow engine resets state
+        forgotModal.dispatchEvent(new CustomEvent('fg:open'));
+        openModal(forgotModal, forgotLink, '#fgEmail');
       }
-      // If not attempted yet: do nothing (link is inert)
     });
   }
 
@@ -915,8 +1012,501 @@ setTimeout(() => {
   }
 
   /* ============================================================
-     15. Dev overflow guard
+     15. Forgot Password Modal – 3-Step Reset Flow
+     ─────────────────────────────────────────────
+     Step 1 → Email verification
+     Step 2 → OTP (6-digit, 2-min expiry, 5-attempt lock)
+     Step 3 → New password (strength + rules)
      ============================================================ */
+
+  const forgotModal = document.getElementById('forgotModal');
+  if (forgotModal) wireModalClose(forgotModal);
+
+  /* ── DOM refs ──────────────────────────────────────────── */
+  // Steps
+  const fgDots  = [1, 2, 3].map(n => document.getElementById(`fgDot${n}`));
+  const fgLines = forgotModal?.querySelectorAll('.fg-step-line');
+  const fgPanels = {
+    1:       document.getElementById('fgPanel1'),
+    2:       document.getElementById('fgPanel2'),
+    3:       document.getElementById('fgPanel3'),
+    success: document.getElementById('fgPanelSuccess'),
+  };
+
+  // Step 1
+  const fgFormEmail  = document.getElementById('fgFormEmail');
+  const fgEmail      = document.getElementById('fgEmail');
+  const fgEmailErr   = document.getElementById('fgEmailErr');
+  const fgSendBtn    = document.getElementById('fgSendBtn');
+
+  // Step 2
+  const fgFormOtp      = document.getElementById('fgFormOtp');
+  const fgOtp          = document.getElementById('fgOtp');
+  const fgOtpErr       = document.getElementById('fgOtpErr');
+  const fgEmailDisplay = document.getElementById('fgEmailDisplay');
+  const fgTimerEl      = document.getElementById('fgTimer');
+  const fgCountdownEl  = document.getElementById('fgCountdown');
+  const fgResendBtn    = document.getElementById('fgResendBtn');
+  const fgLockWarn     = document.getElementById('fgLockWarn');
+  const fgAttemptsLeft = document.getElementById('fgAttemptsLeft');
+  const fgVerifyBtn    = document.getElementById('fgVerifyBtn');
+  const fgBackToEmail  = document.getElementById('fgBackToEmail');
+
+  // Step 3
+  const fgFormPassword = document.getElementById('fgFormPassword');
+  const fgNewPass      = document.getElementById('fgNewPass');
+  const fgNewPassErr   = document.getElementById('fgNewPassErr');
+  const fgConfPass     = document.getElementById('fgConfPass');
+  const fgConfPassErr  = document.getElementById('fgConfPassErr');
+  const fgToggleNew    = document.getElementById('fgToggleNew');
+  const fgToggleConf   = document.getElementById('fgToggleConf');
+  const fgStrengthEl   = document.getElementById('fgStrength');
+  const fgStrengthFill = document.getElementById('fgStrengthFill');
+  const fgStrengthLbl  = document.getElementById('fgStrengthLabel');
+  const fgSaveBtn      = document.getElementById('fgSaveBtn');
+
+  /* ── State ─────────────────────────────────────────────── */
+  const FG = {
+    currentStep:   1,
+    otp:           null,   // generated code (string)
+    otpExpiry:     null,   // Date timestamp
+    otpFailures:   0,
+    otpLocked:     false,
+    countdownId:   null,
+    OTP_TTL_MS:    2 * 60 * 1000,   // 2 minutes
+    MAX_ATTEMPTS:  5,
+  };
+
+  /* ── Helpers ───────────────────────────────────────────── */
+
+  /** Set or clear an inline field error */
+  const fgSetErr = (field, errEl, msg) => {
+    if (!field || !errEl) return;
+    if (msg) {
+      field.classList.add('is-invalid');
+      field.setAttribute('aria-invalid', 'true');
+      errEl.textContent = msg;
+    } else {
+      field.classList.remove('is-invalid');
+      field.setAttribute('aria-invalid', 'false');
+      errEl.textContent = '';
+    }
+  };
+
+  /** Generate a cryptographically random 6-digit OTP */
+  const fgGenerateOtp = () => {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return String(arr[0] % 900000 + 100000); // always 6 digits
+  };
+
+  /** Store a new OTP and reset expiry */
+  const fgIssueOtp = () => {
+    FG.otp       = fgGenerateOtp();
+    FG.otpExpiry = Date.now() + FG.OTP_TTL_MS;
+    // ── DEV hint (remove in production) ────────────────────
+    const hint = document.getElementById('fgDevHint');
+    if (hint) hint.querySelector('strong').textContent = FG.otp;
+    // ───────────────────────────────────────────────────────
+    console.info('[DEV] OTP issued:', FG.otp); // remove in production
+  };
+
+  /** Toggle password-type input visibility */
+  const fgToggleEye = (inputEl, btnEl) => {
+    if (!inputEl || !btnEl) return;
+    const hidden = inputEl.type === 'password';
+    inputEl.type = hidden ? 'text' : 'password';
+    const icon = btnEl.querySelector('i');
+    if (icon) {
+      icon.classList.toggle('fa-eye',      hidden);
+      icon.classList.toggle('fa-eye-slash', !hidden);
+    }
+    btnEl.setAttribute('aria-label', hidden ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');
+  };
+
+  /* ── Step navigation ───────────────────────────────────── */
+
+  const fgShowPanel = (step) => {
+    // Hide all panels
+    Object.values(fgPanels).forEach(p => {
+      if (p) p.classList.add('fg-panel--hidden');
+    });
+
+    // Show target panel
+    const target = fgPanels[step] || fgPanels.success;
+    if (target) {
+      target.classList.remove('fg-panel--hidden');
+    }
+
+    // Update step dots
+    fgDots.forEach((dot, i) => {
+      if (!dot) return;
+      const n = i + 1;
+      dot.classList.remove('fg-step--active', 'fg-step--done');
+      if (typeof step === 'number') {
+        if (n < step)  dot.classList.add('fg-step--done');
+        if (n === step) dot.classList.add('fg-step--active');
+      }
+    });
+
+    // Update connector lines
+    if (fgLines) {
+      fgLines.forEach((line, i) => {
+        if (typeof step === 'number') {
+          line.classList.toggle('fg-step-line--done', i + 2 <= step);
+        }
+      });
+    }
+
+    FG.currentStep = step;
+
+    // Focus first focusable element in new panel
+    const focusable = target?.querySelector(
+      'input:not([disabled]), button:not([disabled])'
+    );
+    if (focusable) setTimeout(() => focusable.focus(), 50);
+  };
+
+  /* ── Countdown timer ───────────────────────────────────── */
+
+  const fgStopCountdown = () => {
+    clearInterval(FG.countdownId);
+    FG.countdownId = null;
+  };
+
+  const fgStartCountdown = (seconds = 60) => {
+    fgStopCountdown();
+    let remaining = seconds;
+
+    const updateUI = () => {
+      if (fgTimerEl)  fgTimerEl.textContent = remaining;
+      if (fgResendBtn) fgResendBtn.disabled = remaining > 0;
+      if (fgCountdownEl) fgCountdownEl.hidden = remaining <= 0;
+    };
+
+    updateUI();
+
+    FG.countdownId = setInterval(() => {
+      remaining -= 1;
+      updateUI();
+      if (remaining <= 0) fgStopCountdown();
+    }, 1000);
+  };
+
+  /* ── Password strength checker ─────────────────────────── */
+
+  const PASS_RULES = [
+    { id: 'fgR8',   test: v => v.length >= 8 },
+    { id: 'fgRUp',  test: v => /[A-Z]/.test(v) },
+    { id: 'fgRLow', test: v => /[a-z]/.test(v) },
+    { id: 'fgRNum', test: v => /\d/.test(v) },
+    { id: 'fgRSpc', test: v => /[!@#$%^&*]/.test(v) },
+  ];
+
+  const STRENGTH_LEVELS = [
+    { cls: '',               label: '' },
+    { cls: 'fg-strength--weak',   label: 'ضعيفة' },
+    { cls: 'fg-strength--fair',   label: 'مقبولة' },
+    { cls: 'fg-strength--good',   label: 'جيدة' },
+    { cls: 'fg-strength--strong', label: 'قوية' },
+  ];
+
+  const fgCheckStrength = (val) => {
+    const passed = PASS_RULES.filter(r => r.test(val)).length;
+
+    // Update rule checklist
+    PASS_RULES.forEach(r => {
+      const el = document.getElementById(r.id);
+      if (!el) return;
+      el.classList.toggle('fg-rule--ok', r.test(val));
+    });
+
+    // Update strength bar
+    if (fgStrengthEl) {
+      STRENGTH_LEVELS.forEach(l => fgStrengthEl.classList.remove(l.cls));
+      const level = STRENGTH_LEVELS[passed <= 4 ? passed : 4];
+      if (level.cls) fgStrengthEl.classList.add(level.cls);
+      if (fgStrengthLbl) fgStrengthLbl.textContent = level.label;
+    }
+
+    return passed;
+  };
+
+  const isPasswordStrong = val => PASS_RULES.every(r => r.test(val));
+
+  /* ── Full reset (called when modal closes) ─────────────── */
+
+  const fgReset = () => {
+    fgStopCountdown();
+    FG.otp         = null;
+    FG.otpExpiry   = null;
+    FG.otpFailures = 0;
+    FG.otpLocked   = false;
+
+    // Reset all forms
+    [fgFormEmail, fgFormOtp, fgFormPassword].forEach(f => f?.reset());
+
+    // Clear errors
+    [
+      [fgEmail,   fgEmailErr],
+      [fgOtp,     fgOtpErr],
+      [fgNewPass, fgNewPassErr],
+      [fgConfPass,fgConfPassErr],
+    ].forEach(([f, e]) => fgSetErr(f, e, ''));
+
+    // Reset OTP lock UI
+    if (fgOtp) fgOtp.classList.remove('is-locked');
+    if (fgLockWarn) fgLockWarn.hidden = true;
+
+    // Reset strength meter + rules
+    if (fgStrengthEl) {
+      STRENGTH_LEVELS.forEach(l => fgStrengthEl.classList.remove(l.cls));
+      if (fgStrengthLbl) fgStrengthLbl.textContent = '';
+    }
+    PASS_RULES.forEach(r => {
+      const el = document.getElementById(r.id);
+      if (el) el.classList.remove('fg-rule--ok');
+    });
+
+    // Reset password eye buttons
+    [
+      [fgNewPass, fgToggleNew],
+      [fgConfPass, fgToggleConf],
+    ].forEach(([inp, btn]) => {
+      if (!inp || !btn) return;
+      inp.type = 'password';
+      const icon = btn.querySelector('i');
+      if (icon) {
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+      btn.setAttribute('aria-label', 'إظهار كلمة المرور');
+    });
+
+    // Back to step 1
+    fgShowPanel(1);
+  };
+
+  /* ── Wire modal open/close ─────────────────────────────── */
+
+  // Called from the forgotLink click handler (section 14)
+  // We expose fgReset on the modal element for external callers
+  if (forgotModal) {
+    forgotModal.addEventListener('fg:open', () => fgReset());
+  }
+
+  /* ── Step 1: Email ─────────────────────────────────────── */
+
+  if (fgFormEmail) {
+    fgFormEmail.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const val = String(fgEmail?.value || '').trim();
+
+      if (!val) {
+        fgSetErr(fgEmail, fgEmailErr, 'الرجاء إدخال بريدك الإلكتروني.');
+        return;
+      }
+      if (!isValidEmail(val)) {
+        fgSetErr(fgEmail, fgEmailErr, 'الرجاء إدخال بريد إلكتروني صحيح.');
+        return;
+      }
+      fgSetErr(fgEmail, fgEmailErr, '');
+
+      // Simulate sending OTP
+      if (fgSendBtn) {
+        fgSendBtn.disabled = true;
+        fgSendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ الإرسال…';
+      }
+
+      setTimeout(() => {
+        fgIssueOtp();
+        FG.otpFailures = 0;
+        FG.otpLocked   = false;
+
+        if (fgEmailDisplay) fgEmailDisplay.textContent = val;
+        if (fgSendBtn) {
+          fgSendBtn.disabled = false;
+          fgSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الرمز';
+        }
+
+        fgShowPanel(2);
+        fgStartCountdown(60);
+      }, 900); // simulated network delay
+    });
+
+    // Live validation on blur
+    fgEmail?.addEventListener('blur', () => {
+      const val = String(fgEmail.value || '').trim();
+      if (!val) return; // don't nag on empty blur
+      if (!isValidEmail(val)) {
+        fgSetErr(fgEmail, fgEmailErr, 'الرجاء إدخال بريد إلكتروني صحيح.');
+      } else {
+        fgSetErr(fgEmail, fgEmailErr, '');
+      }
+    });
+  }
+
+  /* ── Step 2: OTP ───────────────────────────────────────── */
+
+  // Only allow digits in OTP input
+  fgOtp?.addEventListener('input', () => {
+    fgOtp.value = fgOtp.value.replace(/\D/g, '').slice(0, 6);
+  });
+
+  // Resend button
+  fgResendBtn?.addEventListener('click', () => {
+    if (FG.otpLocked) return;
+    fgIssueOtp();
+    FG.otpFailures = 0;
+    if (fgLockWarn) fgLockWarn.hidden = true;
+    if (fgOtp) {
+      fgOtp.value = '';
+      fgOtp.classList.remove('is-locked');
+    }
+    fgSetErr(fgOtp, fgOtpErr, '');
+    fgStartCountdown(60);
+  });
+
+  // Back to email
+  fgBackToEmail?.addEventListener('click', () => {
+    fgStopCountdown();
+    fgSetErr(fgOtp, fgOtpErr, '');
+    if (fgOtp) fgOtp.value = '';
+    fgShowPanel(1);
+  });
+
+  if (fgFormOtp) {
+    fgFormOtp.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (FG.otpLocked) return;
+
+      const entered = String(fgOtp?.value || '').trim();
+
+      // Basic format checks
+      if (!entered) {
+        fgSetErr(fgOtp, fgOtpErr, 'الرجاء إدخال رمز التحقق.');
+        return;
+      }
+      if (!/^\d{6}$/.test(entered)) {
+        fgSetErr(fgOtp, fgOtpErr, 'الرمز يجب أن يتكون من 6 أرقام فقط.');
+        return;
+      }
+
+      // Expiry check
+      if (Date.now() > FG.otpExpiry) {
+        fgSetErr(fgOtp, fgOtpErr, 'انتهت صلاحية الرمز. الرجاء طلب رمز جديد.');
+        fgStartCountdown(0); // reset timer UI
+        return;
+      }
+
+      // Match check
+      if (entered !== FG.otp) {
+        FG.otpFailures += 1;
+        const left = FG.MAX_ATTEMPTS - FG.otpFailures;
+
+        if (FG.otpFailures >= FG.MAX_ATTEMPTS) {
+          // Lock out
+          FG.otpLocked = true;
+          fgOtp.classList.add('is-locked');
+          fgOtp.disabled = true;
+          if (fgVerifyBtn) fgVerifyBtn.disabled = true;
+          if (fgLockWarn) {
+            fgLockWarn.hidden = false;
+            const msg = fgLockWarn.querySelector('#fgLockMsg');
+            if (msg) msg.innerHTML = 'تم قفل المحاولات. الرجاء طلب رمز جديد.';
+          }
+          fgSetErr(fgOtp, fgOtpErr, 'رمز التحقق خاطئ. تم قفل الحساب مؤقتًا.');
+        } else {
+          // Show warning with remaining attempts
+          if (fgLockWarn && left <= 2) {
+            fgLockWarn.hidden = false;
+            if (fgAttemptsLeft) fgAttemptsLeft.textContent = left;
+          }
+          fgSetErr(fgOtp, fgOtpErr, `رمز التحقق غير صحيح. (${left} محاولات متبقية)`);
+        }
+        return;
+      }
+
+      // ✅ OTP correct
+      fgStopCountdown();
+      fgSetErr(fgOtp, fgOtpErr, '');
+      if (fgLockWarn) fgLockWarn.hidden = true;
+      fgShowPanel(3);
+    });
+  }
+
+  /* ── Step 3: New Password ──────────────────────────────── */
+
+  // Live strength + rules update
+  fgNewPass?.addEventListener('input', () => {
+    fgCheckStrength(fgNewPass.value);
+    // Live clear confirm error if it was "doesn't match"
+    if (fgConfPass?.value && fgConfPass.value === fgNewPass.value) {
+      fgSetErr(fgConfPass, fgConfPassErr, '');
+    }
+  });
+
+  // Eye toggles
+  fgToggleNew?.addEventListener('click',  () => fgToggleEye(fgNewPass,  fgToggleNew));
+  fgToggleConf?.addEventListener('click', () => fgToggleEye(fgConfPass, fgToggleConf));
+
+  if (fgFormPassword) {
+    fgFormPassword.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const newVal  = String(fgNewPass?.value  || '');
+      const confVal = String(fgConfPass?.value || '');
+      let ok = true;
+
+      // New password checks
+      if (!newVal) {
+        fgSetErr(fgNewPass, fgNewPassErr, 'الرجاء إدخال كلمة المرور الجديدة.');
+        ok = false;
+      } else if (!isPasswordStrong(newVal)) {
+        fgSetErr(fgNewPass, fgNewPassErr, 'كلمة المرور لا تستوفي جميع الشروط المطلوبة.');
+        ok = false;
+      } else {
+        fgSetErr(fgNewPass, fgNewPassErr, '');
+      }
+
+      // Confirm password checks
+      if (!confVal) {
+        fgSetErr(fgConfPass, fgConfPassErr, 'الرجاء تأكيد كلمة المرور.');
+        ok = false;
+      } else if (confVal !== newVal) {
+        fgSetErr(fgConfPass, fgConfPassErr, 'كلمتا المرور غير متطابقتين.');
+        ok = false;
+      } else {
+        fgSetErr(fgConfPass, fgConfPassErr, '');
+      }
+
+      if (!ok) return;
+
+      // Simulate save
+      if (fgSaveBtn) {
+        fgSaveBtn.disabled = true;
+        fgSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ الحفظ…';
+      }
+
+      setTimeout(() => {
+        // Clear sensitive data from memory
+        FG.otp       = null;
+        FG.otpExpiry = null;
+
+        // Show success
+        fgShowPanel('success');
+
+        // Close modal after 2.8 s, then open login
+        setTimeout(() => {
+          closeModal(forgotModal);
+          fgReset();
+          // Offer user to log in
+          showToast('تمت إعادة التعيين', 'يمكنك الآن تسجيل الدخول بكلمة مرورك الجديدة.');
+        }, 2800);
+      }, 1000);
+    });
+  }
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     const checkOverflow = () => {
       const docWidth = document.documentElement.scrollWidth;

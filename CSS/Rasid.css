@@ -141,6 +141,16 @@ ul{list-style:none}
   border-color:rgba(255,255,255,.32);
 }
 
+.page-wrap {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 3vw, 1.5rem) 3rem;
+    }
+
+  
+
 /* ═══════════════════════════════════════════════
    PAGE HEADING
 ═══════════════════════════════════════════════ */
@@ -525,6 +535,22 @@ footer{
   height:5px;
   background:linear-gradient(90deg,#7a5028,#9a6838,#836030,#a87848,#7c5830);
 }
+
+.footer-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+
+.footer-brand .footer-logo {
+  height: clamp(38px, 6vw, 52px);
+  margin-bottom: 0.9rem;
+   margin-right: 0.05px;
+}
+
+.footer-brand p  { font-size: clamp(0.85rem, 1.3vw, 0.9rem); line-height: 1.8; color: rgba(255,255,255,0.45); margin-bottom: 1rem; }
+
 
 /*.social-links { display: flex; gap: 0.625rem; flex-wrap: wrap; }
 .social-links a {
