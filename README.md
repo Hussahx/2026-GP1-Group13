@@ -73,17 +73,9 @@ The system analyzes drone video frame by frame, detects human presence in real t
 
 ---
 
-## Ethical & Operational Considerations
-
-- Human verification ensures report accuracy.  
-- Reports are not automatically sent to authorities without review.  
-- Designed to support, not replace, rescue teams.
-
----
 
 ## Future Enhancements
-
-- Thermal imaging and night vision integration  
+ 
 - Smart alert system improvements  
 - Cloud-based data storage  
 - Mobile application for field teams  
