@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#F5EFE6" />
-
+ <!-- Custom CSS -->
+  <link rel="stylesheet" href="../CSS/Rasid.css" />
 <title>راصد — تسحيل متطوع</title>
   <!-- Google Fonts: Tajawal -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
@@ -68,33 +69,7 @@
        ================================================================ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html {
-      font-size: 16px;
-      scroll-behavior: smooth;
-      overflow-x: hidden;
-    }
-
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      direction: rtl;
-      text-align: right;
-      min-height: 100vh;
-      line-height: 1.7;
-      overflow-x: hidden;
-      -webkit-text-size-adjust: 100%;
-      display: flex;
-      flex-direction: column;
-      /* desert texture */
-      background-image:
-        radial-gradient(ellipse at 12% 18%, rgba(194,164,119,0.14) 0%, transparent 52%),
-        radial-gradient(ellipse at 88% 82%, rgba(139,107,71,0.08) 0%, transparent 50%),
-        repeating-linear-gradient(
-          45deg, transparent, transparent 38px,
-          rgba(166,124,82,0.032) 38px, rgba(166,124,82,0.032) 39px
-        );
-    }
+   
 
     img { max-width: 100%; display: block; }
     a { color: var(--primary); text-decoration: none; transition: var(--transition); }
@@ -125,44 +100,20 @@
     /* ================================================================
        PAGE HEADER (full-width, flat top, curved bottom corners)
        ================================================================ */
- .page-header {
-  position: relative;
-  width: 100%;
-  background: linear-gradient(138deg, var(--secondary) 0%, var(--accent) 100%);
-  padding: clamp(1.1rem, 3.5vw, 1.75rem) clamp(1.25rem, 4vw, 2rem);
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  overflow: visible;
-  border-radius: 0 0 clamp(22px, 5vw, 38px) clamp(22px, 5vw, 38px);
-  margin-bottom: 0;
-  z-index: 10;
-}
 
-    .page-header::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      border-radius: inherit;
-      background-image:
-        radial-gradient(ellipse at 80% 40%, rgba(255,255,255,0.07) 0%, transparent 58%),
-        repeating-linear-gradient(
-          45deg, transparent, transparent 28px,
-          rgba(255,255,255,0.03) 28px, rgba(255,255,255,0.03) 29px
-        );
-    }
 
     /* ================================================================
        PAGE WRAPPER
        ================================================================ */
-    .page-wrap {
+   .page-wrap {
       flex: 1;
       display: flex;
       align-items: flex-start;
       justify-content: center;
       padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 3vw, 1.5rem) 3rem;
     }
+
+   
 
     /* ================================================================
        MAIN CARD
@@ -1392,47 +1343,37 @@
         max-width: 100% !important;
       }
     }
-     
-/* ── FOOTER ── */
-footer{position:relative;margin-top:32px;background:linear-gradient(180deg,#f5efe5 0%,#f4ead8 18%,#e8d4b4 34%,#d8bc90 50%,#c4a070 64%,#9e7449 78%,#614426 100%);overflow:hidden;}
-.footer-dune-bottom{position:absolute;bottom:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#7a5028 0%,#9a6838 18%,#836030 35%,#a87848 52%,#7c5830 68%,#825b39 84%,#6a4623 100%);}
-.footer-top-svg{display:block;width:100%;height:70px;position:relative;z-index:2;}
-.footer-content{position:relative;z-index:3;max-width:1120px;margin:0 auto;padding:8px 28px 48px;display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:40px;}
-.foot-logo{font-family:'Scheherazade New',serif;font-size:1.8rem;font-weight:700;color:rgba(255,255,255,.92);margin-bottom:4px;}
-.foot-logo span{font-family:'Tajawal',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:4px;color:rgba(255,255,255,.5);display:block;margin-top:-4px;}
-.foot-brand p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.9;margin-top:8px;}
-.foot-col h4{font-size:10.5px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.42);margin-bottom:14px;font-weight:700;}
-.foot-col ul{list-style:none;}
-.foot-col ul li{margin-bottom:8px;}
-.foot-col ul li a{color:rgba(255,255,255,.6);text-decoration:none;font-size:13px;transition:color .2s;}
-.foot-col ul li a:hover{color:#fff;}
-.emergency-box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:14px;text-align:center;margin-bottom:8px;transition:background .2s;}
-.emergency-box:hover{background:rgba(255,255,255,.13);}
-.emergency-box .num{font-family:'Scheherazade New',serif;font-size:2rem;color:#fff;line-height:1;}
-.emergency-box small{display:block;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.4);margin-top:3px;text-transform:uppercase;}
-.footer-bottom-bar{position:relative;z-index:3;text-align:center;padding:12px 24px 16px;font-size:11px;color:rgba(255,255,255,.25);letter-spacing:2px;border-top:1px solid rgba(255,255,255,.07);}
-
-::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-track{background:var(--sand-100);}
-::-webkit-scrollbar-thumb{background:var(--sand-300);border-radius:3px;}
+ 
   </style>
 
 </head>
-<body>
-
-  <!-- Accessible live region for screen readers -->
-  <div aria-live="polite" aria-atomic="true" class="sr-only" id="liveAnnounce"></div>
-
-  <!-- PAGE HEADER – full width, flat top, curved bottom -->
-  <header class="page-header">
-    <div class="brand-badge" aria-hidden="true">
+<header class="page-header">
+    <div class="header-logo-mark" aria-hidden="true">
       <img src="../assest/New-logo.JPG.jpeg" alt="شعار راصد" />
     </div>
-    <div class="brand-text">
+    <div class="header-brand">
       <h1>راصد</h1>
-      <p>تسجيل متطوع  </p>
+      <p>عين الصحراء — تسجيل متطوع</p>
     </div>
+    <nav class="header-nav" aria-label="تنقل سريع">
+      <a href="index.html">
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+        الرئيسية
+      </a>
+    </nav>
   </header>
+
+  <main class="page-body">
+
+    <div class="page-heading">
+      <div class="page-heading-eyebrow" aria-hidden="true">
+        <span></span>
+        انضم معنا 
+        <span></span>
+      </div>
+      <h2>تسجيل متطوع</h2>
+      <p>الرجاء التأكد من صحة البيانات المدخلة</p>
+    </div>
 
   <div class="page-wrap">
     <div class="main-card" role="main">
@@ -1748,10 +1689,7 @@ footer{position:relative;margin-top:32px;background:linear-gradient(180deg,#f5ef
             شكرًا لك على انضمامك لمنظومة راصد —<br>
             سيتم مراجعة بياناتك والتواصل معك قريبًا.
           </p>
-          <a href="index.html" class="btn-home">
-            <i class="fas fa-house" aria-hidden="true"></i>
-            العودة للرئيسية
-          </a>
+          
         </div>
  </div> <!-- /.card-body -->
   </div>   <!-- /.main-card -->
@@ -1760,33 +1698,40 @@ footer{position:relative;margin-top:32px;background:linear-gradient(180deg,#f5ef
     
 <!-- ════ FOOTER ════ -->
   <footer>
-    <svg class="footer-top-svg" viewBox="0 0 1440 70" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,70 L0,32 Q200,0 420,26 Q640,50 860,18 Q1080,0 1280,28 L1440,36 L1440,70 Z" fill="#f9f6f1"/>
-      <path d="M0,70 L0,46 Q250,18 500,44 Q750,66 1000,38 Q1250,14 1440,48 L1440,70 Z" fill="#e8d4b4" opacity="0.35"/>
+
+    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
     </svg>
-    <div class="footer-content">
-      <div class="foot-brand">
-        <div class="foot-logo">راصد<span>RASID</span></div>
-        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية. نعمل على مدار الساعة.</p>
+    <div class="footer-inner">
+      
+        <div class="footer-brand">
+          <img src="../assest/logoo.PNG" alt="شعار راصد" class="footer-logo" />
+         
+     
+        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
       </div>
-      <div class="foot-col">
+
+      
+
+      <div class="f-col">
         <h4>روابط سريعة</h4>
         <ul>
           <li><a href="index.html">الصفحة الرئيسية</a></li>
           <li><a href="login.html">تسجيل الدخول</a></li>
           <li><a href="Regester.html">انضم كمتطوع</a></li>
+          <li><a href="track-report.html">تتبع البلاغ</a></li>
         </ul>
       </div>
-      <div class="foot-col">
+      <div class="f-col">
         <h4>أرقام الطوارئ</h4>
-        <div class="emergency-box"><div class="num">911</div><small>الدفاع المدني</small></div>
-        <div class="emergency-box"><div class="num">998</div><small>الهلال الأحمر</small></div>
+        <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+        <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
       </div>
     </div>
-    <div class="footer-bottom-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
-    <div class="footer-dune-bottom"></div>
+    <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+    <div class="footer-dune"></div>
   </footer>
-
 
 
 

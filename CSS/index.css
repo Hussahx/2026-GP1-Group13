@@ -2339,3 +2339,305 @@ input[type="file"] {
 .track-link a:hover {
   text-decoration: underline;
 }
+/* ============================================================
+   FORGOT PASSWORD – 3-STEP RESET FLOW
+   Desert Sand theme · RTL · Mobile-first
+   ============================================================ */
+
+/* ── Step indicator ─────────────────────────────────────── */
+.fg-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.4rem;
+  padding: 0 0.5rem;
+}
+
+.fg-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.fg-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.fg-step-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.fg-step--active .fg-step-num {
+  background: linear-gradient(135deg, var(--secondary), var(--accent));
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(139, 107, 71, 0.35);
+}
+
+.fg-step--active .fg-step-label {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.fg-step--done .fg-step-num {
+  background: linear-gradient(135deg, #7A9A7A, #4A7A56);
+  border-color: #4A7A56;
+  color: #fff;
+}
+
+.fg-step--done .fg-step-label {
+  color: #4A7A56;
+}
+
+.fg-step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  margin: 0 0.4rem;
+  margin-bottom: 1.3rem; /* align with circle center */
+  transition: background 0.4s ease;
+}
+
+.fg-step-line--done {
+  background: #4A7A56;
+}
+
+/* ── Panel transitions ───────────────────────────────────── */
+.fg-panel {
+  animation: fgFadeIn 0.28s ease-out both;
+}
+
+.fg-panel--hidden {
+  display: none;
+}
+
+@keyframes fgFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── OTP input: centered, large, numeric feel ────────────── */
+#fgOtp {
+  text-align: center;
+  letter-spacing: 0.55em;
+  font-size: 1.6rem;
+  font-weight: 700;
+  padding: 0.65rem 1rem;
+  color: var(--text-primary);
+  font-family: 'Tajawal', monospace;
+  caret-color: var(--accent);
+}
+
+/* ── Resend row ──────────────────────────────────────────── */
+.fg-resend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.fg-countdown {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.fg-countdown i {
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+.fg-resend-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.fg-resend-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.fg-resend-btn:not(:disabled):hover {
+  background: rgba(166, 124, 82, 0.08);
+  border-color: var(--secondary);
+}
+
+/* ── Lock warning ────────────────────────────────────────── */
+.fg-lock-warn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: rgba(180, 75, 75, 0.08);
+  border: 1px solid rgba(180, 75, 75, 0.22);
+  color: #B44B4B;
+  font-size: 0.85rem;
+}
+
+.fg-lock-warn i { font-size: 1rem; flex-shrink: 0; }
+
+/* Locked state: red border on OTP input */
+#fgOtp.is-locked {
+  border-color: rgba(180, 75, 75, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(180, 75, 75, 0.12) !important;
+  pointer-events: none;
+}
+
+/* ── Password strength meter ─────────────────────────────── */
+.fg-strength {
+  margin-top: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.fg-strength-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.fg-strength-fill {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  width: 0%;
+  transition: width 0.35s ease, background 0.35s ease;
+}
+
+.fg-strength-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-width: 3.5rem;
+  text-align: start;
+  transition: color 0.3s;
+}
+
+/* strength levels */
+.fg-strength--weak   .fg-strength-fill { width: 25%; background: #B44B4B; }
+.fg-strength--fair   .fg-strength-fill { width: 50%; background: #C97820; }
+.fg-strength--good   .fg-strength-fill { width: 75%; background: #C2A477; }
+.fg-strength--strong .fg-strength-fill { width: 100%; background: #4A7A56; }
+
+.fg-strength--weak   .fg-strength-label { color: #B44B4B; }
+.fg-strength--fair   .fg-strength-label { color: #C97820; }
+.fg-strength--good   .fg-strength-label { color: #A67C52; }
+.fg-strength--strong .fg-strength-label { color: #4A7A56; }
+
+/* ── Password rules checklist ────────────────────────────── */
+.fg-rules {
+  list-style: none;
+  margin-top: 0.65rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem 0.5rem;
+}
+
+.fg-rule {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: color 0.25s;
+}
+
+.fg-rule i {
+  font-size: 0.5rem;
+  transition: color 0.25s, transform 0.25s;
+  color: var(--border);
+}
+
+.fg-rule--ok {
+  color: #4A7A56;
+}
+
+.fg-rule--ok i {
+  font-size: 0.75rem;
+  color: #4A7A56;
+}
+
+/* Replace dot icon with check when rule passes */
+.fg-rule--ok i::before {
+  content: "\f00c"; /* fa-check */
+}
+
+/* ── Success box ─────────────────────────────────────────── */
+.fg-success-box {
+  margin-top: 0.5rem;
+}
+
+/* ── Dev-only OTP hint box ───────────────────────────────── */
+.fg-otp-dev-hint {
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(194, 164, 119, 0.12);
+  border: 1px dashed var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.fg-otp-dev-hint strong {
+  color: var(--accent);
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .fg-rules {
+    grid-template-columns: 1fr;
+  }
+
+  #fgOtp {
+    font-size: 1.3rem;
+    letter-spacing: 0.4em;
+  }
+
+  .fg-step-label {
+    font-size: 0.7rem;
+  }
+}
+
+/* Constrain forgot-password modal to a narrower, focused width */
+#forgotModal .modal-dialog {
+  width: min(500px, calc(100% - 2rem));
+}
