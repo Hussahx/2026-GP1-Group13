@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F5EFE6">
+<title>راصد — الملف الشخصي</title>
+<link rel="icon" href="../assest/logo.PNG" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../CSS/Rasid.css">
+
+<style>
+.profile-page {
+  --white: #fff;
+  --s100:  var(--sand-50);
+  --s200:  var(--sand-200);
+  --s300:  var(--sand-300);
+  --s400:  var(--oak-400);
+  --s500:  var(--oak-500);
+  --s600:  var(--oak-600);
+  --t900:  var(--ink);
+  --t700:  var(--ink-mid);
+  --t500:  var(--ink-muted);
+  --t300:  rgba(122,98,69,.70);
+  --bdr:   rgba(166,124,82,0.18);
+  --ndot:  #e07830;
+  --odot:  #4060c8;
+  --red:   #c0392b;
+}
+
+.profile-page .profile-hero {
+  background: linear-gradient(180deg, #fdf8f1 0%, #f5ece0 60%, #ede3d4 100%);
+  border-bottom: 1.5px solid rgba(166,124,82,0.15);
+  position: relative; overflow: hidden;
+}
+.profile-page .profile-hero::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 80% at 95% 50%, rgba(200,155,80,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 5%  30%, rgba(180,130,60,0.05) 0%, transparent 60%);
+}
+.profile-page .hero-inner {
+  position: relative; z-index: 1;
+  max-width: 1120px; margin: 0 auto; padding: 36px 28px 32px;
+}
+.profile-page .hero-top {
+  display: flex; align-items: center; gap: 26px; margin-bottom: 24px;
+}
+.profile-page .avatar-wrap { position: relative; flex-shrink: 0; }
+.profile-page .p-avatar {
+  width: 104px; height: 104px; border-radius: 50%;
+  background: linear-gradient(145deg, #e8d4b0, #c4a070);
+  border: 4px solid #fff;
+  box-shadow: 0 4px 20px rgba(140,90,30,0.15), 0 0 0 1px rgba(166,124,82,0.2);
+  display: flex; align-items: center; justify-content: center;
+}
+.profile-page .p-avatar svg { width: 66px; height: 66px; opacity: .78; }
+.profile-page .online-dot {
+  position: absolute; bottom: 5px; left: 5px;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: #2d9e52; border: 3px solid #fdf8f1;
+  box-shadow: 0 0 6px rgba(45,158,82,0.5);
+}
+.profile-page .hero-info { flex: 1; min-width: 0; padding-top: 4px; }
+.profile-page .hero-role {
+  font-size: 10px; letter-spacing: 3.5px; text-transform: uppercase;
+  color: var(--oak-400); font-weight: 700; margin-bottom: 7px;
+}
+.profile-page .name-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.profile-page .hero-name {
+  font-family: 'Scheherazade New', serif;
+  font-size: 2.1rem; font-weight: 700; color: var(--ink);
+  outline: none; min-width: 40px; line-height: 1.2;
+}
+.profile-page .hero-name[contenteditable="true"] {
+  border-bottom: 2px dashed var(--sand-300); padding-bottom: 2px;
+}
+.profile-page .pencil-btn {
+  background: #fff; border: 1.5px solid var(--bdr); cursor: pointer;
+  padding: 5px 13px; border-radius: 20px;
+  display: flex; align-items: center; gap: 5px;
+  font-family: 'Tajawal',sans-serif; font-size: 12px;
+  color: var(--ink-muted); font-weight: 600; transition: all .2s; flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(140,90,30,0.08);
+}
+.profile-page .pencil-btn:hover { background: var(--sand-50); color: var(--ink-mid); border-color: rgba(166,124,82,0.35); }
+.profile-page .pencil-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+.profile-page .save-btn {
+  display: none;
+  background: linear-gradient(135deg,#2d9e52,#1a7038); color: #fff;
+  border: none; border-radius: 20px; padding: 6px 16px;
+  font-family: 'Tajawal',sans-serif; font-size: 12px; font-weight: 700;
+  cursor: pointer; align-items: center; gap: 4px;
+}
+.profile-page .save-btn.show { display: flex; }
+.profile-page .hero-bio { display: flex; flex-direction: column; gap: 6px; }
+.profile-page .bio-row { display: flex; align-items: center; gap: 7px; }
+.profile-page .bio-ico { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+.profile-page .bio-val {
+  font-family: 'Tajawal',sans-serif; font-size: 13px; color: var(--ink-muted);
+  outline: none; background: transparent; border: none; min-width: 40px;
+}
+.profile-page .bio-val[contenteditable="true"] {
+  border-bottom: 1.5px dashed var(--sand-300); color: var(--ink-mid); padding-bottom: 1px;
+}
+.profile-page .stats-row {
+  display: flex;
+  background: rgba(255,255,255,0.7);
+  border-radius: 14px;
+  border: 1.5px solid rgba(166,124,82,0.14);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(140,90,30,0.07);
+}
+.profile-page .stat {
+  flex: 1; padding: 15px 8px; text-align: center;
+  border-left: 1px solid rgba(166,124,82,0.12); transition: background .2s;
+}
+.profile-page .stat:last-child { border-left: none; }
+.profile-page .stat:hover { background: rgba(255,255,255,0.9); }
+.profile-page .stat-num { font-family: 'Scheherazade New',serif; font-size: 1.6rem; font-weight: 700; line-height: 1; }
+.profile-page .stat-lbl { font-size: 9px; color: var(--t300); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+.profile-page .so .stat-num { color: #c05820; }
+.profile-page .sg .stat-num { color: #1e8040; }
+.profile-page .sb .stat-num { color: #2840a0; }
+.profile-page .sd .stat-num { color: var(--oak-500); }
+
+.profile-page .tabs-bar {
+  background: rgba(245,239,230,.97); border-bottom: 1px solid var(--bdr);
+  position: sticky; top: 0; z-index: 50;
+}
+.profile-page .tabs-inner { max-width: 1120px; margin: 0 auto; padding: 0 20px; display: flex; }
+.profile-page .tab-btn {
+  padding: 13px 20px; font-family: 'Tajawal',sans-serif;
+  font-size: 13px; font-weight: 700; color: var(--ink);
+  background: none; border: none; border-bottom: 2.5px solid var(--oak-400);
+  cursor: pointer; display: flex; align-items: center; gap: 7px;
+}
+.profile-page .tab-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; border-radius: 9px;
+  font-size: 10px; font-weight: 700; padding: 0 4px;
+  background: var(--sand-200); color: var(--oak-600);
+}
+.profile-page .p-main { max-width: 1120px; margin: 0 auto; padding: 24px 20px 60px; }
+.profile-page .sec-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.profile-page .sec-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.profile-page .sec-ttl { font-size: 11px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; color: var(--ink-mid); }
+.profile-page .sec-line { flex: 1; height: 1px; background: linear-gradient(to left, transparent, var(--sand-200)); }
+.profile-page .sec-cnt { font-size: 11.5px; color: var(--t300); font-weight: 600; }
+
+/* ══ DRONE ══ */
+.profile-page .drone-widget { position: relative; flex-shrink: 0; }
+.profile-page .drone-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg,#2a1e0e,#4a3420);
+  border: 2px solid var(--oak-400);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer; transition: transform .2s,box-shadow .2s; position: relative;
+}
+.profile-page .drone-circle:hover { transform: scale(1.1); box-shadow: 0 4px 14px rgba(166,124,82,.35); }
+.profile-page .drone-badge {
+  position: absolute; top: -5px; left: -5px;
+  min-width: 17px; height: 17px; border-radius: 9px;
+  background: #c0392b; border: 2px solid #fff; color: #fff;
+  font-size: 10px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; padding: 0 3px;
+}
+.profile-page .drone-badge.hidden { display: none; }
+.profile-page .drone-pulse-dot {
+  position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%);
+  width: 7px; height: 7px; border-radius: 50%; background: #c0392b;
+}
+.profile-page .drone-pulse-dot::after {
+  content: ''; position: absolute; inset: -3px;
+  border-radius: 50%; border: 2px solid #c0392b; animation: p-ripple 1.5s infinite;
+}
+@keyframes p-ripple {
+  0%  { transform: scale(1); opacity: 1; }
+  100%{ transform: scale(2.4); opacity: 0; }
+}
+
+/* البوب-أب — موقعها يتحدد بالكامل عن طريق JS */
+.profile-page .drone-popup {
+  position: fixed;
+  width: 360px;
+  background: rgba(18,10,2,0.97);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(200,155,70,.22);
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.55);
+  z-index: 400; display: none; overflow: hidden;
+}
+.profile-page .drone-popup.open {
+  display: block;
+  animation: p-popIn .22s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes p-popIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.profile-page .dp-head {
+  padding: 13px 16px 11px; border-bottom: 1px solid rgba(200,155,70,.1);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.profile-page .dp-head-l { display: flex; align-items: center; gap: 7px; }
+.profile-page .dp-live { width: 7px; height: 7px; border-radius: 50%; background: #e07830; animation: p-live 1.4s infinite; }
+@keyframes p-live {
+  0%  { box-shadow: 0 0 0 0 rgba(224,120,48,.6); }
+  70% { box-shadow: 0 0 0 5px rgba(224,120,48,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(224,120,48,0); }
+}
+.profile-page .dp-head-l span { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.6); letter-spacing: 2px; text-transform: uppercase; }
+.profile-page .dp-showall { font-size: 10.5px; color: rgba(184,150,94,.85); font-weight: 600; cursor: pointer; padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(180,140,80,.2); background: rgba(180,140,80,.07); }
+.profile-page .dp-showall:hover { background: rgba(180,140,80,.16); }
+.profile-page .dp-list { max-height: 300px; overflow-y: auto; padding: 4px 0; }
+.profile-page .dp-list::-webkit-scrollbar { width: 3px; }
+.profile-page .dp-list::-webkit-scrollbar-thumb { background: rgba(180,140,80,.25); border-radius: 2px; }
+.profile-page .dp-item { padding: 11px 16px; border-bottom: 1px solid rgba(180,140,80,.07); cursor: pointer; transition: background .15s; }
+.profile-page .dp-item:last-child { border-bottom: none; }
+.profile-page .dp-item:hover { background: rgba(180,140,80,.09); }
+.profile-page .dp-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; gap: 8px; }
+.profile-page .dp-left { display: flex; align-items: center; gap: 5px; }
+.profile-page .dp-unread { width: 6px; height: 6px; border-radius: 50%; background: #e07830; flex-shrink: 0; }
+.profile-page .dp-icon { font-size: 15px; }
+.profile-page .dp-name { font-size: 9.5px; font-weight: 700; color: rgba(184,150,94,.7); letter-spacing: 1.5px; text-transform: uppercase; }
+.profile-page .dp-dt { font-size: 10px; color: rgba(255,255,255,.28); white-space: nowrap; }
+.profile-page .dp-msg { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,.85); line-height: 1.4; }
+.profile-page .dp-empty { padding: 28px; text-align: center; color: rgba(255,255,255,.3); font-size: 13px; }
+
+.profile-page .drone-full { display: none; margin-top: 20px; }
+.profile-page .drone-full.open { display: block; }
+.profile-page .drone-full-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.profile-page .drone-full-l { display: flex; align-items: center; gap: 8px; }
+.profile-page .dpulse { width: 9px; height: 9px; border-radius: 50%; background: #e07830; animation: p-dpulse 1.4s infinite; }
+@keyframes p-dpulse {
+  0%  { box-shadow: 0 0 0 0 rgba(224,120,48,.5); }
+  70% { box-shadow: 0 0 0 6px rgba(224,120,48,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(224,120,48,0); }
+}
+.profile-page .live-tag { font-size: 9.5px; font-weight: 700; color: #c0392b; background: #fff0ee; border: 1px solid #ffb8b0; border-radius: 5px; padding: 2px 8px; }
+.profile-page .drone-list-full { display: flex; flex-direction: column; gap: 10px; }
+.profile-page .dc { background: #fff; border-radius: 14px; border: 1.5px solid var(--bdr); overflow: hidden; display: flex; }
+.profile-page .dc-stripe { width: 4px; flex-shrink: 0; }
+.profile-page .dc-stripe.orange { background: linear-gradient(180deg,#e07830,#f0a060); }
+.profile-page .dc-stripe.red    { background: linear-gradient(180deg,#c0392b,#e06050); }
+.profile-page .dc-body { padding: 12px 14px; flex: 1; display: flex; gap: 11px; align-items: flex-start; }
+.profile-page .dc-icon { font-size: 22px; flex-shrink: 0; }
+.profile-page .dc-content { flex: 1; min-width: 0; }
+.profile-page .dc-dname { font-size: 10px; font-weight: 700; color: var(--t300); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
+.profile-page .dc-msg { font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.4; margin-bottom: 2px; }
+.profile-page .dc-meta { font-size: 11px; color: var(--ink-muted); }
+
+.profile-page .ops-scroll { max-height: 650px; overflow-y: auto; padding-left: 2px; }
+.profile-page .ops-scroll::-webkit-scrollbar { width: 4px; }
+.profile-page .ops-scroll::-webkit-scrollbar-track { background: var(--sand-50); border-radius: 2px; }
+.profile-page .ops-scroll::-webkit-scrollbar-thumb { background: var(--sand-300); border-radius: 2px; }
+.profile-page .ops-list { display: flex; flex-direction: column; gap: 12px; }
+.profile-page .op { background: #fff; border-radius: 16px; border: 1.5px solid var(--bdr); overflow: hidden; position: relative; transition: box-shadow .2s; }
+.profile-page .op:hover { box-shadow: 0 6px 24px rgba(100,60,20,.1); }
+.profile-page .op::before { content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 100%; }
+.profile-page .op.open::before   { background: linear-gradient(180deg,#4060c8,#80a0e8); }
+.profile-page .op.closed::before { background: linear-gradient(180deg,#2d9e52,#60c880); }
+.profile-page .op-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--sand-50); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.profile-page .op-head-left { display: flex; flex-direction: column; gap: 5px; }
+.profile-page .op-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.profile-page .op-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 11px; font-size: 11px; font-weight: 700; }
+.profile-page .op-badge.bl { background: #fef9f4; color: #c05820; border: 1px solid #f0d4a8; }
+.profile-page .op-badge.bm { background: #f4f6ff; color: #2840a0; border: 1px solid #b8c8f0; }
+.profile-page .op-badge.bc { background: #f4faf5; color: #1a6030; border: 1px solid #a8d8b0; font-size: 10px; border-radius: 6px; }
+.profile-page .op-id { font-size: 14px; font-weight: 800; color: var(--ink); }
+.profile-page .op-loc { font-size: 12px; color: var(--ink-muted); }
+.profile-page .op-act { padding: 9px 18px; border-radius: 10px; background: transparent; font-family: 'Tajawal',sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border: 1.5px solid; flex-shrink: 0; transition: opacity .15s; }
+.profile-page .op-act:active { opacity: .78; }
+.profile-page .act-blue  { border-color: #b8c8f0; color: #2840a0; }
+.profile-page .act-green { border-color: #a8d8b0; color: #1a6030; }
+.profile-page .op-body { padding: 12px 16px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 16px; }
+.profile-page .ii .il { font-size: 9.5px; color: var(--t300); letter-spacing: .7px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+.profile-page .ii .iv { font-size: 12.5px; color: var(--ink-mid); font-weight: 500; }
+.profile-page .prog-full { grid-column: 1/-1; }
+.profile-page .prog-lbl { display: flex; justify-content: space-between; font-size: 11px; color: var(--t300); margin-bottom: 4px; }
+.profile-page .prog-bar { height: 5px; border-radius: 3px; background: var(--sand-50); overflow: hidden; }
+.profile-page .pf { height: 100%; border-radius: 3px; transition: width .7s ease; }
+.profile-page .pf-blue  { background: linear-gradient(90deg,#4060c8,#80a0f0); }
+.profile-page .pf-green { background: linear-gradient(90deg,#2d9e52,#60c880); }
+.profile-page .op-foot { padding: 10px 16px 13px; border-top: 1px solid var(--sand-50); display: flex; align-items: center; justify-content: space-between; }
+.profile-page .p-avs { display: flex; }
+.profile-page .p-av { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 9px; margin-left: -5px; color: #fff; font-weight: 700; flex-shrink: 0; }
+.profile-page .p-av:first-child { margin-left: 0; }
+.profile-page .p-dtag { font-size: 10px; color: #c0392b; font-weight: 600; background: #fef2f2; padding: 2px 7px; border-radius: 5px; border: 1px solid #ffd4d0; }
+
+.p-overlay { position: fixed; inset: 0; background: rgba(20,10,0,.55); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.p-overlay.on { opacity: 1; pointer-events: all; }
+.p-modal { background: #fff; border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; transform: translateY(40px); transition: transform .3s ease; }
+.p-overlay.on .p-modal { transform: translateY(0); }
+.p-modal .mhandle { width: 36px; height: 4px; background: var(--sand-300); border-radius: 2px; margin: 10px auto 0; }
+.p-modal .mhead { padding: 14px 18px 13px; border-bottom: 1px solid var(--sand-50); display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.p-modal .mclose { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--t300); padding: 4px 8px; border-radius: 8px; min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; }
+.p-modal .mbody { padding: 16px 18px; }
+.p-modal .msec  { margin-bottom: 18px; }
+.p-modal .mstitle { font-size: 9.5px; letter-spacing: 3px; text-transform: uppercase; color: var(--t300); font-weight: 700; margin-bottom: 10px; }
+.p-modal .p-dgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.p-modal .p-di { background: var(--sand-50); border-radius: 9px; padding: 10px 12px; }
+.p-modal .p-di .dl { font-size: 9.5px; color: var(--t300); letter-spacing: .7px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+.p-modal .p-di .dv { font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.p-modal .mdesc { font-size: 13px; color: var(--ink-mid); line-height: 1.8; background: var(--sand-50); border-radius: 9px; padding: 12px; }
+.p-modal .mfoot { padding: 12px 18px 24px; }
+.p-modal .team-row { display: flex; flex-direction: column; gap: 7px; }
+.p-modal .team-member { display: flex; align-items: center; gap: 9px; background: var(--sand-50); border-radius: 10px; padding: 10px 12px; }
+.p-modal .tm-av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; font-weight: 700; flex-shrink: 0; }
+.p-modal .tm-name { font-size: 13px; color: var(--ink); font-weight: 600; }
+.p-modal .tm-phone { font-size: 11px; color: var(--ink-muted); margin-top: 1px; }
+.p-modal .tm-role { font-size: 10px; padding: 2px 6px; border-radius: 5px; background: #fff; border: 1px solid var(--sand-300); color: var(--oak-600); font-weight: 700; flex-shrink: 0; }
+.p-modal .p-timeline { display: flex; flex-direction: column; }
+.p-modal .tl-item { display: flex; gap: 12px; padding-bottom: 16px; position: relative; }
+.p-modal .tl-item:last-child { padding-bottom: 0; }
+.p-modal .tl-item:not(:last-child)::before { content: ''; position: absolute; right: 11px; top: 22px; bottom: 0; width: 2px; background: var(--sand-200); }
+.p-modal .tl-dot { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; border: 2px solid #fff; }
+.p-modal .tl-dot.start { background: #e07830; }
+.p-modal .tl-dot.found { background: #2d9e52; }
+.p-modal .tl-dot.close { background: #4060c8; }
+.p-modal .tl-content { flex: 1; padding-top: 2px; }
+.p-modal .tl-lbl { font-size: 11px; font-weight: 700; color: var(--ink-mid); margin-bottom: 2px; }
+.p-modal .tl-time { font-size: 11.5px; color: var(--ink-muted); }
+.p-modal .tl-dur  { font-size: 11px; color: var(--t300); margin-top: 2px; }
+
+.p-toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 12px; padding: 12px 20px; box-shadow: 0 6px 24px rgba(0,0,0,.13); font-size: 13px; font-weight: 600; color: var(--ink); z-index: 600; border-right: 4px solid #2d9e52; pointer-events: none; animation: p-tin .3s, p-tout .3s 2.5s forwards; }
+@keyframes p-tin  { from{opacity:0;transform:translateX(-50%) translateY(-8px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+@keyframes p-tout { to{opacity:0;} }
+
+@media(max-width:900px){ .profile-page .op-body { grid-template-columns: 1fr 1fr; } }
+@media(max-width:600px){
+  .profile-page .stats-row { flex-wrap: wrap; }
+  .profile-page .stat { min-width: 50%; }
+  .profile-page .hero-name { font-size: 1.5rem; }
+  .profile-page .op-body { grid-template-columns: 1fr; }
+  .profile-page .drone-popup { width: 92vw !important; }
+  .p-modal .p-dgrid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="header-logo-mark" aria-hidden="true">
+    <img src="../assest/New-logo.JPG.jpeg" alt="شعار راصد">
+  </div>
+  <div class="header-brand">
+    <h1>راصد</h1>
+    <p>عين الصحراء — الملف الشخصي</p>
+  </div>
+</header>
+
+<main class="page-body profile-page" style="padding:0; max-width:100%;">
+
+  <div class="profile-hero">
+    <div class="hero-inner">
+      <div class="hero-top">
+        <div class="avatar-wrap">
+          <div class="p-avatar">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="4.2" fill="#9a7440"/>
+              <path d="M3.5 21c0-4.5 3.8-8 8.5-8s8.5 3.5 8.5 8" stroke="#9a7440" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="online-dot"></div>
+        </div>
+        <div class="hero-info">
+          <div class="hero-role">&#x22C6; متطوع &#x2014; منصة راصد &#x22C6;</div>
+          <div class="name-row">
+            <div class="hero-name" id="bioName" contenteditable="false">يوسف الدوسري</div>
+            <button class="pencil-btn" id="editBtn" onclick="startEdit()">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              تعديل
+            </button>
+            <button class="save-btn" id="saveBtn" onclick="saveEdit()">&#x2713; حفظ</button>
+          </div>
+          <div class="hero-bio">
+            <div class="bio-row"><span class="bio-ico">📞</span><span class="bio-val" id="bioPhone" contenteditable="false" dir="ltr">0512345678</span></div>
+            <div class="bio-row"><span class="bio-ico">📍</span><span class="bio-val" id="bioCity" contenteditable="false">الرياض</span></div>
+            <div class="bio-row"><span class="bio-ico">🪪</span><span class="bio-val" contenteditable="false" dir="ltr">VOL-001 · انضم فبراير 2026</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat so"><div class="stat-num" id="stTotal">٠</div><div class="stat-lbl">اجمالي العمليات</div></div>
+        <div class="stat sg"><div class="stat-num" id="stLead">٠</div><div class="stat-lbl">قاد فيها</div></div>
+        <div class="stat sb"><div class="stat-num" id="stMem">٠</div><div class="stat-lbl">عضو فيها</div></div>
+        <div class="stat sd"><div class="stat-num" id="stDone">٠</div><div class="stat-lbl">منجزة</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <div class="tabs-inner">
+      <button class="tab-btn">
+        <span class="tab-count" id="cntOps">٣</span>العمليات
+      </button>
+    </div>
+  </div>
+
+  <div class="p-main">
+    <div class="sec-head">
+      <div class="sec-dot" style="background:var(--odot);"></div>
+      <span class="sec-ttl">العمليات اللي شاركت فيها</span>
+      <div class="sec-line"></div>
+      <span class="sec-cnt" id="opCnt"></span>
+      <div class="drone-widget" id="droneWidget">
+        <div class="drone-circle" id="droneBtn" onclick="togglePopup(event)">
+          🚁
+          <div class="drone-badge hidden" id="droneBadge">٠</div>
+        </div>
+        <div class="drone-pulse-dot"></div>
+        <div class="drone-popup" id="dronePopup">
+          <div class="dp-head">
+            <div class="dp-head-l"><div class="dp-live"></div><span>اشعارات الدرون</span></div>
+            <div class="dp-showall" onclick="expandFull()">عرض الكل ↓</div>
+          </div>
+          <div class="dp-list" id="dpList"><div class="dp-empty">جاري الاتصال...</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="ops-scroll">
+      <div class="ops-list" id="opList"></div>
+    </div>
+    <div class="drone-full" id="droneFull">
+      <div class="drone-full-head">
+        <div class="drone-full-l"><div class="dpulse"></div><span class="sec-ttl">اشعارات الدرون</span></div>
+        <span class="live-tag">🔴 مباشر</span>
+      </div>
+      <div class="drone-list-full" id="droneListFull"></div>
+    </div>
+  </div>
+
+</main>
+
+<div class="p-overlay" id="modalTrack">
+  <div class="p-modal">
+    <div class="mhandle"></div>
+    <div class="mhead">
+      <div>
+        <div id="mtBadge" style="margin-bottom:5px;"></div>
+        <div id="mtName" style="font-family:'Scheherazade New',serif;font-size:1.3rem;font-weight:700;color:var(--ink);"></div>
+        <div id="mtLoc" style="font-size:12px;color:var(--ink-muted);margin-top:2px;"></div>
+      </div>
+      <button class="mclose" onclick="closeModal('modalTrack')">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="msec"><div class="mstitle">معلومات المفقود</div><div class="p-dgrid" id="mtDetails"></div></div>
+      <div class="msec"><div class="mstitle">الوصف</div><div class="mdesc" id="mtDesc"></div></div>
+      <div class="msec"><div class="mstitle">فريق البحث</div><div class="team-row" id="mtTeam"></div></div>
+    </div>
+    <div class="mfoot" id="mtFoot"></div>
+  </div>
+</div>
+
+<div class="p-overlay" id="modalLog">
+  <div class="p-modal">
+    <div class="mhandle"></div>
+    <div class="mhead">
+      <div>
+        <div id="mlBadge" style="margin-bottom:5px;"></div>
+        <div id="mlName" style="font-family:'Scheherazade New',serif;font-size:1.3rem;font-weight:700;color:var(--ink);"></div>
+        <div id="mlLoc" style="font-size:12px;color:var(--ink-muted);margin-top:2px;"></div>
+      </div>
+      <button class="mclose" onclick="closeModal('modalLog')">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="msec"><div class="mstitle">تفاصيل البلاغ</div><div class="p-dgrid" id="mlDetails"></div></div>
+      <div class="msec"><div class="mstitle">مكان الايجاد</div><div class="mdesc" id="mlFound"></div></div>
+      <div class="msec"><div class="mstitle">الجدول الزمني</div><div class="p-timeline" id="mlTimeline"></div></div>
+      <div class="msec"><div class="mstitle">الفريق الميداني</div><div class="team-row" id="mlTeam"></div></div>
+    </div>
+    <div class="mfoot" id="mlFoot"></div>
+  </div>
+</div>
+
+<footer>
+  <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+    <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
+  </svg>
+  <div class="footer-inner">
+    <div class="f-brand">
+      <div class="f-logo">راصد<span>RASID</span></div>
+      <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
+    </div>
+    <div class="f-col">
+      <h4>روابط سريعة</h4>
+      <ul>
+        <li><a href="index.html">الصفحة الرئيسية</a></li>
+        <li><a href="login.html">تسجيل الدخول</a></li>
+        <li><a href="Regester.html">انضم كمتطوع</a></li>
+        <li><a href="track-report.html">تتبع البلاغ</a></li>
+      </ul>
+    </div>
+    <div class="f-col">
+      <h4>أرقام الطوارئ</h4>
+      <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+      <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+    </div>
+  </div>
+  <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+  <div class="footer-dune"></div>
+</footer>
+
+<script>
+function toAr(n){return String(n).replace(/\d/g,function(d){return'٠١٢٣٤٥٦٧٨٩'[+d];});}
+
+var editFields=['bioName','bioPhone','bioCity'];
+function startEdit(){
+  editFields.forEach(function(id){var el=document.getElementById(id);if(el)el.contentEditable='true';});
+  document.getElementById('saveBtn').classList.add('show');
+  document.getElementById('editBtn').style.display='none';
+  document.getElementById('bioName').focus();
+}
+function saveEdit(){
+  editFields.forEach(function(id){var el=document.getElementById(id);if(el)el.contentEditable='false';});
+  document.getElementById('saveBtn').classList.remove('show');
+  document.getElementById('editBtn').style.display='';
+  showToast('✓ تم حفظ البيانات بنجاح');
+}
+function showToast(msg){
+  var t=document.createElement('div');t.className='p-toast';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},3200);
+}
+
+/* ══ DRONE POPUP — يطلع تحت الأيقونة مباشرة ══ */
+var unread = 0;
+function togglePopup(e){
+  e.stopPropagation();
+  var p   = document.getElementById('dronePopup');
+  var btn = document.getElementById('droneBtn');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')){
+    var rect   = btn.getBoundingClientRect();
+    var popW   = Math.min(360, window.innerWidth - 16);
+    var margin = 8;
+
+    /* أفقي — يبدأ من يمين الزر للشمال، لا يخرج من الشاشة */
+    var left = rect.right - popW;
+    if(left < margin) left = margin;
+    if(left + popW > window.innerWidth - margin) left = window.innerWidth - popW - margin;
+
+    /* عمودي — تحت الزر دايماً */
+    var top = rect.bottom + 8;
+
+    p.style.width     = popW + 'px';
+    p.style.top       = top  + 'px';
+    p.style.left      = left + 'px';
+    p.style.transform = 'none';
+
+    unread = 0;
+    document.getElementById('droneBadge').classList.add('hidden');
+    renderPopup();
+  }
+}
+
+function expandFull(){
+  document.getElementById('dronePopup').classList.remove('open');
+  var f = document.getElementById('droneFull');
+  f.classList.toggle('open');
+  if(f.classList.contains('open')){renderFull();f.scrollIntoView({behavior:'smooth',block:'start'});}
+}
+document.addEventListener('click',function(e){
+  var w = document.getElementById('droneWidget');
+  if(w && !w.contains(e.target)) document.getElementById('dronePopup').classList.remove('open');
+});
+
+var TEAM={
+  'مح':{n:'محمد الغامدي',p:'0502220002',c:'#7a5828'},
+  'فه':{n:'فهد الحربي',p:'0503330003',c:'#9a7440'},
+  'سا':{n:'سالم الشهراني',p:'0527008800',c:'#b8965e'},
+  'خا':{n:'خالد القحطاني',p:'0508880008',c:'#8c6840'},
+  'يو':{n:'يوسف الدوسري',p:'0512345678',c:'#b8782a'},
+  'عم':{n:'عمر السبيعي',p:'0511001100',c:'#9a7440'},
+  'أن':{n:'يوسف الدوسري',p:'0512345678',c:'#b8782a'},
+  'عا':{n:'عامر الغامدي',p:'0525006600',c:'#b8965e'}
+};
+
+var MY_OPS=[
+  {id:'BLG-1124',ar:'BLG-١١٢٤',nm:'خالد السهلي',
+   loc:'صحراء الربع الخالي — الرياض',days:'منذ ١٣ يوماً',ld:'١٦ فبراير ٢٠٢٦',
+   role:'leader',closed:false,hlth:'لا يوجد',veh:'لاندكروزر بيضاء',age:'٤٢',
+   ldr:'يوسف الدوسري',lph:'0512345678',
+   desc:'آخر اتصال كان الساعة ٣ عصراً. ذهب لاستكشاف الوادي الجنوبي بمفرده ولم يعد.',
+   mbr:[{i:'مح',c:'#7a5828'},{i:'فه',c:'#9a7440'},{i:'سا',c:'#b8965e'}]},
+  {id:'BLG-1110',ar:'BLG-١١١٠',nm:'آل سبيعي (٣ أفراد)',
+   loc:'منطقة الجوف الصحراوية',days:'منذ ٥ أيام',ld:'٢٤ فبراير ٢٠٢٦',
+   role:'member',closed:true,hlth:'لا يوجد',veh:'لاند روفر أبيض',age:'٨ - ٤٥',
+   ldr:'م. خالد القرشي',lph:'0555443322',
+   desc:'عائلة من ٣ أشخاص، أصغرهم ٨ سنوات. خرجوا للتخييم ولم يعودوا.',
+   foundAt:'وادي الجوف الشمالي — على بعد ٢٢ كم',
+   startDate:'٢٤ فبراير ٢٠٢٦ - ٨:٣٠ ص',foundDate:'٢٦ فبراير ٢٠٢٦ - ٤:١٥ م',
+   closeDate:'٢٦ فبراير ٢٠٢٦ - ٦:٠٠ م',duration:'يومان و ٩ ساعات و ٣٠ دقيقة',
+   mbr:[{i:'خا',c:'#8c6840'},{i:'يو',c:'#b8965e'},{i:'عم',c:'#9a7440'},{i:'أن',c:'#b8782a'}]},
+  {id:'BLG-1100',ar:'BLG-١١٠٠',nm:'هند المطيري',
+   loc:'صحراء نجد الوسطى',days:'منذ ١١ يوماً',ld:'١٨ فبراير ٢٠٢٦',
+   role:'member',closed:false,hlth:'حمل ٧ أشهر',veh:'لاندكروزر رمادية',age:'٣٢',
+   ldr:'م. محمد الخالدي',lph:'0544556677',
+   desc:'حالة طارئة — المرأة في شهرها السابع من الحمل. أولوية قصوى.',
+   mbr:[{i:'مح',c:'#9a7440'},{i:'عا',c:'#b8965e'},{i:'أن',c:'#b8782a'}]}
+];
+
+function renderOps(){
+  var leaders=MY_OPS.filter(function(o){return o.role==='leader';}).length;
+  var members=MY_OPS.filter(function(o){return o.role==='member';}).length;
+  var done=MY_OPS.filter(function(o){return o.closed;}).length;
+  document.getElementById('stTotal').textContent=toAr(MY_OPS.length);
+  document.getElementById('stLead').textContent=toAr(leaders);
+  document.getElementById('stMem').textContent=toAr(members);
+  document.getElementById('stDone').textContent=toAr(done);
+  document.getElementById('opCnt').textContent=toAr(MY_OPS.length)+' عمليات';
+  document.getElementById('cntOps').textContent=toAr(MY_OPS.length);
+  var el=document.getElementById('opList');var h='';
+  MY_OPS.forEach(function(r){
+    var opCls=r.closed?'op closed':'op open';
+    var bCls=r.role==='leader'?'bl':'bm';
+    var bLbl=r.closed?'✅ منجزة':(r.role==='leader'?'يوسف القائد':'عضو في الفريق');
+    var pfCls=r.closed?'pf pf-green':'pf pf-blue';
+    var pfClr=r.closed?'#1e8040':'#4060c8';
+    var avs='';
+    for(var j=0;j<Math.min(r.mbr.length,5);j++)
+      avs+='<div class="p-av" style="background:'+r.mbr[j].c+';">'+r.mbr[j].i+'</div>';
+    if(r.mbr.length>5)
+      avs+='<div class="p-av" style="background:var(--oak-400);">+'+toAr(r.mbr.length-5)+'</div>';
+    var actBtn=r.closed
+      ?'<button class="op-act act-green" onclick="openLog(\''+r.id+'\')">📋 عرض السجل</button>'
+      :'<button class="op-act act-blue" onclick="openTrack(\''+r.id+'\')">تتبع العملية</button>';
+    h+='<div class="'+opCls+'">'+
+      '<div class="op-head">'+
+        '<div class="op-head-left">'+
+          '<div class="op-badges">'+
+            '<span class="op-badge '+bCls+'">'+bLbl+'</span>'+
+            (r.closed?'<span class="op-badge bc">✅ مغلقة</span>':'')+
+          '</div>'+
+          '<div class="op-id">'+r.ar+'</div>'+
+          '<div class="op-loc">📍 '+r.loc+'</div>'+
+        '</div>'+actBtn+
+      '</div>'+
+      '<div class="op-body">'+
+        '<div class="ii"><div class="il">الاسم</div><div class="iv">'+r.nm+'</div></div>'+
+        '<div class="ii"><div class="il">الحالة الصحية</div><div class="iv">'+r.hlth+'</div></div>'+
+        '<div class="ii"><div class="il">المركبة</div><div class="iv">'+r.veh+'</div></div>'+
+        (r.role==='leader'
+          ?'<div class="ii"><div class="il">العمر</div><div class="iv">'+r.age+'</div></div>'
+          :'<div class="ii"><div class="il">القائد</div><div class="iv">'+r.ldr+'</div></div>')+
+        '<div class="ii"><div class="il">تاريخ الفقدان</div><div class="iv">'+r.ld+'</div></div>'+
+        '<div class="ii"><div class="il">المدة</div><div class="iv">'+r.days+'</div></div>'+
+        '<div class="prog-full">'+
+          '<div class="prog-lbl"><span>اكتمال الفريق</span>'+
+          '<span style="color:'+pfClr+';font-weight:700;">'+toAr(r.mbr.length)+' / ١٠</span></div>'+
+          '<div class="prog-bar"><div class="'+pfCls+'" style="width:0%" data-w="'+Math.min(r.mbr.length*10,100)+'%"></div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="op-foot">'+
+        '<div style="display:flex;align-items:center;gap:8px;">'+
+          '<div class="p-avs">'+avs+'</div>'+
+          '<span style="font-size:11.5px;color:var(--ink-muted);">'+toAr(r.mbr.length)+' متطوع</span>'+
+        '</div>'+
+        '<div class="p-dtag">⏱ '+r.days+'</div>'+
+      '</div>'+
+    '</div>';
+  });
+  el.innerHTML=h;
+  setTimeout(function(){
+    document.querySelectorAll('.pf[data-w]').forEach(function(f){
+      setTimeout(function(){f.style.width=f.getAttribute('data-w');},80);
+    });
+  },50);
+}
+
+function openTrack(id){
+  var r=null;MY_OPS.forEach(function(o){if(o.id===id)r=o;});if(!r)return;
+  document.getElementById('mtBadge').innerHTML='<span class="op-badge '+(r.role==='leader'?'bl':'bm')+'">'+(r.role==='leader'?'يوسف القائد':'عضو في الفريق')+'</span>';
+  document.getElementById('mtName').textContent=r.nm;
+  document.getElementById('mtLoc').textContent='📍 '+r.loc;
+  var keys=['العمر','الحالة الصحية','المركبة','تاريخ الفقدان','المدة','قائد الفريق'];
+  var vals=[r.age+' سنة',r.hlth,r.veh,r.ld,r.days,r.ldr];
+  var dh='';for(var i=0;i<keys.length;i++)
+    dh+='<div class="p-di"><div class="dl">'+keys[i]+'</div><div class="dv">'+vals[i]+'</div></div>';
+  document.getElementById('mtDetails').innerHTML=dh;
+  document.getElementById('mtDesc').textContent=r.desc||'—';
+  var th='';
+  r.mbr.forEach(function(m){
+    var info=TEAM[m.i]||{n:'متطوع',p:'—',c:m.c};
+    var isMe=(m.i==='أن'||m.i==='يو');
+    var nm=isMe?'يوسف الدوسري':info.n;
+    var rl=isMe?(r.role==='leader'?'قائد':'عضو'):'عضو';
+    th+='<div class="team-member">'+
+      '<div class="tm-av" style="background:'+m.c+';">'+m.i+'</div>'+
+      '<div style="flex:1;min-width:0;"><div class="tm-name">'+nm+'</div><div class="tm-phone" dir="ltr">'+info.p+'</div></div>'+
+      '<span class="tm-role">'+rl+'</span></div>';
+  });
+  document.getElementById('mtTeam').innerHTML=th;
+  document.getElementById('mtFoot').innerHTML=
+    '<button class="op-act act-blue" style="width:100%;padding:13px;border-radius:12px;font-size:14px;" onclick="window.location.href=\'RealTimeReportDetails.html?id='+r.id+'\'">📍 متابعة العملية الميدانية</button>';
+  document.getElementById('modalTrack').classList.add('on');
+}
+
+function openLog(id){
+  var r=null;MY_OPS.forEach(function(o){if(o.id===id)r=o;});if(!r||!r.closed)return;
+  document.getElementById('mlBadge').innerHTML='<span class="op-badge bc">✅ مغلقة — منجزة</span>';
+  document.getElementById('mlName').textContent=r.nm;
+  document.getElementById('mlLoc').textContent='📍 '+r.loc;
+  var keys=['العمر','الحالة الصحية','المركبة','تاريخ الفقدان','مدة البلاغ','قائد الفريق','عدد المتطوعين','نتيجة العملية'];
+  var vals=[r.age+' سنة',r.hlth,r.veh,r.ld,r.duration,r.ldr,toAr(r.mbr.length)+' أفراد','تم الانقاذ بنجاح ✅'];
+  var dh='';for(var i=0;i<keys.length;i++)
+    dh+='<div class="p-di"><div class="dl">'+keys[i]+'</div><div class="dv">'+vals[i]+'</div></div>';
+  document.getElementById('mlDetails').innerHTML=dh;
+  document.getElementById('mlFound').textContent=r.foundAt||'—';
+  document.getElementById('mlTimeline').innerHTML=
+    '<div class="tl-item"><div class="tl-dot start">🚨</div><div class="tl-content"><div class="tl-lbl">بدء البلاغ</div><div class="tl-time">'+r.startDate+'</div><div class="tl-dur">استلم البلاغ وبدأ تشكيل الفريق</div></div></div>'+
+    '<div class="tl-item"><div class="tl-dot found">✅</div><div class="tl-content"><div class="tl-lbl">تم العثور على المفقودين</div><div class="tl-time">'+r.foundDate+'</div><div class="tl-dur">'+r.foundAt+'</div></div></div>'+
+    '<div class="tl-item"><div class="tl-dot close">🔒</div><div class="tl-content"><div class="tl-lbl">اغلاق البلاغ</div><div class="tl-time">'+r.closeDate+'</div><div class="tl-dur">المدة الاجمالية: '+r.duration+'</div></div></div>';
+  var th='';
+  r.mbr.forEach(function(m){
+    var info=TEAM[m.i]||{n:'متطوع',p:'—',c:m.c};
+    var isMe=(m.i==='أن'||m.i==='يو');
+    var nm=isMe?'يوسف الدوسري':info.n;
+    th+='<div class="team-member">'+
+      '<div class="tm-av" style="background:'+m.c+';">'+m.i+'</div>'+
+      '<div style="flex:1;min-width:0;"><div class="tm-name">'+nm+'</div><div class="tm-phone" dir="ltr">'+info.p+'</div></div>'+
+      '<span class="tm-role">عضو</span></div>';
+  });
+  document.getElementById('mlTeam').innerHTML=th;
+  document.getElementById('mlFoot').innerHTML=
+    '<button class="op-act act-green" style="width:100%;padding:13px;border-radius:12px;font-size:14px;" onclick="closeModal(\'modalLog\')">اغلاق السجل</button>';
+  document.getElementById('modalLog').classList.add('on');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('on');}
+document.querySelectorAll('.p-overlay').forEach(function(o){
+  o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('on');});
+});
+
+var DRONE_MSGS=[
+  {icon:'🧍',type:'orange',drone:'DRONE-A1',op:'BLG-1124',msg:'كشف جسم بشري — الحالة: محتمل | BLG-1124'},
+  {icon:'🔋',type:'red',   drone:'DRONE-A1',op:'BLG-1124',msg:'بطارية DRONE-A1: 15%'},
+  {icon:'🧍',type:'orange',drone:'DRONE-B2',op:'BLG-1100',msg:'كشف جسم بشري — الحالة: غير متحرك | BLG-1100'},
+  {icon:'🔋',type:'red',   drone:'DRONE-B2',op:'BLG-1100',msg:'بطارية DRONE-B2: 8%'},
+  {icon:'🧍',type:'orange',drone:'DRONE-A1',op:'BLG-1124',msg:'كشف جسم بشري — الحالة: متحرك | BLG-1124'},
+  {icon:'🔋',type:'red',   drone:'DRONE-A1',op:'BLG-1124',msg:'بطارية DRONE-A1: 7%'},
+  {icon:'🧍',type:'orange',drone:'DRONE-B2',op:'BLG-1100',msg:'كشف جسم بشري — الحالة: محتمل | BLG-1100'},
+  {icon:'🔋',type:'red',   drone:'DRONE-B2',op:'BLG-1100',msg:'بطارية DRONE-B2: 20%'}
+];
+var droneNotifs=[],droneIdx=0;
+
+function fmtDT(ts){
+  var d=new Date(ts);
+  var date=toAr(d.getDate())+'/'+(toAr(d.getMonth()+1))+'/'+toAr(d.getFullYear());
+  var h=d.getHours(),m=d.getMinutes(),ap=h>=12?'م':'ص';
+  h=h%12||12;
+  return{date:date,time:toAr(h)+':'+toAr(String(m).padStart(2,'0'))+' '+ap};
+}
+function timeAgo(ms){
+  var s=Math.floor(ms/1000);
+  if(s<60)return'الآن';
+  if(s<3600)return'منذ '+toAr(Math.floor(s/60))+' دقيقة';
+  return'منذ '+toAr(Math.floor(s/3600))+' ساعة';
+}
+function renderPopup(){
+  var el=document.getElementById('dpList');
+  if(!droneNotifs.length){el.innerHTML='<div class="dp-empty">لا توجد اشعارات بعد</div>';return;}
+  var h='';
+  droneNotifs.slice(0,5).forEach(function(n){
+    var dt=fmtDT(n.ts);
+    h+='<div class="dp-item" onclick="expandFull()">'+
+      '<div class="dp-top">'+
+        '<div class="dp-left">'+(n.unread?'<div class="dp-unread"></div>':'')+
+          '<span class="dp-icon">'+n.icon+'</span>'+
+          '<span class="dp-name">'+n.drone+' · '+n.op+'</span></div>'+
+        '<span class="dp-dt">'+dt.date+' '+dt.time+'</span>'+
+      '</div>'+
+      '<div class="dp-msg">'+n.msg+'</div>'+
+    '</div>';
+  });
+  el.innerHTML=h;
+}
+function renderFull(){
+  var el=document.getElementById('droneListFull');
+  if(!droneNotifs.length)return;
+  var h='';
+  droneNotifs.forEach(function(n){
+    var dt=fmtDT(n.ts);
+    var st=n.type==='red'?'red':'orange';
+    h+='<div class="dc"><div class="dc-stripe '+st+'"></div>'+
+      '<div class="dc-body"><div class="dc-icon">'+n.icon+'</div>'+
+        '<div class="dc-content">'+
+          '<div class="dc-dname">'+n.drone+' · '+n.op+'</div>'+
+          '<div class="dc-msg">'+n.msg+'</div>'+
+          '<div class="dc-meta">'+dt.date+' — '+dt.time+' · '+timeAgo(Date.now()-n.ts)+'</div>'+
+        '</div>'+
+        (n.unread?'<div style="width:7px;height:7px;border-radius:50%;background:#e07830;flex-shrink:0;margin-top:5px;"></div>':'')+
+      '</div></div>';
+  });
+  el.innerHTML=h;
+}
+function pushDrone(){
+  var m=DRONE_MSGS[droneIdx%DRONE_MSGS.length];droneIdx++;
+  droneNotifs.unshift({icon:m.icon,type:m.type,drone:m.drone,op:m.op,msg:m.msg,ts:Date.now(),unread:true});
+  if(droneNotifs.length>12)droneNotifs.pop();
+  var popOpen=document.getElementById('dronePopup').classList.contains('open');
+  var fullOpen=document.getElementById('droneFull').classList.contains('open');
+  if(!popOpen&&!fullOpen){
+    unread++;
+    var b=document.getElementById('droneBadge');
+    b.textContent=toAr(unread);b.classList.remove('hidden');
+  }
+  if(popOpen)renderPopup();
+  if(fullOpen)renderFull();
+  setTimeout(function(){if(droneNotifs[0]){droneNotifs[0].unread=false;renderPopup();renderFull();}},4000);
+}
+
+setInterval(renderFull,30000);
+setInterval(pushDrone,7000);
+setTimeout(pushDrone,1800);
+setTimeout(pushDrone,4500);
+renderOps();
+</script>
+</body>
+</html>

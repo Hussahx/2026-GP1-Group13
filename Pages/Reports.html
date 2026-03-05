@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#c8a06a" />
+  <title>راصد — بلاغات البحث والإنقاذ</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS شروق -->
+  <link rel="stylesheet" href="../CSS/Rasid.css" />
+
+  <style>
+    :root{
+      --bg:#f9f6f1; --white:#fff;
+      --s100:#f5ece0; --s200:#e8d9c4; --s300:#d4bc98;
+      --s400:#b8965e; --s500:#9a7440; --s600:#7a5828;
+      --t900:#2a1e0e; --t700:#5a3e20; --t500:#8c6840; --t300:#b89870;
+      --bdr:rgba(180,140,80,0.15); --acc:#b8782a;
+      --ndot:#e07830; --adot:#2d9e52; --odot:#4060c8;
+      --red:#c0392b; --grn:#1e8040;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--t900);min-height:100vh;overflow-x:hidden;}
+
+    /* ✅ مهم: عزل أي transform من Rasid.css عشان fixed ما ينكسر */
+    .reports-scope, .page-body, .page-header { transform:none !important; }
+
+    /* ====== (إجبار) التوست + المودال فوق الهيدر مهما صار ====== */
+    .nwrap{
+      position:fixed !important;
+      top:14px !important;
+      left:50% !important;
+      transform:translateX(-50%) !important;
+      z-index:99999 !important;
+      display:flex !important;
+      flex-direction:column !important;
+      gap:7px !important;
+      pointer-events:none !important;
+      align-items:center !important;
+      width:88% !important;
+      max-width:380px !important;
+    }
+    .notif{
+      background:var(--white) !important;
+      border-radius:12px !important;
+      padding:11px 15px !important;
+      box-shadow:0 6px 24px rgba(0,0,0,.13) !important;
+      font-size:13px !important;
+      color:var(--t900) !important;
+      font-weight:500 !important;
+      width:100% !important;
+      border-right:4px solid !important;
+      animation:nin .3s ease,nout .3s ease 3.5s forwards !important;
+    }
+    .ns{border-color:#2d9e52 !important;}
+    .ni{border-color:#4060c8 !important;}
+    .nw{border-color:#e07830 !important;}
+    @keyframes nin{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes nout{from{opacity:1;}to{opacity:0;}}
+
+    .overlay{
+      position:fixed !important;
+      inset:0 !important;
+      background:rgba(20,10,0,.55) !important;
+      z-index:99990 !important;
+      display:flex !important;
+      align-items:flex-end !important;
+      justify-content:center !important;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s;
+    }
+    .overlay.on{opacity:1;pointer-events:all;}
+    .modal{
+      background:var(--white);
+      border-radius:20px 20px 0 0;
+      width:100%;
+      max-width:560px;
+      max-height:90vh;
+      overflow-y:auto;
+      transform:translateY(40px);
+      transition:transform .3s ease;
+    }
+    .overlay.on .modal{transform:translateY(0);}
+
+    
+
+    /* ====== باقي ستايل صفحتك ====== */
+    .sticky{position:sticky;top:0;z-index:100;background:rgba(249,246,241,.97);border-bottom:1px solid var(--bdr);}
+    .s-inner{max-width:1120px;margin:0 auto;padding:0 20px;}
+    .tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--bdr);}
+    .tabs::-webkit-scrollbar{display:none;}
+    .tab{flex-shrink:0;padding:13px 16px;font-size:13px;font-weight:600;color:var(--t500);cursor:pointer;border:none;border-bottom:2.5px solid transparent;background:none;font-family:'Tajawal',sans-serif;white-space:nowrap;transition:all .2s;}
+    .tab.on{color:var(--t900);border-bottom-color:var(--acc);font-weight:700;}
+    .tc{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;border-radius:9px;font-size:10px;font-weight:700;margin-right:4px;padding:0 3px;}
+    .tca{background:var(--s200);color:var(--s600);}
+    .tcn{background:#fde8d0;color:#c05820;}
+    .tck{background:#d4f0dc;color:#1a6830;}
+    .tco{background:#dce4f8;color:#2840a0;}
+    .frow{display:flex;gap:8px;padding:9px 0 7px;align-items:center;}
+    .sinput{flex:1;min-width:0;padding:9px 14px;background:var(--white);border:1.5px solid var(--bdr);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:13px;color:var(--t900);outline:none;direction:rtl;}
+    .sinput:focus{border-color:var(--s300);}
+    .sinput::placeholder{color:var(--t300);}
+    .sselect{flex-shrink:0;padding:9px 11px;background:var(--white);border:1.5px solid var(--bdr);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:12px;color:var(--t700);outline:none;cursor:pointer;}
+    .main{max-width:1120px;margin:0 auto;padding:24px 20px 48px;}
+    .sec{margin-bottom:32px;}
+    .sec-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+    .sec-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+    .sec-head h2{font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--t700);}
+    .sec-line{flex:1;height:1px;background:linear-gradient(to left,transparent,var(--s200));}
+    .sec-cnt{font-size:11.5px;color:var(--t300);font-weight:600;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;}
+    .scroll-row{display:flex;gap:14px;overflow-x:auto;padding-bottom:12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
+    .scroll-row::-webkit-scrollbar{height:4px;}
+    .scroll-row::-webkit-scrollbar-track{background:var(--s100);border-radius:2px;}
+    .scroll-row::-webkit-scrollbar-thumb{background:var(--s300);border-radius:2px;}
+    .scroll-row .card{min-width:290px;max-width:290px;scroll-snap-align:start;flex-shrink:0;}
+    .card{background:var(--white);border-radius:16px;border:1.5px solid var(--bdr);overflow:hidden;position:relative;transition:transform .2s,box-shadow .2s;}
+    .card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(100,60,20,.1);}
+    .card::before{content:'';position:absolute;top:0;right:0;width:4px;height:100%;border-radius:0 16px 16px 0;}
+    .cn::before{background:linear-gradient(180deg,#e07830,#f0a060);}
+    .ca::before{background:linear-gradient(180deg,#2d9e52,#60c880);}
+    .co::before{background:linear-gradient(180deg,#4060c8,#80a0e8);}
+    .ctop{padding:15px 16px 12px;border-bottom:1px solid var(--s100);}
+    .cmeta{display:flex;align-items:center;margin-bottom:7px;}
+    .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:11px;font-size:11px;font-weight:700;}
+    .bn{background:#fef9f4;color:#c05820;border:1px solid #f0d4a8;}
+    .bk{background:#f4faf5;color:#1a6830;border:1px solid #a8d8b0;}
+    .bo{background:#f4f6ff;color:#2840a0;border:1px solid #b8c8f0;}
+    .cid{font-size:13.5px;font-weight:800;color:var(--t900);margin-bottom:4px;}
+    .cloc{font-size:12px;color:var(--t500);}
+    .cbody{padding:12px 16px;}
+    .igrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 11px;margin-bottom:12px;}
+    .il{font-size:9.5px;color:var(--t300);letter-spacing:.7px;text-transform:uppercase;font-weight:600;margin-bottom:1px;}
+    .iv{font-size:12.5px;color:var(--t700);font-weight:500;}
+    .info-item{display:flex;flex-direction:column;gap:2px;}
+    .info-item .iv{line-height:1.35;}
+    .prow{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--s100);flex-wrap:wrap;gap:5px;}
+    .avs{display:flex;}
+    .av{width:26px;height:26px;border-radius:50%;border:2px solid var(--white);display:flex;align-items:center;justify-content:center;font-size:9px;margin-left:-5px;color:#fff;font-weight:700;flex-shrink:0;}
+    .av:first-child{margin-left:0;}
+    .pcnt{font-size:11.5px;color:var(--t500);}
+    .dtag{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--red);font-weight:600;background:#fef2f2;padding:2px 7px;border-radius:5px;border:1px solid #ffd4d0;}
+    .cact{display:flex;gap:7px;padding:9px 16px 14px;}
+
+    /* ✅ رفع specificity للأزرار حتى Rasid.css ما يغير ألوانها */
+    body.reports-page .btn{
+      flex:1;
+      padding:10px 4px;
+      border-radius:10px;
+      font-family:'Tajawal',sans-serif;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+      transition:opacity .15s;
+      text-align:center;
+      border:1.5px solid;
+      min-height:44px;
+      touch-action:manipulation;
+      background:transparent;
+    }
+    body.reports-page .btn:active{opacity:.78;}
+    body.reports-page .bto{background:linear-gradient(135deg,#e07830,#c05820);border-color:transparent;color:#fff;}
+    body.reports-page .bjn{background:linear-gradient(135deg,#2d9e52,#1a7038);border-color:transparent;color:#fff;}
+    body.reports-page .bvw{background:transparent;border-color:var(--bdr);color:var(--t700);}
+    body.reports-page .bph{background:transparent;border-color:#a8d8b0;color:var(--grn);font-size:11.5px;}
+    body.reports-page .bov{background:transparent;border-color:#b8c8f0;color:#2840a0;}
+
+    .urg{position:absolute;top:10px;left:10px;padding:2px 7px;border-radius:5px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+    .uh{background:#fff0ee;color:#c0392b;border:1px solid #ffb8b0;}
+    .um{background:#fff8ee;color:#c07020;border:1px solid #ffd898;}
+
+    .mhandle{width:36px;height:4px;background:var(--s300);border-radius:2px;margin:10px auto 0;}
+    .mhead{padding:14px 18px 13px;border-bottom:1px solid var(--s100);display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+    .mclose{background:none;border:none;font-size:18px;cursor:pointer;color:var(--t300);padding:4px 8px;border-radius:8px;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;}
+    .mclose:active{background:var(--s100);}
+    .mbody{padding:16px 18px;}
+    .msec{margin-bottom:16px;}
+    .mstitle{font-size:9.5px;letter-spacing:3px;text-transform:uppercase;color:var(--t300);font-weight:700;margin-bottom:9px;}
+    .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .di{background:var(--s100);border-radius:9px;padding:10px 12px;}
+    .di .dl{font-size:9.5px;color:var(--t300);letter-spacing:.7px;text-transform:uppercase;font-weight:600;margin-bottom:2px;}
+    .di .dv{font-size:12.5px;color:var(--t900);font-weight:600;}
+    .mdesc{font-size:13px;color:var(--t700);line-height:1.8;background:var(--s100);border-radius:9px;padding:12px;}
+    .mfoot{padding:12px 18px 24px;border-top:1px solid var(--s100);}
+
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,158,82,.5);}70%{box-shadow:0 0 0 6px rgba(45,158,82,0);}100%{box-shadow:0 0 0 0 rgba(45,158,82,0);}}
+
+    @media(max-width:767px){
+      .s-inner{padding:0 14px;}
+      .tab{padding:12px 13px;font-size:12.5px;}
+      .main{padding:16px 14px 36px;}
+      .grid{grid-template-columns:1fr;gap:11px;}
+      .modal{border-radius:20px 20px 0 0;max-width:100%;}
+      .dgrid{grid-template-columns:1fr 1fr;}
+      .overlay{align-items:flex-end;padding:0;}
+    }
+    @media(max-width:380px){
+      .s-inner{padding:0 11px;}
+      .tab{padding:11px 11px;font-size:12px;}
+      .main{padding:14px 12px 30px;}
+      .dgrid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+
+<body class="reports-page">
+
+  <!-- ✅ التوست برا أي wrapper عشان ما يتأثر بـ Rasid.css -->
+  <div class="nwrap" id="nwrap"></div>
+
+  <!-- ✅ المودال برا أي wrapper -->
+  <div class="overlay" id="modal">
+    <div class="modal">
+      <div class="mhandle"></div>
+      <div class="mhead">
+        <div>
+          <div id="mBadge" style="margin-bottom:5px;"></div>
+          <div id="mName" style="font-family:'Scheherazade New',serif;font-size:1.35rem;font-weight:700;color:var(--t900);"></div>
+          <div id="mLoc" style="font-size:12px;color:var(--t500);margin-top:2px;"></div>
+        </div>
+        <button class="mclose" id="mcloseBtn" type="button">✕</button>
+      </div>
+      <div class="mbody">
+        <div class="msec"><div class="mstitle">معلومات المفقود</div><div class="dgrid" id="mDetails"></div></div>
+        <div class="msec"><div class="mstitle">تفاصيل</div><div class="mdesc" id="mDesc"></div></div>
+        <div class="msec"><div class="mstitle">فريق البحث</div><div id="mTeam"></div></div>
+      </div>
+      <div class="mfoot" id="mFoot"></div>
+    </div>
+  </div>
+
+  <div class="reports-scope">
+    <!-- هيدر شروق -->
+    <header class="page-header">
+      <div class="header-logo-mark" aria-hidden="true">
+        <img src="../assest/New-logo.JPG.jpeg" alt="شعار راصد" />
+      </div>
+      <div class="header-brand">
+        <h1>راصد</h1>
+        <p>عين الصحراء - ⟡ لوحة البلاغات الميدانية</p>
+      </div>
+      <nav class="header-nav" aria-label="تنقل سريع">
+       <div class="user-chip" title="حسابي" onclick="window.location.href='Profile.html'" style="cursor:pointer;">
+  <span class="avatar" id="userInitial">ي</span>
+  <span class="name" id="userName">يوسف</span>
+  
+</div>
+      </nav>
+    </header>
+
+    <main class="page-body">
+      <div class="page-heading">
+        <div class="page-heading-eyebrow" aria-hidden="true">
+          <span></span>
+          __ لوحة البلاغات الميداني __
+          <span></span>
+        </div>
+        <h2>بلاغات البحث والإنقاذ</h2>
+        <p>تتبّع وانضم وأدر عمليات البحث عن المفقودين في الصحراء</p>
+      </div>
+    </main>
+
+    <div class="sticky">
+      <div class="s-inner">
+        <div class="tabs">
+          <button class="tab on" data-tab="all"><span class="tc tca" id="tca">15</span>الكل</button>
+          <button class="tab" data-tab="new"><span class="tc tcn" id="tcn">6</span>جديدة</button>
+          <button class="tab" data-tab="active"><span class="tc tck" id="tck">9</span>جارٍ العمل</button>
+          <button class="tab" data-tab="org"><span class="tc tco" id="tco">0</span>منظّم لها</button>
+        </div>
+        <div class="frow">
+          <input class="sinput" id="srch" type="search" placeholder="🔍 ابحث باسم أو رقم أو منطقة...">
+          <select class="sselect" id="srt">
+            <option value="newest">الأحدث</option>
+            <option value="urgent">الأعلى أولوية</option>
+            <option value="oldest">الأقدم</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="sec" id="sNew">
+        <div class="sec-head">
+          <div class="sec-dot" style="background:var(--ndot);"></div>
+          <h2>بلاغات جديدة</h2><div class="sec-line"></div><div class="sec-cnt" id="cntN"></div>
+        </div>
+        <div class="grid" id="gNew"></div>
+      </div>
+
+      <div class="sec" id="sAct">
+        <div class="sec-head">
+          <div class="sec-dot" style="background:var(--adot);animation:pulse 1.4s infinite;"></div>
+          <h2>جارٍ العمل عليها</h2><div class="sec-line"></div><div class="sec-cnt" id="cntA"></div>
+        </div>
+        <div class="grid" id="gAct"></div>
+      </div>
+
+      <div class="sec" id="sOrg">
+        <div class="sec-head">
+          <div class="sec-dot" style="background:var(--odot);"></div>
+          <h2>المنظّم لها</h2><div class="sec-line"></div><div class="sec-cnt" id="cntO"></div>
+        </div>
+        <div class="grid" id="gOrg"></div>
+      </div>
+    </div>
+
+    <footer>
+      <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+        <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
+      </svg>
+      <div class="footer-inner">
+        <div class="f-brand">
+          <div class="f-logo">راصد<span>RASID</span></div>
+          <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
+        </div>
+        <div class="f-col">
+          <h4>روابط سريعة</h4>
+          <ul>
+            <li><a href="index.html">الصفحة الرئيسية</a></li>
+            <li><a href="login.html">تسجيل الدخول</a></li>
+            <li><a href="Regester.html">انضم كمتطوع</a></li>
+            <li><a href="track-report.html">تتبع البلاغ</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>أرقام الطوارئ</h4>
+          <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+          <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+        </div>
+      </div>
+      <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+      <div class="footer-dune"></div>
+    </footer>
+  </div>
+
+  <script>
+    var TAB  = 'all';
+    var SRCH = '';
+    var SORT = 'newest';
+
+    var TEAM = {
+      'أح':{n:'أحمد العمري',p:'0501110001'},'مح':{n:'محمد الغامدي',p:'0502220002'},
+      'فه':{n:'فهد الحربي',p:'0503330003'},'سل':{n:'سلطان الزهراني',p:'0504440004'},
+      'عب':{n:'عبدالله المطيري',p:'0505550005'},'رش':{n:'راشد الشمري',p:'0506660006'},
+      'ند':{n:'نادر العتيبي',p:'0507770007'},'خا':{n:'خالد القحطاني',p:'0508880008'},
+      'يو':{n:'يوسف الدوسري',p:'0509990009'},'عم':{n:'عمر السبيعي',p:'0511001100'},
+      'بد':{n:'بدر الرشيدي',p:'0512002200'},'طا':{n:'طارق السلمي',p:'0513003300'},
+      'نا':{n:'ناصر الحميد',p:'0514004400'},'رم':{n:'رامي العنزي',p:'0515005500'},
+      'سع':{n:'سعد المالكي',p:'0516006600'},'وا':{n:'وائل الجهني',p:'0517007700'},
+      'أم':{n:'أمير الخالدي',p:'0518008800'},'هن':{n:'هاني الصاعدي',p:'0519009900'},
+      'يا':{n:'ياسر الزهراني',p:'0521002200'},'حس':{n:'حسن الحارثي',p:'0523004400'},
+      'حم':{n:'حمزة الشهري',p:'0524005500'},'عا':{n:'عامر الغامدي',p:'0525006600'},
+      'أس':{n:'أسامة الدوسري',p:'0526007700'},'سا':{n:'سالم الشهراني',p:'0527008800'},
+      'أن':{n:'أنت',p:'0512345678'}
+    };
+    function gm(k){ return TEAM[k]||{n:'متطوع '+k,p:'—'}; }
+
+    var NR = [
+      {id:'BLG-1124',ar:'BLG-١١٢٤',nm:'خالد السهلي',loc:'صحراء الربع الخالي — الرياض',days:'منذ ١٣ يوماً',ld:'١٦ فبراير ٢٠٢٦',dt:6,age:'٤٢',hlth:'لا يوجد',
+      det:{العمر:'٤٢ سنة','تاريخ الفقدان':'١٦ فبراير ٢٠٢٦','آخر موقع':'طريق الوادي الجنوبي',المركبة:'لاندكروزر بيضاء','المطلوب':'٨ متطوعين','الحالة الصحية':'لا يوجد'},
+      desc:'آخر اتصال كان الساعة ٣ عصراً. ذهب لاستكشاف منطقة الوادي الجنوبي بمفرده ولم يعد.',mbr:[]},
+      {id:'BLG-1125',ar:'BLG-١١٢٥',nm:'محمد العتيبي',loc:'صحراء النفود الكبير — حائل',days:'منذ ٧ أيام',ld:'٢٢ فبراير ٢٠٢٦',dt:5,age:'٢٨',hlth:'لا يوجد',
+      det:{العمر:'٢٨ سنة','تاريخ الفقدان':'٢٢ فبراير ٢٠٢٦',الملابس:'ثوب أبيض، شماغ أحمر','المطلوب':'٨ متطوعين',النشاط:'رحلة استكشافية','الحالة الصحية':'لا يوجد'},
+      desc:'خرج مع مجموعة وانفصل عنهم.',mbr:[]},
+      {id:'BLG-1126',ar:'BLG-١١٢٦',nm:'عبدالرحمن الشمري',loc:'صحراء الدهناء — الأحساء',days:'منذ يومين',ld:'٢٧ فبراير ٢٠٢٦',dt:4,age:'٣٣',hlth:'لا يوجد',
+      det:{العمر:'٣٣ سنة','تاريخ الفقدان':'٢٧ فبراير ٢٠٢٦',المركبة:'دراجة نارية بيضاء','المطلوب':'٥ متطوعين',النشاط:'تجوّل صحراوي','الحالة الصحية':'لا يوجد'},
+      desc:'خرج في رحلة قصيرة ولم يعد.',mbr:[]},
+      {id:'BLG-1127',ar:'BLG-١١٢٧',nm:'فيصل الحربي',loc:'منطقة تبوك الصحراوية',days:'منذ ٤ أيام',ld:'٢٥ فبراير ٢٠٢٦',dt:3,age:'٥١',hlth:'لا يوجد',
+      det:{العمر:'٥١ سنة','تاريخ الفقدان':'٢٥ فبراير ٢٠٢٦','آخر موقع':'شمال غرب تبوك',المركبة:'هايلكس رمادي','المطلوب':'٦ متطوعين','الحالة الصحية':'لا يوجد'},
+      desc:'خرج لرحلة صيد ولم يتصل بعائلته منذ ٤ أيام.',mbr:[]},
+      {id:'BLG-1128',ar:'BLG-١١٢٨',nm:'سعد القحطاني',loc:'صحراء الكبد — شمال الرياض',days:'منذ يوم',ld:'٢٨ فبراير ٢٠٢٦',dt:2,age:'٣٨',hlth:'لا يوجد',
+      det:{العمر:'٣٨ سنة','تاريخ الفقدان':'٢٨ فبراير ٢٠٢٦',المركبة:'فور رانر أسود','المطلوب':'٤ متطوعين',النشاط:'تخييم','الحالة الصحية':'لا يوجد'},
+      desc:'تأخر عن موعد عودته بـ ٢٤ ساعة.',mbr:[]},
+      {id:'BLG-1129',ar:'BLG-١١٢٩',nm:'نورة الدوسري',loc:'منطقة نجران الجنوبية',days:'منذ ٥ أيام',ld:'٢٤ فبراير ٢٠٢٦',dt:1,age:'٦٥',hlth:'ضغط وسكري',
+      det:{العمر:'٦٥ سنة','تاريخ الفقدان':'٢٤ فبراير ٢٠٢٦','الحالة الصحية':'ضغط وسكري','المطلوب':'١٠ متطوعين',النشاط:'رحلة عائلية',الملابس:'عباءة سوداء'},
+      desc:'سيدة كبيرة في السن تحتاج دواء يومياً.',mbr:[]}
+    ];
+
+    var AR = [
+      {id:'BLG-1118',ar:'BLG-١١١٨',nm:'فيصل الدوسري',loc:'منطقة نجران الصحراوية',days:'منذ أمس',ld:'٢٨ فبراير ٢٠٢٦',dt:9,age:'٤٧',hlth:'لا يوجد',
+      ldr:'م. أحمد الزهراني',lph:'0501234567',upd:'قبل ٤٥ دقيقة',
+      det:{العمر:'٤٧ سنة','الحالة الصحية':'لا يوجد',النشاط:'رحلة صيد','آخر تحديث':'قبل ٤٥ دقيقة','قائد الفريق':'م. أحمد الزهراني'},
+      desc:'الفريق يمشط المنطقة الشمالية.',
+      mbr:[{i:'أح',c:'#9a7440'},{i:'مح',c:'#7a5828'},{i:'خا',c:'#b8965e'},{i:'فه',c:'#8c6840'}]},
+      {id:'BLG-1115',ar:'BLG-١١١٥',nm:'راشد الحربي',loc:'صحراء تبوك الشمالية',days:'منذ ٣ أيام',ld:'٢٦ فبراير ٢٠٢٦',dt:8,age:'٥٨',hlth:'لا يوجد',
+      ldr:'م. سعد المالكي',lph:'0509876543',upd:'قبل ساعتين',
+      det:{العمر:'٥٨ سنة','الحالة الصحية':'لا يوجد',المركبة:'نيسان باترول رمادية','آخر تحديث':'قبل ساعتين','قائد الفريق':'م. سعد المالكي'},
+      desc:'الفريق يستخدم الدرونز للمسح الجوي.',
+      mbr:[{i:'سع',c:'#b8965e'},{i:'ند',c:'#9a7440'},{i:'طا',c:'#7a5828'}]},
+      {id:'BLG-1110',ar:'BLG-١١١٠',nm:'آل سبيعي (٣ أفراد)',loc:'منطقة الجوف الصحراوية',days:'منذ ٥ أيام',ld:'٢٤ فبراير ٢٠٢٦',dt:7,age:'٨',hlth:'لا يوجد',
+      ldr:'م. خالد القرشي',lph:'0555443322',upd:'قبل ٣٠ دقيقة',
+      det:{العمر:'٣ أفراد (أصغرهم ٨ سنوات)','الحالة الصحية':'لا يوجد',النشاط:'تخييم عائلي','آخر تحديث':'قبل ٣٠ دقيقة','قائد الفريق':'م. خالد القرشي'},
+      desc:'عائلة من ٣ أشخاص. طائرة مروحية في الطريق.',
+      mbr:[{i:'خا',c:'#8c6840'},{i:'يو',c:'#b8965e'},{i:'عم',c:'#9a7440'},{i:'بد',c:'#7a5828'}]},
+      {id:'BLG-1112',ar:'BLG-١١١٢',nm:'بندر الرشيدي',loc:'صحراء الربع الخالي الجنوبي',days:'منذ ٦ أيام',ld:'٢٣ فبراير ٢٠٢٦',dt:6,age:'٤٤',hlth:'لا يوجد',
+      ldr:'م. طارق السبيعي',lph:'0501122334',upd:'قبل ساعة',
+      det:{العمر:'٤٤ سنة','الحالة الصحية':'لا يوجد',المركبة:'لاندكروزر بيضاء','آخر تحديث':'قبل ساعة','قائد الفريق':'م. طارق السبيعي'},
+      desc:'منطقة صعبة الوصول. الفريق يعمل مع طيران مدني.',
+      mbr:[{i:'طا',c:'#9a7440'},{i:'نا',c:'#b8965e'},{i:'رم',c:'#7a5828'}]},
+      {id:'BLG-1108',ar:'BLG-١١٠٨',nm:'ناصر العنزي',loc:'صحراء الدبدبة — الحدود الشمالية',days:'منذ ٨ أيام',ld:'٢١ فبراير ٢٠٢٦',dt:5,age:'٣٩',hlth:'لا يوجد',
+      ldr:'م. عمر الحميد',lph:'0544332211',upd:'قبل ٣ ساعات',
+      det:{العمر:'٣٩ سنة','الحالة الصحية':'لا يوجد',المركبة:'تاهو بيضاء','آخر تحديث':'قبل ٣ ساعات','قائد الفريق':'م. عمر الحميد'},
+      desc:'التنسيق مع الكويت لتغطية المنطقة الحدودية.',
+      mbr:[{i:'عم',c:'#8c6840'},{i:'حم',c:'#9a7440'},{i:'وا',c:'#b8965e'}]},
+      {id:'BLG-1105',ar:'BLG-١١٠٥',nm:'سليم الغامدي',loc:'منطقة عسير الجنوبية',days:'منذ يومين',ld:'٢٧ فبراير ٢٠٢٦',dt:4,age:'٢٥',hlth:'لا يوجد',
+      ldr:'م. بدر الزهراني',lph:'0512233445',upd:'قبل ٥ ساعات',
+      det:{العمر:'٢٥ سنة','الحالة الصحية':'لا يوجد',النشاط:'مشي جبلي-صحراوي','آخر تحديث':'قبل ٥ ساعات','قائد الفريق':'م. بدر الزهراني'},
+      desc:'شاب رياضي خرج منفرداً ولم يعد في الوقت المحدد.',
+      mbr:[{i:'يا',c:'#9a7440'}]},
+      {id:'BLG-1102',ar:'BLG-١٠١٠٢',nm:'مشعل الشهري',loc:'صحراء الحجاز الشرقية',days:'منذ ٩ أيام',ld:'٢٠ فبراير ٢٠٢٦',dt:3,age:'٥٢',hlth:'لا يوجد',
+      ldr:'م. فهد الرشيدي',lph:'0566778899',upd:'قبل ساعة',
+      det:{العمر:'٥٢ سنة','الحالة الصحية':'لا يوجد',المركبة:'جيب رانجلر أسود','آخر تحديث':'قبل ساعة','قائد الفريق':'م. فهد الرشيدي'},
+      desc:'تعطلت مركبته ويُعتقد أنه مشى سيراً نحو الطريق الرئيسي.',
+      mbr:[{i:'فه',c:'#8c6840'},{i:'مح',c:'#9a7440'},{i:'سل',c:'#b8965e'},{i:'نا',c:'#7a5828'}]},
+      {id:'BLG-1100',ar:'BLG-١١٠٠',nm:'هند المطيري',loc:'صحراء نجد الوسطى',days:'منذ ١١ يوماً',ld:'١٨ فبراير ٢٠٢٦',dt:2,age:'٣٢',hlth:'حمل ٧ أشهر',
+      ldr:'م. محمد الخالدي',lph:'0544556677',upd:'قبل ساعتين',
+      det:{العمر:'٣٢ سنة','الحالة الصحية':'حمل ٧ أشهر','آخر تحديث':'قبل ساعتين','قائد الفريق':'م. محمد الخالدي'},
+      desc:'حالة طارئة — المرأة في شهرها السابع. أولوية قصوى.',
+      mbr:[{i:'مح',c:'#9a7440'},{i:'عا',c:'#b8965e'},{i:'حس',c:'#8c6840'}]},
+      {id:'BLG-1098',ar:'BLG-١٠٩٨',nm:'عادل القرني',loc:'منطقة جازان الصحراوية',days:'منذ ١٥ يوماً',ld:'١٤ فبراير ٢٠٢٦',dt:1,age:'٦٠',hlth:'لا يوجد',
+      ldr:'م. أسامة الدوسري',lph:'0533221100',upd:'قبل ٤ ساعات',
+      det:{العمر:'٦٠ سنة','الحالة الصحية':'لا يوجد',المركبة:'لاند روفر أبيض','آخر تحديث':'قبل ٤ ساعات','قائد الفريق':'م. أسامة الدوسري'},
+      desc:'مزارع ذهب لتفقد أرضه ولم يعد.',
+      mbr:[{i:'أس',c:'#9a7440'},{i:'حم',c:'#7a5828'}]}
+    ];
+
+    var MR = [];
+
+    function a2w(s){ return String(s).replace(/[٠١٢٣٤٥٦٧٨٩]/g,function(d){return d.charCodeAt(0)-0x0660;}); }
+    function toAr(n){ return String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[+d];}); }
+
+    function parseArDate(ld){
+      if(!ld) return null;
+      var s=a2w(String(ld)).replace(/[،,]/g,' ').replace(/\s+/g,' ').trim();
+      var parts=s.split(' '); if(parts.length<3) return null;
+      var day=parseInt(parts[0],10), monName=parts[1], year=parseInt(parts[2],10);
+      var months={'يناير':0,'فبراير':1,'مارس':2,'أبريل':3,'ابريل':3,'مايو':4,'يونيو':5,'يوليو':6,'أغسطس':7,'اغسطس':7,'سبتمبر':8,'أكتوبر':9,'اكتوبر':9,'نوفمبر':10,'ديسمبر':11};
+      var m=months[monName]; if(m===undefined||isNaN(day)||isNaN(year)) return null;
+      var d=new Date(year,m,day); if(isNaN(d.getTime())) return null; return d;
+    }
+    function getReportTime(r){
+      var raw=(r&&r.ld)?r.ld:(r&&r.det&&(r.det['تاريخ الفقدان']||r.det['تاريخ البلاغ']))?(r.det['تاريخ الفقدان']||r.det['تاريخ البلاغ']):null;
+      var d=parseArDate(raw); if(d) return d.getTime();
+      return (typeof r.dt==='number')?r.dt:0;
+    }
+    function urgency(age,hlth){
+      var n=parseInt(a2w(String(age)))||0;
+      var bad=hlth&&hlth!=='لا يوجد'&&hlth!=='جيدة'&&hlth!=='—';
+      if(n<=12||n>=60||bad) return {cls:'uh',lbl:'طارئ جداً',ord:0};
+      return {cls:'um',lbl:'متوسط',ord:1};
+    }
+    function notify(msg,type){
+      var w=document.getElementById('nwrap'),d=document.createElement('div');
+      d.className='notif n'+(type||'i');
+      d.textContent=msg;
+      w.appendChild(d);
+      setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); },4200);
+    }
+
+    function applyFilter(arr){
+      if(!SRCH.trim()) return arr;
+      var qRaw=SRCH.trim(), qLow=qRaw.toLowerCase();
+      var qNorm=a2w(qLow).replace(/\s+/g,'').trim();
+      var qDigits=qNorm.replace(/\D/g,'');
+      return arr.filter(function(r){
+        var nm=(r.nm||'').toLowerCase();
+        var loc=(r.loc||'').toLowerCase();
+        var id=(r.id||'').toLowerCase();
+        var ar=a2w((r.ar||'').toLowerCase());
+        if(nm.indexOf(qLow)>-1) return true;
+        if(loc.indexOf(qLow)>-1) return true;
+        if(id.indexOf(qNorm)>-1) return true;
+        if(ar.indexOf(qNorm)>-1) return true;
+        if(qDigits){
+          var idDigits=id.replace(/\D/g,'');
+          var arDigits=ar.replace(/\D/g,'');
+          if(idDigits.indexOf(qDigits)>-1) return true;
+          if(arDigits.indexOf(qDigits)>-1) return true;
+        }
+        return false;
+      });
+    }
+    function applySort(arr){
+      var s=arr.slice();
+      if(SORT==='urgent'){
+        s.sort(function(a,b){
+          var ha=(a.hlth && a.hlth!=='لا يوجد' && a.hlth!=='جيدة' && a.hlth!=='—')?0:1;
+          var hb=(b.hlth && b.hlth!=='لا يوجد' && b.hlth!=='جيدة' && b.hlth!=='—')?0:1;
+          if(ha!==hb) return ha-hb;
+          var na=parseInt(a2w(String(a.age)))||0;
+          var nb=parseInt(a2w(String(b.age)))||0;
+          var aa=(na<=12||na>=60)?0:1;
+          var ab=(nb<=12||nb>=60)?0:1;
+          if(aa!==ab) return aa-ab;
+          return getReportTime(b)-getReportTime(a);
+        });
+      } else if(SORT==='oldest'){
+        s.sort(function(a,b){return getReportTime(a)-getReportTime(b);});
+      } else {
+        s.sort(function(a,b){return getReportTime(b)-getReportTime(a);});
+      }
+      return s;
+    }
+
+    function buildCards(arr,type){
+      if(!arr.length){
+        return '<div class="empty"><div class="ei">'+(type==='org'?'📋':'🔍')+'</div><p>'+
+          (type==='org'?'لم تنضم لأي بلاغ بعد.<br>تولّ بلاغاً جديداً أو انضم لبلاغ جارٍ.':'لا توجد نتائج تطابق بحثك.')+
+          '</p></div>';
+      }
+      var h='';
+      for(var i=0;i<arr.length;i++){
+        var r=arr[i],u=urgency(r.age,r.hlth);
+        var badge=type==='new'?'<span class="badge bn">جديد</span>'
+                 :type==='active'?'<span class="badge bk">جارٍ البحث</span>'
+                 :'<span class="badge bo">'+(r.role==='leader'?'أنت القائد':'عضو في الفريق')+'</span>';
+        var rows='';
+        if(type==='new'){
+          rows='<div class="info-item"><span class="il">اسم المفقود</span><span class="iv">'+r.nm+'</span></div>'+
+               '<div class="info-item"><span class="il">العمر</span><span class="iv">'+r.det['العمر']+'</span></div>'+
+               '<div class="info-item"><span class="il">الحالة الصحية</span><span class="iv">'+r.hlth+'</span></div>'+
+               '<div class="info-item"><span class="il">تاريخ الفقدان</span><span class="iv">'+(r.det['تاريخ الفقدان']||'—')+'</span></div>';
+        } else if(type==='active'){
+          rows='<div class="info-item"><span class="il">اسم المفقود</span><span class="iv">'+r.nm+'</span></div>'+
+               '<div class="info-item"><span class="il">القائد</span><span class="iv">'+r.ldr+'</span></div>'+
+               '<div class="info-item"><span class="il">الحالة الصحية</span><span class="iv">'+r.hlth+'</span></div>'+
+               '<div class="info-item"><span class="il">آخر تحديث</span><span class="iv">'+r.upd+'</span></div>';
+        } else {
+          rows='<div class="info-item"><span class="il">اسم المفقود</span><span class="iv">'+r.nm+'</span></div>'+
+               '<div class="info-item"><span class="il">دورك</span><span class="iv">'+(r.role==='leader'?'قائد الفريق':'عضو')+'</span></div>'+
+               '<div class="info-item"><span class="il">الحالة الصحية</span><span class="iv">'+r.hlth+'</span></div>'+
+               (r.role==='leader'
+                 ?'<div class="info-item"><span class="il">رقمك</span><span class="iv">'+(r.lph||'—')+'</span></div>'
+                 :'<div class="info-item"><span class="il">القائد</span><span class="iv">'+r.ldr+'</span></div>');
+        }
+
+        var avs='';
+        for(var j=0;j<Math.min(r.mbr.length,4);j++) avs+='<div class="av" style="background:'+r.mbr[j].c+';">'+r.mbr[j].i+'</div>';
+        if(r.mbr.length>4) avs+='<div class="av" style="background:var(--s400);">+'+(r.mbr.length-4)+'</div>';
+
+        var dtag=r.days
+          ?'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><div class="dtag">⏱ '+r.days+'</div>'+
+             (r.ld?'<div style="font-size:10px;color:var(--t300);">'+r.ld+'</div>':'')+
+           '</div>'
+          :'';
+
+        var btns='';
+        if(type==='new'){
+          btns='<button class="btn bto" data-act="takeover" data-id="'+r.id+'" type="button">تولّي البلاغ</button>'+
+               '<button class="btn bvw" data-act="openmodal" data-id="'+r.id+'" data-type="new" type="button">التفاصيل</button>';
+        } else if(type==='active'){
+          btns='<button class="btn bjn" data-act="join" data-id="'+r.id+'" type="button">انضمام للفريق</button>'+
+               '<button class="btn bph" data-act="call" data-ph="'+r.lph+'" data-nm="'+r.ldr+'" type="button">📞 '+r.lph+'</button>';
+        } else {
+          btns='<button class="btn bov" style="flex:2;" data-act="openmodal" data-id="'+r.id+'" data-type="org" type="button">متابعة العملية</button>';
+        }
+
+        h+='<div class="card c'+type[0]+'">'+
+          '<div class="urg '+u.cls+'">'+u.lbl+'</div>'+
+          '<div class="ctop"><div class="cmeta">'+badge+'</div>'+
+            '<div class="cid">'+r.ar+'</div>'+
+            '<div class="cloc">📍 '+r.loc+'</div></div>'+
+          '<div class="cbody">'+
+            '<div class="igrid">'+rows+'</div>'+
+            '<div class="prow">'+
+              '<div style="display:flex;align-items:center;gap:6px;"><div class="avs">'+avs+'</div>'+
+              '<span class="pcnt">'+toAr(r.mbr.length)+' متطوع</span></div>'+
+              dtag+
+            '</div></div>'+
+          '<div class="cact">'+btns+'</div>'+
+        '</div>';
+      }
+      return h;
+    }
+
+    function render(){
+      var sN=TAB==='all'||TAB==='new';
+      var sA=TAB==='all'||TAB==='active';
+      var sO=TAB==='all'||TAB==='org';
+      document.getElementById('sNew').style.display=sN?'':'none';
+      document.getElementById('sAct').style.display=sA?'':'none';
+      document.getElementById('sOrg').style.display=sO?'':'none';
+
+      var gNew=document.getElementById('gNew');
+      gNew.className=(TAB==='all')?'scroll-row':'grid';
+
+      if(sN) gNew.innerHTML = buildCards(applyFilter(applySort(NR)),'new');
+      if(sA) document.getElementById('gAct').innerHTML = buildCards(applyFilter(applySort(AR)),'active');
+      if(sO) document.getElementById('gOrg').innerHTML = buildCards(applyFilter(applySort(MR)),'org');
+    }
+
+    function doTakeOver(id){
+      var idx=-1;
+      for(var i=0;i<NR.length;i++) if(NR[i].id===id){idx=i;break;}
+      if(idx<0) return;
+
+      for(var j=0;j<MR.length;j++) if(MR[j].id===id){notify('أنت بالفعل مسجّل في هذا البلاغ','i');return;}
+
+      var r=JSON.parse(JSON.stringify(NR[idx]));
+      r.role='leader'; r.ldr='أنت — القائد'; r.lph='0512345678'; r.upd='الآن';
+      r.mbr=[{i:'أن',c:'#9a7440'}];
+
+      NR.splice(idx,1);
+      MR.unshift(r);
+      render();
+
+      notify('تولّيت البلاغ '+r.ar+' — أنت الآن القائد','s');
+
+      setTimeout(function(){
+        var m=null;
+        for(var k=0;k<MR.length;k++) if(MR[k].id===id){m=MR[k];break;}
+        if(m){
+          m.mbr.push({i:'سا',c:'#b8965e'});
+          render();
+          notify('انضم سالم الشهراني لبلاغك '+r.ar,'w');
+        }
+      },5000);
+    }
+
+    function doJoin(id){
+      var idx=-1;
+      for(var i=0;i<AR.length;i++) if(AR[i].id===id){idx=i;break;}
+      if(idx<0) return;
+
+      for(var j=0;j<MR.length;j++) if(MR[j].id===id){notify('أنت منضم لهذا البلاغ بالفعل','i');return;}
+
+      var r=JSON.parse(JSON.stringify(AR[idx]));
+      r.role='member';
+      r.mbr=r.mbr.concat([{i:'أن',c:'#9a7440'}]);
+
+      AR.splice(idx,1);
+      MR.unshift(r);
+      render();
+
+      notify('انضممت لبلاغ '+r.ar+' كعضو في فريق '+r.ldr,'s');
+    }
+
+    function openModal(id,type){
+      var r=null, pool=type==='new'?NR:type==='active'?AR:MR;
+      for(var i=0;i<pool.length;i++) if(pool[i].id===id){r=pool[i];break;}
+      if(!r) return;
+
+      var bh=type==='new'?'<span class="badge bn">جديد</span>'
+            :type==='active'?'<span class="badge bk">جارٍ البحث</span>'
+            :'<span class="badge bo">'+(r.role==='leader'?'أنت القائد':'عضو في الفريق')+'</span>';
+
+      document.getElementById('mBadge').innerHTML=bh;
+      document.getElementById('mName').textContent=r.nm;
+      document.getElementById('mLoc').textContent='📍 '+r.loc;
+
+      var dh='', keys=Object.keys(r.det);
+      for(var k=0;k<keys.length;k++){
+        dh+='<div class="di"><div class="dl">'+keys[k]+'</div><div class="dv">'+r.det[keys[k]]+'</div></div>';
+      }
+      document.getElementById('mDetails').innerHTML=dh;
+      document.getElementById('mDesc').textContent=r.desc||'لا توجد تفاصيل إضافية.';
+
+      var rows=[];
+      if(type==='org'){
+        if(r.role==='leader'){
+          rows.push({n:'أنت',p:'0512345678',role:'قائد',c:'#9a7440'});
+          for(var a=0;a<r.mbr.length;a++){
+            if(r.mbr[a].i==='أن') continue;
+            var mm=gm(r.mbr[a].i);
+            rows.push({n:mm.n,p:mm.p,role:'عضو',c:r.mbr[a].c});
+          }
+        } else {
+          rows.push({n:r.ldr,p:r.lph||'—',role:'قائد',c:'#7a5828'});
+          for(var b=0;b<r.mbr.length;b++){
+            var isMe=r.mbr[b].i==='أن';
+            var mm2=gm(r.mbr[b].i);
+            rows.push({n:isMe?'أنت':mm2.n,p:isMe?'0512345678':mm2.p,role:'عضو',c:r.mbr[b].c});
+          }
+        }
+      } else {
+        if(r.ldr) rows.push({n:r.ldr,p:r.lph||'—',role:'قائد',c:'#7a5828'});
+        for(var c=0;c<r.mbr.length;c++){
+          var mm3=gm(r.mbr[c].i);
+          rows.push({n:mm3.n,p:mm3.p,role:'عضو',c:r.mbr[c].c});
+        }
+      }
+
+      var th='';
+      if(rows.length){
+        th='<div style="display:flex;flex-direction:column;gap:7px;">';
+        for(var z=0;z<rows.length;z++){
+          var rw=rows[z], rc=(rw.role==='قائد')?'#b8782a':'#6b4c2a';
+          th+='<div style="display:flex;align-items:center;gap:9px;background:var(--s100);border-radius:10px;padding:10px 12px;">'+
+              '<div class="av" style="background:'+rw.c+';width:32px;height:32px;font-size:10px;flex-shrink:0;">'+rw.n.slice(0,2)+'</div>'+
+              '<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">'+
+              '<span style="font-size:13px;color:var(--t900);font-weight:600;">'+rw.n+'</span>'+
+              '<span style="font-size:10px;padding:2px 6px;border-radius:5px;background:#fff;border:1px solid var(--s300);color:'+rc+';font-weight:700;">'+rw.role+'</span>'+
+              '</div><div style="font-size:11.5px;color:var(--t500);margin-top:1px;">'+rw.p+'</div></div>'+
+              /* ✅ هنا التغيير الوحيد: زر الاتصال صار دائري */
+              '<button class="call-btn" data-act="call" data-ph="'+rw.p+'" data-nm="'+rw.n+'" type="button">📞</button>'+
+              '</div>';
+        }
+        th+='</div>';
+      } else {
+        th='<p style="font-size:13px;color:var(--t300);">لا يوجد متطوعون بعد.</p>';
+      }
+      document.getElementById('mTeam').innerHTML=th;
+
+      var fh='';
+      if(type==='new'){
+        fh='<button class="btn bto" style="width:100%;padding:13px;" data-act="modal-takeover" data-id="'+id+'" type="button">تولّي البلاغ</button>';
+      } else if(type==='active'){
+        fh='<div style="display:flex;gap:9px;">'+
+           '<button class="btn bjn" style="flex:1;padding:13px;" data-act="modal-join" data-id="'+id+'" type="button">انضمام للفريق</button>'+
+           '<button class="btn bph" style="flex:1;padding:13px;" data-act="call" data-ph="'+r.lph+'" data-nm="'+r.ldr+'" type="button">📞 '+r.lph+'</button>'+
+           '</div>';
+      } else {
+        fh='<button class="btn bov" style="width:100%;padding:13px;" data-act="closemodal" type="button">متابعة العملية الميدانية</button>';
+      }
+      document.getElementById('mFoot').innerHTML=fh;
+
+      document.getElementById('modal').classList.add('on');
+    }
+
+    function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+
+    document.addEventListener('click',function(e){
+      var el=e.target.closest('[data-act]');
+      if(!el) return;
+
+      var act=el.getAttribute('data-act');
+      var id=el.getAttribute('data-id');
+
+      if(act==='takeover') doTakeOver(id);
+      else if(act==='join') doJoin(id);
+      else if(act==='call') notify('📞 '+el.getAttribute('data-nm')+': '+el.getAttribute('data-ph'),'i');
+      else if(act==='openmodal') openModal(id,el.getAttribute('data-type'));
+      else if(act==='modal-takeover'){ doTakeOver(id); closeModal(); }
+      else if(act==='modal-join'){ doJoin(id); closeModal(); }
+      else if(act==='closemodal'){
+  window.location.href = "RealTimeReportDetails.html";
+}
+    });
+
+    document.getElementById('modal').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+    document.getElementById('mcloseBtn').addEventListener('click',closeModal);
+
+    var tabs=document.querySelectorAll('.tab');
+    for(var i=0;i<tabs.length;i++){
+      tabs[i].addEventListener('click',function(){
+        for(var j=0;j<tabs.length;j++) tabs[j].classList.remove('on');
+        this.classList.add('on');
+        TAB=this.getAttribute('data-tab');
+        render();
+      });
+    }
+
+    document.getElementById('srch').addEventListener('input',function(){ SRCH=this.value; render(); });
+    document.getElementById('srt').addEventListener('change',function(){ SORT=this.value; render(); });
+
+    render();
+  </script>
+</body>
+</html>
