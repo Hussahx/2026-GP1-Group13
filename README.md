@@ -7,7 +7,7 @@
 
 ## Abstract
 
-**Rasid (Eyes of the Desert)** is a smart and integrated web-based system designed to enhance search and rescue operations in desert areas.  
+**Rasid (Eye of the Desert)** is a smart and integrated web-based system designed to enhance search and rescue operations in desert areas.  
 It combines drone surveillance, AI-based human detection, geolocation tracking, and a comprehensive web platform for managing reports, volunteers, and operations.
 
 The main goal is to reduce search time, improve detection accuracy, and support rescue teams efficiently.
