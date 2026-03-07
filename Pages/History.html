@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F5EFE6" />
+  <title>راصد — السجل التاريخي</title>
+  <link rel="icon" href="../assest/logo.PNG" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="../CSS/Rasid.css" />
+  <link rel="stylesheet" href="../CSS/history.css" />
+</head>
+<body>
+
+  <!-- ══════════ HEADER — from base.html ══════════ -->
+  <header class="page-header">
+    <div class="header-logo-mark" aria-hidden="true">
+      <img src="../assest/New-logo.JPG.jpeg" alt="شعار راصد" />
+    </div>
+    <div class="header-brand">
+      <h1>راصد</h1>
+      <p>عين الصحراء — السجل التاريخي</p>
+    </div>
+    <nav class="header-nav" aria-label="تنقل سريع">
+      <div class="user-chip" title="حسابي">
+        <span class="avatar" id="userInitial">ي</span>
+        <span class="name" id="userName">يوسف</span>
+        <span class="notif" id="notifCount">3</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <main class="page-body">
+
+    <!-- Page heading -->
+    <div class="page-heading">
+      <div class="page-heading-eyebrow" aria-hidden="true">
+        <span></span>السجل التاريخي<span></span>
+      </div>
+      <h2>البلاغات المُغلقة</h2>
+      <p>سجل شامل لجميع عمليات البحث والإنقاذ التي اكتملت، للاطلاع على تفاصيلها ونتائجها.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" aria-label="إحصائيات سريعة">
+      <div class="stat-card">
+        <div class="stat-icon total"><i class="fas fa-folder-closed"></i></div>
+        <div class="stat-info">
+          <div class="stat-num" id="statTotal">—</div>
+          <div class="stat-desc">إجمالي البلاغات المغلقة</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon found"><i class="fas fa-circle-check"></i></div>
+        <div class="stat-info">
+          <div class="stat-num" id="statFound">—</div>
+          <div class="stat-desc">تم العثور عليهم</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon duration"><i class="fas fa-clock-rotate-left"></i></div>
+        <div class="stat-info">
+          <div class="stat-num">٦.٢</div>
+          <div class="stat-desc">متوسط ساعات الإنقاذ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-bar" role="search" aria-label="بحث وتصفية">
+
+      <!-- Search bar -->
+      <div class="search-wrap">
+        <span class="search-icon" aria-hidden="true"><i class="fas fa-magnifying-glass"></i></span>
+        <input
+          id="searchInput" type="text" class="search-input"
+          placeholder="ابحث برقم البلاغ أو المنطقة أو اسم المفقود…"
+          autocomplete="off" aria-label="البحث في البلاغات المغلقة"
+        />
+        <button class="search-clear-btn" id="clearBtn" aria-label="مسح البحث">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-section">
+
+        <!-- Single row: outcome chips + region select + sort select -->
+        <div class="filter-row">
+          <span class="filter-label">النتيجة:</span>
+          <div class="filter-chips" id="outcomeChips">
+            <button class="filter-chip active" data-outcome="all">
+              <i class="fas fa-border-all"></i> الكل
+            </button>
+            <button class="filter-chip" data-outcome="found">
+              <i class="fas fa-circle-check"></i> تم العثور
+            </button>
+            <button class="filter-chip" data-outcome="notfound">
+              <i class="fas fa-circle-xmark"></i> لم يُعثر
+            </button>
+          </div>
+          <div class="sort-wrap">
+            <select class="sort-select" id="regionSelect" aria-label="تصفية حسب المنطقة">
+              <option value="all">كل المناطق</option>
+              <!-- Injected by JS -->
+            </select>
+          </div>
+          <div class="sort-wrap">
+            <select class="sort-select" id="sortSelect" aria-label="ترتيب النتائج">
+              <option value="newest">الأحدث أولاً</option>
+              <option value="oldest">الأقدم أولاً</option>
+              <option value="duration-asc">مدة أقصر</option>
+              <option value="duration-desc">مدة أطول</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Results header -->
+    <div class="results-header" aria-live="polite" aria-atomic="true">
+      <div class="results-count">
+        عرض <strong id="countDisplay">—</strong> بلاغ مغلق
+      </div>
+    </div>
+
+    <!-- Cases list -->
+    <div class="cases-list" id="casesList" aria-label="قائمة البلاغات المغلقة"></div>
+
+    <!-- Pagination -->
+    <nav class="pagination" id="pagination" aria-label="تنقل بين الصفحات"></nav>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState" role="status" aria-live="polite">
+      <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+      <h3>لا توجد نتائج</h3>
+      <p>لم يُعثر على بلاغات تطابق معايير البحث أو التصفية الحالية.</p>
+    </div>
+
+  </main>
+
+  <!-- ══════════ FOOTER — from base.html ══════════ -->
+  <footer>
+    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
+    </svg>
+    <div class="footer-inner">
+      <div class="f-brand">
+        <div class="f-logo">راصد<span>RASID</span></div>
+        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
+      </div>
+      <div class="f-col">
+        <h4>روابط سريعة</h4>
+        <ul>
+          <li><a href="index.html">الصفحة الرئيسية</a></li>
+          <li><a href="login.html">تسجيل الدخول</a></li>
+          <li><a href="Regester.html">انضم كمتطوع</a></li>
+          <li><a href="track-report.html">تتبع البلاغ</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h4>أرقام الطوارئ</h4>
+        <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+        <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+      </div>
+    </div>
+    <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+    <div class="footer-dune"></div>
+  </footer>
+
+  <!-- html2canvas + jsPDF for proper Arabic PDF rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+  'use strict';
+
+  /* ════════════════════════════════════════════
+     DATA
+  ════════════════════════════════════════════ */
+  const CASES = [
+    {
+      id: 'RSD-2025-00089', title: 'بلاغ مفقود — بادية حائل الشمالية',
+      closedDate: '٦ مارس ٢٠٢٥', closedTimestamp: new Date('2025-03-06'),
+      outcome: 'found', outcomeLbl: 'تم العثور عليه',
+      region: 'حائل', location: 'حائل — البادية الشمالية',
+      reportDate: '٣ مارس ٢٠٢٥', volunteers: '١٢ متطوعاً',
+      duration: '٨ ساعات', durationHours: 8, missing: 'محمد عبدالله الشمري',
+      notes: 'تم العثور على المفقود بحالة جيدة على بُعد ١٨ كم من نقطة الانطلاق.',
+      log: [
+        { time: '٤:٤٥ م', text: 'تم إغلاق البلاغ بعد العثور على المفقود بحالة جيدة.' },
+        { time: '١١:٠٠ ص', text: 'جارٍ تنفيذ عملية البحث في المنطقة المحددة.' },
+        { time: '٩:٣٠ ص', text: 'تمت مراجعة البلاغ والتحقق من بياناته.' },
+        { time: '٨:١٠ ص', text: 'تم استلام البلاغ وتسجيله في النظام.' },
+      ]
+    },
+    {
+      id: 'RSD-2025-00062', title: 'بلاغ مفقود — صحراء الدهناء',
+      closedDate: '١٤ فبراير ٢٠٢٥', closedTimestamp: new Date('2025-02-14'),
+      outcome: 'found', outcomeLbl: 'تم العثور عليه',
+      region: 'القصيم', location: 'القصيم — صحراء الدهناء',
+      reportDate: '١٣ فبراير ٢٠٢٥', volunteers: '٩ متطوعين',
+      duration: '١٤ ساعة', durationHours: 14, missing: 'سالم ناصر العتيبي',
+      notes: 'انقطع بالمسافر إثر عطل مركبته ليلاً، وتم تحديد موقعه باستخدام طائرة راصد.',
+      log: [
+        { time: '١٠:٢٢ ص', text: 'تم تسليم المفقود لذويه وإغلاق الملف.' },
+        { time: '٦:٠٠ ص', text: 'رصدت الطائرة إشارة حرارية وأُرسل فريق للتحقق.' },
+        { time: '٩:٠٠ م', text: 'بدء عملية البحث الجوي خلال ساعات الليل.' },
+        { time: '٨:١٥ م', text: 'استلام البلاغ وتجهيز الفريق الميداني.' },
+      ]
+    },
+    {
+      id: 'RSD-2025-00041', title: 'بلاغ مفقودين — الربع الخالي الشرقي',
+      closedDate: '٢٨ يناير ٢٠٢٥', closedTimestamp: new Date('2025-01-28'),
+      outcome: 'found', outcomeLbl: 'تم العثور عليهم',
+      region: 'نجران', location: 'نجران — الربع الخالي الشرقي',
+      reportDate: '٢٥ يناير ٢٠٢٥', volunteers: '٢٠ متطوعاً',
+      duration: '٧٢ ساعة', durationHours: 72, missing: 'عائلة الدوسري (٤ أفراد)',
+      notes: 'تعطلت مركبة العائلة في عمق الصحراء؛ تم إنقاذ جميع الأفراد بحالة صحية مستقرة.',
+      log: [
+        { time: '١١:٣٠ ص', text: 'إغلاق الملف بعد التأكد من سلامة جميع الأفراد.' },
+        { time: '٩:٠٠ ص', text: 'تم إخلاء العائلة جواً إلى مستشفى نجران.' },
+        { time: '٤:٤٠ ص', text: 'حدّد الطاقم موقع المركبة المتعطلة.' },
+        { time: '٨:٠٠ م', text: 'استُعين بطائرة إضافية لتوسيع نطاق البحث.' },
+      ]
+    },
+    {
+      id: 'RSD-2025-00033', title: 'بلاغ مفقود — بادية تبوك الجنوبية',
+      closedDate: '١٩ يناير ٢٠٢٥', closedTimestamp: new Date('2025-01-19'),
+      outcome: 'notfound', outcomeLbl: 'لم يُعثر عليه',
+      region: 'تبوك', location: 'تبوك — البادية الجنوبية',
+      reportDate: '١٨ يناير ٢٠٢٥', volunteers: '٦ متطوعين',
+      duration: '١٠ ساعات', durationHours: 10, missing: 'عمر فيصل الحربي',
+      notes: 'لم يُعثر على المفقود داخل نطاق العملية؛ أُحيل الملف لقوات الأمن لمتابعة التحقيق.',
+      log: [
+        { time: '٦:٣٠ م', text: 'إحالة الملف رسمياً لقوات الأمن بتبوك.' },
+        { time: '٢:٠٠ م', text: 'توسيع نطاق البحث دون الوصول لنتيجة.' },
+        { time: '٩:١٠ ص', text: 'انطلاق الفريق الميداني في المنطقة المشار إليها.' },
+        { time: '٨:٢٠ ص', text: 'استلام البلاغ وتحليل آخر موقع معروف.' },
+      ]
+    },
+    {
+      id: 'RSD-2024-00198', title: 'بلاغ مفقود — صحراء الجوف',
+      closedDate: '٢٢ ديسمبر ٢٠٢٤', closedTimestamp: new Date('2024-12-22'),
+      outcome: 'found', outcomeLbl: 'تم العثور عليه',
+      region: 'الجوف', location: 'الجوف — صحراء الطلح',
+      reportDate: '٢١ ديسمبر ٢٠٢٤', volunteers: '١١ متطوعاً',
+      duration: '٥ ساعات', durationHours: 5, missing: 'خالد محمد الرشيدي',
+      notes: 'تحديد موقع المفقود بسرعة قياسية بواسطة أجهزة الاستشعار الحراري في راصد.',
+      log: [
+        { time: '١١:٤٥ ص', text: 'إغلاق البلاغ والإبلاغ عن نجاح العملية.' },
+        { time: '٩:٣٠ ص', text: 'العثور على المفقود نائماً تحت شجرة سمرة.' },
+        { time: '٧:٠٠ ص', text: 'إطلاق الطائرة في نطاق البحث الأولي.' },
+        { time: '٦:٤٠ ص', text: 'استقبال البلاغ وإحداثيات آخر موقع.' },
+      ]
+    },
+    {
+      id: 'RSD-2024-00175', title: 'بلاغ مفقود — وادي الدواسر',
+      closedDate: '٥ ديسمبر ٢٠٢٤', closedTimestamp: new Date('2024-12-05'),
+      outcome: 'notfound', outcomeLbl: 'لم يُعثر عليه',
+      region: 'الرياض', location: 'الرياض — وادي الدواسر',
+      reportDate: '٢ ديسمبر ٢٠٢٤', volunteers: '١٥ متطوعاً',
+      duration: '٤٨ ساعة', durationHours: 48, missing: 'صالح مطلق القحطاني',
+      notes: 'بعد ٤٨ ساعة من العمليات المكثفة، أُغلق ملف راصد وأُحيل للنيابة العامة لمتابعته.',
+      log: [
+        { time: '٨:٠٠ ص', text: 'إغلاق الملف في النظام وإحالته رسمياً.' },
+        { time: '٤:٠٠ ص', text: 'المسح الثالث للمنطقة دون نتيجة.' },
+        { time: '١٢:٠٠ م', text: 'تعزيز الفريق الميداني بـ ٦ متطوعين إضافيين.' },
+        { time: '٧:٣٠ ص', text: 'بدء أولى رحلات المسح الجوي.' },
+      ]
+    },
+    {
+      id: 'RSD-2024-00152', title: 'بلاغ مفقود — العُلا الصحراوية',
+      closedDate: '١٨ نوفمبر ٢٠٢٤', closedTimestamp: new Date('2024-11-18'),
+      outcome: 'found', outcomeLbl: 'تم العثور عليه',
+      region: 'المدينة المنورة', location: 'المدينة المنورة — العُلا',
+      reportDate: '١٨ نوفمبر ٢٠٢٤', volunteers: '٨ متطوعين',
+      duration: '٣ ساعات', durationHours: 3, missing: 'نايف سعد الأحمدي',
+      notes: 'أقصر عملية إنقاذ مُسجَّلة في المنصة، واكتملت دون أي إصابات.',
+      log: [
+        { time: '١:٠٠ م', text: 'إغلاق الملف بنجاح وعودة الفريق.' },
+        { time: '١٢:٣٠ م', text: 'تحديد موقع المفقود بدقة متناهية.' },
+        { time: '١١:١٥ ص', text: 'إقلاع الطائرة للمسح الأولي.' },
+        { time: '١٠:٤٥ ص', text: 'استلام البلاغ والتوجه للمنطقة.' },
+      ]
+    },
+    {
+      id: 'RSD-2024-00130', title: 'بلاغ مفقود — صحراء الأحساء',
+      closedDate: '٣ نوفمبر ٢٠٢٤', closedTimestamp: new Date('2024-11-03'),
+      outcome: 'found', outcomeLbl: 'تم العثور عليه',
+      region: 'المنطقة الشرقية', location: 'الأحساء — الصحراء الغربية',
+      reportDate: '٢ نوفمبر ٢٠٢٤', volunteers: '١٠ متطوعين',
+      duration: '٦ ساعات', durationHours: 6, missing: 'عبدالرحمن علي المنصور',
+      notes: 'عثر على المفقود بعد انقطاع الاتصال خلال رحلة تخييم.',
+      log: [
+        { time: '٢:٣٠ م', text: 'العثور على المفقود وإعادته لذويه.' },
+        { time: '١١:٠٠ ص', text: 'عملية البحث الجوي تُغطي القطاع الشمالي.' },
+        { time: '٨:٤٥ ص', text: 'استلام البلاغ وتوزيع مهام الفرق.' },
+      ]
+    },
+    {
+      id: 'RSD-2024-00108', title: 'بلاغ مفقود — صحراء عسير',
+      closedDate: '١٧ أكتوبر ٢٠٢٤', closedTimestamp: new Date('2024-10-17'),
+      outcome: 'notfound', outcomeLbl: 'لم يُعثر عليه',
+      region: 'عسير', location: 'عسير — الصحراء الشمالية',
+      reportDate: '١٤ أكتوبر ٢٠٢٤', volunteers: '١٤ متطوعاً',
+      duration: '٦٠ ساعة', durationHours: 60, missing: 'فهد ظافر القحطاني',
+      notes: 'عملية بحث مكثفة لمدة ٦٠ ساعة دون نتيجة؛ أُحيل للجهات الأمنية.',
+      log: [
+        { time: '٩:٠٠ ص', text: 'إغلاق الملف في المنصة وإحالته للجهات المختصة.' },
+        { time: '٤:٠٠ م', text: 'انتهاء دور ٣ من المسح الجوي دون رصد.' },
+        { time: '٧:٠٠ ص', text: 'تعزيز الفريق وتوسيع نطاق البحث.' },
+        { time: '٩:٣٠ ص', text: 'استلام البلاغ وإطلاق العملية الميدانية.' },
+      ]
+    },
+    {
+      id: 'RSD-2024-00091', title: 'بلاغ مفقود — بادية المدينة المنورة',
+      closedDate: '٢ أكتوبر ٢٠٢٤', closedTimestamp: new Date('2024-10-02'),
+      outcome: 'found', outcomeLbl: 'تم العثور عليه',
+      region: 'المدينة المنورة', location: 'المدينة المنورة — البادية الشرقية',
+      reportDate: '٢ أكتوبر ٢٠٢٤', volunteers: '٧ متطوعين',
+      duration: '٤ ساعات', durationHours: 4, missing: 'ماجد سليمان الأنصاري',
+      notes: 'تم العثور على المفقود بعد انحراف بسيط عن المسار المخطط.',
+      log: [
+        { time: '٥:١٠ م', text: 'إغلاق الملف بنجاح والعودة للقاعدة.' },
+        { time: '٣:٤٥ م', text: 'رصد المفقود عبر كاميرا الطائرة.' },
+        { time: '١:٣٠ م', text: 'إقلاع الطائرة وبدء المسح.' },
+        { time: '١:٠٥ م', text: 'تسجيل البلاغ وتجهيز الطاقم.' },
+      ]
+    },
+    {
+      id: 'RSD-2024-00077', title: 'بلاغ مفقود — صحراء الباحة',
+      closedDate: '١٩ سبتمبر ٢٠٢٤', closedTimestamp: new Date('2024-09-19'),
+      outcome: 'found', outcomeLbl: 'تم العثور عليه',
+      region: 'الباحة', location: 'الباحة — السهل الصحراوي الشرقي',
+      reportDate: '١٩ سبتمبر ٢٠٢٤', volunteers: '٥ متطوعين',
+      duration: '٢ ساعات', durationHours: 2, missing: 'يحيى إبراهيم الغامدي',
+      notes: 'أسرع عملية في تاريخ المنطقة، اكتُشف المفقود على بُعد كيلومترين فقط.',
+      log: [
+        { time: '١٠:٣٠ ص', text: 'إغلاق الملف فور تأمين المفقود.' },
+        { time: '٩:٥٥ ص', text: 'العثور على المفقود وإسعافه.' },
+        { time: '٨:٤٠ ص', text: 'إقلاع الطائرة وبدء المسح الأولي.' },
+      ]
+    },
+    {
+      id: 'RSD-2024-00065', title: 'بلاغ مفقود — صحراء جازان',
+      closedDate: '٤ سبتمبر ٢٠٢٤', closedTimestamp: new Date('2024-09-04'),
+      outcome: 'notfound', outcomeLbl: 'لم يُعثر عليه',
+      region: 'جازان', location: 'جازان — الصحراء الشمالية',
+      reportDate: '٢ سبتمبر ٢٠٢٤', volunteers: '١٦ متطوعاً',
+      duration: '٤٢ ساعة', durationHours: 42, missing: 'محسن حمزة الشهري',
+      notes: 'تضاريس صعبة أعاقت العملية؛ أُعيد تنشيط الملف لاحقاً لدى الجهات الأمنية.',
+      log: [
+        { time: '٧:٠٠ ص', text: 'إغلاق الدور الأول وإحالة الملف.' },
+        { time: '٢:٠٠ م', text: 'التحديث الأخير: لا أثر في نطاق البحث.' },
+        { time: '٦:٠٠ ص', text: 'توسيع نطاق البحث للمنطقة الغربية.' },
+        { time: '٩:٠٠ ص', text: 'استلام البلاغ وتشكيل الفريق.' },
+      ]
+    },
+  ];
+
+  /* ════════════════════════════════════════════
+     SA REGIONS (alphabetical)
+  ════════════════════════════════════════════ */
+  const SA_REGIONS = [
+    'الباحة','الجوف','الحدود الشمالية','الرياض','القصيم',
+    'المدينة المنورة','المنطقة الشرقية','تبوك','جازان',
+    'حائل','خميس مشيط','عسير','مكة المكرمة','نجران'
+  ];
+
+  /* ════════════════════════════════════════════
+     STATE
+  ════════════════════════════════════════════ */
+  const PAGE_SIZE = 6;
+  let state = {
+    filterOutcome : 'all',
+    filterRegion  : 'all',
+    search        : '',
+    sort          : 'newest',
+    page          : 1,
+    openId        : null,
+  };
+
+  /* ════════════════════════════════════════════
+     HELPERS
+  ════════════════════════════════════════════ */
+  const toAr = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+
+  /* ════════════════════════════════════════════
+     BUILD REGION CHIPS
+  ════════════════════════════════════════════ */
+  function buildRegionSelect() {
+    const usedRegions = [...new Set(CASES.map(c => c.region))];
+    const sorted = SA_REGIONS.filter(r => usedRegions.includes(r));
+    const sel = document.getElementById('regionSelect');
+    sorted.forEach(region => {
+      const opt = document.createElement('option');
+      opt.value = region;
+      opt.textContent = region;
+      sel.appendChild(opt);
+    });
+  }
+
+  /* ════════════════════════════════════════════
+     FILTER + SORT
+  ════════════════════════════════════════════ */
+  function getFiltered() {
+    let list = [...CASES];
+    if (state.filterOutcome !== 'all') list = list.filter(c => c.outcome === state.filterOutcome);
+    if (state.filterRegion  !== 'all') list = list.filter(c => c.region  === state.filterRegion);
+    if (state.search) {
+      const q = state.search.toLowerCase();
+      list = list.filter(c =>
+        c.id.toLowerCase().includes(q) ||
+        c.location.toLowerCase().includes(q) ||
+        c.missing.toLowerCase().includes(q) ||
+        c.title.toLowerCase().includes(q)
+      );
+    }
+    const s = state.sort;
+    if (s === 'newest')       list.sort((a,b) => b.closedTimestamp - a.closedTimestamp);
+    if (s === 'oldest')       list.sort((a,b) => a.closedTimestamp - b.closedTimestamp);
+    if (s === 'duration-asc') list.sort((a,b) => a.durationHours   - b.durationHours);
+    if (s === 'duration-desc')list.sort((a,b) => b.durationHours   - a.durationHours);
+    return list;
+  }
+
+  /* ════════════════════════════════════════════
+     RENDER CASES
+  ════════════════════════════════════════════ */
+  function renderCases() {
+    const all  = getFiltered();
+    const total = all.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (state.page > totalPages) state.page = totalPages;
+
+    const start  = (state.page - 1) * PAGE_SIZE;
+    const paged  = all.slice(start, start + PAGE_SIZE);
+
+    // Update stats — grand totals always (unfiltered)
+    document.getElementById('statTotal').textContent = toAr(CASES.length);
+    document.getElementById('statFound').textContent = toAr(CASES.filter(c => c.outcome === 'found').length);
+    // Results count reflects active filters
+    document.getElementById('countDisplay').textContent = toAr(total);
+
+    const container = document.getElementById('casesList');
+    const emptyEl   = document.getElementById('emptyState');
+
+    if (total === 0) {
+      container.innerHTML = '';
+      emptyEl.classList.add('visible');
+      renderPagination(0, 1);
+      return;
+    }
+    emptyEl.classList.remove('visible');
+
+    container.innerHTML = paged.map((c, idx) => {
+      const isFound = c.outcome === 'found';
+      const badgeCls = isFound ? 'badge-found' : 'badge-notfound';
+      const isOpen = state.openId === c.id;
+      return `
+      <article
+        class="case-card${isOpen ? ' open' : ''}${!isFound ? ' outcome-notfound' : ''}"
+        data-id="${c.id}"
+        style="animation: cardIn 0.38s ${idx * 0.055}s var(--ease-out) both;"
+        aria-expanded="${isOpen}"
+      >
+        <div class="card-header" role="button" tabindex="0" aria-label="تفاصيل ${c.id}">
+          <div class="card-header-right">
+            <div class="card-report-id">${c.id}</div>
+            <div class="card-closed-date">
+              <i class="fas fa-lock" aria-hidden="true"></i>
+              أُغلق في ${c.closedDate}
+            </div>
+          </div>
+          <div class="card-header-left">
+            <span class="outcome-badge ${badgeCls}">
+              <i class="fas ${isFound ? 'fa-circle-check' : 'fa-circle-xmark'}" aria-hidden="true"></i>
+              ${c.outcomeLbl}
+            </span>
+            <button class="expand-btn" tabindex="-1" aria-label="${isOpen ? 'إخفاء' : 'عرض'} التفاصيل">
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-details" aria-hidden="${!isOpen}">
+          <div class="card-details-inner">
+
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">اسم المفقود</div>
+                <div class="detail-value">${c.missing}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">المنطقة</div>
+                <div class="detail-value warm">${c.location}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">تاريخ البلاغ</div>
+                <div class="detail-value">${c.reportDate}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">تاريخ الإغلاق</div>
+                <div class="detail-value">${c.closedDate}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">مدة العملية</div>
+                <div class="detail-value">${c.duration}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">المتطوعون</div>
+                <div class="detail-value">${c.volunteers}</div>
+              </div>
+              <div class="detail-item" style="grid-column: 1 / -1;">
+                <div class="detail-label">ملاحظات</div>
+                <div class="detail-value" style="font-weight:500;opacity:0.85;line-height:1.65;">${c.notes}</div>
+              </div>
+            </div>
+
+            <div class="detail-log-heading">سجل التحديثات</div>
+            ${c.log.map(e => `
+              <div class="detail-log-entry">
+                <div class="detail-log-dot"></div>
+                <div class="detail-log-time">${e.time}</div>
+                <div class="detail-log-text">${e.text}</div>
+              </div>
+            `).join('')}
+
+            <div class="detail-actions">
+              <button class="detail-btn detail-btn-ghost pdf-btn" data-id="${c.id}">
+                <i class="fas fa-file-arrow-down" aria-hidden="true"></i>
+                تحميل PDF
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+
+    // Attach card toggle events
+    container.querySelectorAll('.card-header').forEach(header => {
+      const toggle = () => {
+        const id = header.closest('.case-card').dataset.id;
+        state.openId = state.openId === id ? null : id;
+        renderCases();
+        if (state.openId === id) {
+          setTimeout(() => header.closest('.case-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+        }
+      };
+      header.addEventListener('click', toggle);
+      header.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    });
+
+    // Attach PDF buttons
+    container.querySelectorAll('.pdf-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const caseData = CASES.find(c => c.id === btn.dataset.id);
+        if (caseData) generatePDF(caseData, btn);
+      });
+    });
+
+    renderPagination(total, totalPages);
+  }
+
+  /* ════════════════════════════════════════════
+     RENDER PAGINATION
+  ════════════════════════════════════════════ */
+  function renderPagination(total, totalPages) {
+    const wrap = document.getElementById('pagination');
+    if (totalPages <= 1) { wrap.innerHTML = ''; return; }
+
+    const p = state.page;
+    let html = '';
+
+    // Prev arrow
+    html += `<button class="page-btn arrow" data-page="${p-1}" ${p===1?'disabled':''} aria-label="الصفحة السابقة">
+               <i class="fas fa-chevron-right"></i>
+             </button>`;
+
+    // Page numbers
+    const pages = buildPageRange(p, totalPages);
+    pages.forEach(item => {
+      if (item === '…') {
+        html += `<span class="page-ellipsis">…</span>`;
+      } else {
+        html += `<button class="page-btn${item===p?' active':''}" data-page="${item}" aria-label="صفحة ${toAr(item)}" aria-current="${item===p?'page':'false'}">
+                   ${toAr(item)}
+                 </button>`;
+      }
+    });
+
+    // Next arrow
+    html += `<button class="page-btn arrow" data-page="${p+1}" ${p===totalPages?'disabled':''} aria-label="الصفحة التالية">
+               <i class="fas fa-chevron-left"></i>
+             </button>`;
+
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('.page-btn:not(:disabled)').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.page = parseInt(btn.dataset.page);
+        state.openId = null;
+        renderCases();
+        document.querySelector('.cases-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  function buildPageRange(current, total) {
+    if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+    const pages = [];
+    pages.push(1);
+    if (current > 3) pages.push('…');
+    for (let i = Math.max(2, current-1); i <= Math.min(total-1, current+1); i++) pages.push(i);
+    if (current < total - 2) pages.push('…');
+    pages.push(total);
+    return pages;
+  }
+
+  /* ════════════════════════════════════════════
+     PDF GENERATION — html2canvas renders Arabic correctly
+  ════════════════════════════════════════════ */
+  function generatePDF(c, btn) {
+    btn.classList.add('loading');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ التحميل…';
+
+    // Build a styled off-screen div with all report data
+    const isFound = c.outcome === 'found';
+    const badgeColor = isFound ? '#3E5C32' : '#7B2020';
+    const badgeText  = c.outcomeLbl;
+    const accentColor = '#8B6B47';
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `
+      position:fixed; left:-9999px; top:0;
+      width:794px; background:#fff;
+      font-family:'Tajawal',sans-serif;
+      direction:rtl; text-align:right;
+      color:#2A1F12;
+    `;
+
+    wrap.innerHTML = `
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#8B6B47,#5C4025);padding:28px 36px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="text-align:left;">
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:3px;">RASID PLATFORM</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.38);margin-top:4px;">rasid.sa</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:24px;font-weight:900;color:#fff;line-height:1;">راصد</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:4px;">تقرير عملية بحث وإنقاذ</div>
+        </div>
+      </div>
+
+      <!-- Report ID + outcome -->
+      <div style="background:#F5EFE6;padding:20px 36px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E8D8C0;">
+        <span style="display:inline-flex;align-items:center;gap:8px;background:${badgeColor};color:#fff;padding:6px 18px;border-radius:100px;font-size:13px;font-weight:800;">${badgeText}</span>
+        <div style="font-size:22px;font-weight:900;letter-spacing:1px;color:#2A1F12;">${c.id}</div>
+      </div>
+
+      <!-- Details grid -->
+      <div style="padding:28px 36px 0;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#7A6245;opacity:0.6;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #EAD8BB;">تفاصيل البلاغ</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px 24px;margin-bottom:24px;">
+          ${[
+            ['اسم المفقود', c.missing],
+            ['المنطقة',     c.location],
+            ['تاريخ البلاغ',c.reportDate],
+            ['تاريخ الإغلاق',c.closedDate],
+            ['مدة العملية', c.duration],
+            ['المتطوعون',   c.volunteers],
+          ].map(([lbl, val]) => `
+            <div style="background:#FAF6EF;border-radius:10px;padding:12px 14px;border:1px solid #EDE4D3;">
+              <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7A6245;opacity:0.55;margin-bottom:5px;">${lbl}</div>
+              <div style="font-size:14px;font-weight:800;color:#2A1F12;">${val}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div style="padding:0 36px 24px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#7A6245;opacity:0.6;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #EAD8BB;">ملاحظات</div>
+        <div style="background:#FAF6EF;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.8;color:#4A3828;border:1px solid #EDE4D3;">${c.notes}</div>
+      </div>
+
+      <!-- Update log -->
+      <div style="padding:0 36px 32px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#7A6245;opacity:0.6;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #EAD8BB;">سجل التحديثات</div>
+        ${c.log.map((e, i) => `
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:10px 14px;background:${i%2===0?'#FAF6EF':'#F5EFE6'};border-radius:8px;margin-bottom:6px;">
+            <div style="font-size:11px;font-weight:700;color:#8B6B47;white-space:nowrap;padding-top:2px;">${e.time}</div>
+            <div style="font-size:13px;color:#2A1F12;line-height:1.65;">${e.text}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#5C4025;padding:14px 36px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:1px;">rasid.sa</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.35);">جميع الحقوق محفوظة © ٢٠٢٥ — منصة راصد</div>
+      </div>
+    `;
+
+    document.body.appendChild(wrap);
+
+    // Wait for Tajawal font to be available in the off-screen div
+    document.fonts.ready.then(() => {
+      html2canvas(wrap, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      }).then(canvas => {
+        document.body.removeChild(wrap);
+
+        const { jsPDF } = window.jspdf;
+        const imgData = canvas.toDataURL('image/jpeg', 0.97);
+        const pdfW = 210;
+        const pdfH = (canvas.height * pdfW) / canvas.width;
+
+        const doc = new jsPDF({
+          orientation: pdfH > pdfW ? 'portrait' : 'landscape',
+          unit: 'mm',
+          format: [pdfW, pdfH]
+        });
+
+        doc.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+        doc.save(`${c.id}.pdf`);
+
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-file-arrow-down"></i> تحميل PDF';
+      }).catch(err => {
+        document.body.removeChild(wrap);
+        console.error('html2canvas error:', err);
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fas fa-file-arrow-down"></i> تحميل PDF';
+      });
+    });
+  }
+
+  /* ════════════════════════════════════════════
+     EVENT LISTENERS
+  ════════════════════════════════════════════ */
+  // Search
+  const searchInput = document.getElementById('searchInput');
+  const clearBtn    = document.getElementById('clearBtn');
+
+  searchInput.addEventListener('input', () => {
+    state.search = searchInput.value.trim();
+    state.page = 1;
+    clearBtn.classList.toggle('visible', state.search.length > 0);
+    renderCases();
+  });
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    state.search = '';
+    state.page = 1;
+    clearBtn.classList.remove('visible');
+    searchInput.focus();
+    renderCases();
+  });
+
+  // Outcome chips
+  document.getElementById('outcomeChips').addEventListener('click', e => {
+    const chip = e.target.closest('[data-outcome]');
+    if (!chip) return;
+    document.querySelectorAll('[data-outcome]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.filterOutcome = chip.dataset.outcome;
+    state.page = 1;
+    renderCases();
+  });
+
+  // Region select
+  document.getElementById('regionSelect').addEventListener('change', e => {
+    state.filterRegion = e.target.value;
+    state.page = 1;
+    renderCases();
+  });
+
+  // Sort
+  document.getElementById('sortSelect').addEventListener('change', e => {
+    state.sort = e.target.value;
+    state.page = 1;
+    renderCases();
+  });
+
+  /* ════════════════════════════════════════════
+     INIT
+  ════════════════════════════════════════════ */
+  buildRegionSelect();
+  // Force selects to match initial state (prevents browser autofill)
+  document.getElementById('regionSelect').value = 'all';
+  document.getElementById('sortSelect').value = 'newest';
+  renderCases();
+
+  </script>
+
+</body>
+</html>
