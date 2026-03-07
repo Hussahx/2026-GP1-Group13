@@ -49,7 +49,6 @@
         ts: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
         desc: "اشتباه وجود بشري بالقرب من كثبان منخفضة.",
         imgDataUrl: null,
-        read: false,
       },
       {
         id: crypto.randomUUID(),
@@ -58,7 +57,6 @@
         ts: new Date(Date.now() - 1000 * 60 * 9).toISOString(),
         desc: "رصد حركة محتملة بجانب مسار رملي.",
         imgDataUrl: null,
-        read: false,
       },
     ],
   };
@@ -78,7 +76,12 @@
       return {
         report: { ...structuredClone(DEFAULT_STATE.report), ...(s.report || {}) },
         drone: { ...structuredClone(DEFAULT_STATE.drone), ...(s.drone || {}) },
-        alerts: Array.isArray(s.alerts) ? s.alerts : structuredClone(DEFAULT_STATE.alerts),
+        alerts: Array.isArray(s.alerts)
+          ? s.alerts.map((a) => {
+              const { read, ...rest } = a || {};
+              return rest;
+            })
+          : structuredClone(DEFAULT_STATE.alerts),
       };
     } catch {
       return structuredClone(DEFAULT_STATE);
@@ -151,25 +154,21 @@
   }
 
   function unreadCount() {
-    return state.alerts.filter((a) => !a.read).length;
+    return state.alerts.length;
   }
 
   function forceTitles() {
     const id = state?.report?.id || "—";
 
-    // الرقم داخل البيلز
     const reportIdEl = $("#reportId");
     if (reportIdEl) reportIdEl.textContent = id;
 
-    // لو عندك عنوان topbar
     const topTitleEl = $("#reportTitleId");
     if (topTitleEl) topTitleEl.textContent = id;
 
-    // العنوان الكبير بالنص (اللي بالصورة)
     const bigTitleEl = $("#bigReportTitleId");
     if (bigTitleEl) bigTitleEl.textContent = id;
 
-    // عنوان التبويب (اختياري)
     try { document.title = `${id} - التفاصيل وتتبع الدرون`; } catch {}
   }
 
@@ -309,7 +308,6 @@
       g.stroke();
     }
 
-    // drone path
     const pathPx = state.drone.path.map((p) => project(p, b, c.width, c.height));
     g.setLineDash([10, 10]);
     g.strokeStyle = "rgba(74,56,40,0.28)";
@@ -328,13 +326,10 @@
 
     const blue = "#3b82f6";
     const red = "#ef4444";
-    const green = "#22c55e";
 
-    // alerts
     for (const a of state.alerts) {
       const p = project({ lat: a.lat, lng: a.lng }, b, c.width, c.height);
-      const color = a.read ? green : red;
-      const rgb = parseCssColorToRgb(color);
+      const rgb = parseCssColorToRgb(red);
 
       g.beginPath();
       g.fillStyle = rgba(rgb.r, rgb.g, rgb.b, 0.16);
@@ -342,7 +337,7 @@
       g.fill();
 
       g.beginPath();
-      g.fillStyle = color;
+      g.fillStyle = red;
       g.arc(p.x, p.y, 8, 0, Math.PI * 2);
       g.fill();
 
@@ -353,7 +348,6 @@
       g.stroke();
     }
 
-    // drone pos
     const dp = project(state.drone.pos, b, c.width, c.height);
     const rgbB = parseCssColorToRgb(blue);
 
@@ -419,7 +413,7 @@
     if (desc) desc.textContent = a.desc;
 
     const markBtn = $("#markReadBtn");
-    if (markBtn) markBtn.style.display = a.read ? "none" : "inline-flex";
+    if (markBtn) markBtn.style.display = "none";
 
     const bd = $("#alertModalBackdrop");
     if (bd) bd.style.display = "flex";
@@ -469,22 +463,6 @@
       if (e.key === "Escape" && bd && bd.style.display === "flex") closeAlert();
     });
 
-    const markBtn = $("#markReadBtn");
-    if (markBtn) {
-      markBtn.addEventListener("click", () => {
-        if (!activeAlertId) return;
-        const a = state.alerts.find((x) => x.id === activeAlertId);
-        if (!a) return;
-
-        a.read = true;
-        saveState();
-        setHeader();
-        draw();
-        showToast("تم تعليم التنبيه كمقروء");
-        closeAlert();
-      });
-    }
-
     const map = $("#mapCanvas");
     if (map) {
       map.addEventListener("click", (e) => {
@@ -511,7 +489,6 @@
       ts: event.ts || new Date().toISOString(),
       desc: event.desc || "تنبيه: تم رصد مؤشر بشري.",
       imgDataUrl: event.imgDataUrl || demoImg("AI Alert"),
-      read: false,
     });
 
     state.alerts = state.alerts.slice(0, 50);
@@ -548,7 +525,6 @@
     wireEvents();
     startSim();
 
-    // ضمان تحديث العناوين حتى لو الـ DOM تأخر
     setTimeout(setHeader, 50);
     setTimeout(setHeader, 200);
     setTimeout(setHeader, 500);
