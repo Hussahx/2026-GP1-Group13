@@ -372,21 +372,22 @@
     }
 
     /* ================================================================
-       INPUTS
+       INPUTS – single universal rule for ALL fields
        ================================================================ */
     .form-input,
     .form-group input[type="text"],
     .form-group input[type="email"],
     .form-group input[type="tel"],
     .form-group input[type="date"],
-    .form-group select {
+    .form-group select,
+    .name-field input[type="text"] {
       width: 100%;
       height: 46px;
       padding: 0 0.9rem;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--bg-input);
-      color: var(--text);
+      border: 1.5px solid var(--border) !important;
+      border-radius: var(--radius-sm) !important;
+      background: var(--bg-input) !important;
+      color: var(--text) !important;
       font-family: var(--font);
       font-size: 0.93rem;
       direction: rtl;
@@ -394,21 +395,24 @@
       outline: none;
       appearance: none;
       -webkit-appearance: none;
+      box-sizing: border-box;
     }
 
     .form-group input[type="text"]:hover,
     .form-group input[type="email"]:hover,
     .form-group input[type="tel"]:hover,
     .form-group input[type="date"]:hover,
-    .form-group select:hover {
-      border-color: var(--border-hover);
+    .form-group select:hover,
+    .name-field input[type="text"]:hover {
+      border-color: var(--border-hover) !important;
     }
 
     .form-group input:focus,
-    .form-group select:focus {
-      border-color: var(--border-focus);
-      background: var(--bg-input-focus);
-      box-shadow: 0 0 0 3px rgba(166,124,82,0.11);
+    .form-group select:focus,
+    .name-field input[type="text"]:focus {
+      border-color: var(--border-focus) !important;
+      background: var(--bg-input-focus) !important;
+      box-shadow: 0 0 0 3px rgba(166,124,82,0.11) !important;
     }
 
     /* LTR fields */
@@ -425,10 +429,11 @@
 
     /* Invalid state */
     .form-group input.is-invalid,
-    .form-group select.is-invalid {
+    .form-group select.is-invalid,
+    .name-field input[type="text"].is-invalid {
       border-color: var(--error-border) !important;
-      background: var(--error-bg);
-      box-shadow: 0 0 0 3px rgba(155,58,58,0.07);
+      background: var(--error-bg) !important;
+      box-shadow: 0 0 0 3px rgba(155,58,58,0.07) !important;
     }
 
     .field-error {
@@ -1579,7 +1584,7 @@
               <div class="form-group">
                 <label for="email">البريد الإلكتروني <span class="req-star" aria-hidden="true">*</span></label>
                 <input type="email" id="email" name="email"
-                  placeholder="name@example.com"
+                  placeholder="name@gmail.com"
                   class="ltr"
                   autocomplete="email"
                   aria-required="true"
