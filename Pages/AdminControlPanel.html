@@ -52,6 +52,7 @@
       gap:.55rem;
       align-items:center;
     }
+
     .admin-search .input{
       direction: rtl;
       text-align: right;
@@ -144,6 +145,7 @@
       border: 1.5px solid rgba(166,124,82,0.22);
       box-shadow: 0 4px 14px rgba(62,47,28,0.06);
     }
+
     .btn.secondary:hover{
       transform: translateY(-2px);
       box-shadow: 0 8px 22px rgba(62,47,28,0.10);
@@ -153,6 +155,7 @@
       background: linear-gradient(135deg, #C23B2E, #9B3A3A);
       box-shadow: 0 4px 18px rgba(194,59,46,0.22);
     }
+
     .btn.danger:hover{
       box-shadow: 0 8px 28px rgba(194,59,46,0.30);
     }
@@ -296,17 +299,25 @@
       .req-actions .btn{ width:100%; justify-content:center; }
     }
   </style>
+
   <script src="../JS/AdminControlPanel.js" defer></script>
 </head>
 <body>
-  <header class="page-header">
+
+  <header class="page-header" id="pageHeader">
     <div class="header-logo-mark" aria-hidden="true">
       <img src="../assest/New-logo.JPG.jpeg" alt="شعار راصد" />
     </div>
+
     <div class="header-brand">
       <h1>راصد</h1>
       <p>عين الصحراء - لوحة التحكم</p>
     </div>
+
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+
     <nav class="header-nav" aria-label="تنقل سريع">
       <div class="user-chip" title="حسابي">
         <span class="avatar" id="userInitial">ي</span>
@@ -314,6 +325,71 @@
       </div>
     </nav>
   </header>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+  <aside class="app-sidebar" id="appSidebar" aria-label="القائمة الجانبية" aria-hidden="true">
+    <div class="sidebar-close-row">
+      <button class="sidebar-close" id="sidebarClose" aria-label="إغلاق القائمة">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">القائمة الرئيسية</span>
+
+      <a href="index.html" class="sidebar-link">
+      <i class="fas fa-house"></i>
+      <span>الصفحة الرئيسية</span>
+      </a>
+
+      <a href="AdminControlPanel.html" class="sidebar-link active">
+      <i class="fas fa-users"></i>
+       <span>طلبات التسجيل</span>
+       </a>
+
+      <a href="#" class="sidebar-link">
+        <i class="fas fa-clock-rotate-left"></i>
+        <span>السجل</span>
+      </a>
+
+      <div class="sidebar-divider"></div>
+
+      <span class="sidebar-section-label">الحساب</span>
+
+      <a href="#" class="sidebar-link">
+        <i class="fas fa-user"></i>
+        <span>الملف الشخصي</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
+        <i class="fas fa-right-from-bracket"></i>
+        <span>تسجيل الخروج</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+    <div class="logout-dialog">
+      <div class="logout-dialog-icon">
+        <i class="fas fa-right-from-bracket"></i>
+      </div>
+      <h3 class="logout-dialog-title" id="logoutTitle">تسجيل الخروج</h3>
+      <p class="logout-dialog-msg">هل أنت متأكد من تسجيل الخروج؟</p>
+      <div class="logout-dialog-actions">
+        <button class="logout-cancel-btn" id="logoutCancel">
+          <i class="fas fa-xmark"></i>
+          إلغاء
+        </button>
+        <button class="logout-confirm-btn" id="logoutConfirm">
+          <i class="fas fa-right-from-bracket"></i>
+          تسجيل الخروج
+        </button>
+      </div>
+    </div>
+  </div>
 
   <main class="page-body">
 
@@ -412,5 +488,120 @@
     <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
     <div class="footer-dune"></div>
   </footer>
+
+  <script>
+    (function () {
+      var IS_HOMEPAGE = (function () {
+        var p = window.location.pathname;
+        return p === '/' || p.endsWith('index.html') || p.endsWith('index.htm') || p === '';
+      })();
+
+      var toggle     = document.getElementById('sidebarToggle');
+      var sidebar    = document.getElementById('appSidebar');
+      var overlay    = document.getElementById('sidebarOverlay');
+      var closeBtn   = document.getElementById('sidebarClose');
+      var pageHeader = document.getElementById('pageHeader');
+      var logoutBtn  = document.getElementById('sidebarLogoutBtn');
+      var logoutOvr  = document.getElementById('logoutOverlay');
+      var logoutCanc = document.getElementById('logoutCancel');
+      var logoutConf = document.getElementById('logoutConfirm');
+
+      function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden', 'false');
+        sidebar.setAttribute('aria-hidden', 'false');
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.setAttribute('aria-label', 'إغلاق القائمة');
+        document.body.style.overflow = 'hidden';
+        if (!IS_HOMEPAGE && pageHeader) {
+          pageHeader.classList.add('header-hidden');
+        }
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+        overlay.setAttribute('aria-hidden', 'true');
+        sidebar.setAttribute('aria-hidden', 'true');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'فتح القائمة');
+        document.body.style.overflow = '';
+        if (pageHeader) {
+          pageHeader.classList.remove('header-hidden');
+        }
+      }
+
+      function openLogout() {
+        logoutOvr.classList.add('on');
+        document.body.style.overflow = 'hidden';
+        logoutConf.focus();
+      }
+
+      function closeLogout() {
+        logoutOvr.classList.remove('on');
+        document.body.style.overflow = '';
+      }
+
+      if (toggle && sidebar && overlay && closeBtn) {
+        toggle.addEventListener('click', function () {
+          sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+        });
+
+        closeBtn.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+
+        sidebar.querySelectorAll('.sidebar-link').forEach(function (link) {
+          link.addEventListener('click', function () {
+            sidebar.querySelectorAll('.sidebar-link').forEach(function (l) {
+              l.classList.remove('active');
+            });
+            link.classList.add('active');
+            if (window.innerWidth < 768) closeSidebar();
+          });
+        });
+      }
+
+      if (logoutBtn && logoutOvr && logoutCanc && logoutConf) {
+        logoutBtn.addEventListener('click', openLogout);
+        logoutCanc.addEventListener('click', closeLogout);
+
+        logoutOvr.addEventListener('click', function (e) {
+          if (e.target === logoutOvr) closeLogout();
+        });
+
+        logoutConf.addEventListener('click', function () {
+          logoutConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الخروج…';
+          logoutConf.disabled = true;
+          setTimeout(function () {
+            window.location.href = 'index.html';
+          }, 900);
+        });
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          if (logoutOvr && logoutOvr.classList.contains('on')) {
+            closeLogout();
+            return;
+          }
+          if (sidebar && sidebar.classList.contains('open')) {
+            closeSidebar();
+            if (toggle) toggle.focus();
+          }
+        }
+      });
+
+      var resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+          if (window.innerWidth >= 1024 && sidebar && sidebar.classList.contains('open')) {
+            closeSidebar();
+          }
+        }, 150);
+      });
+    })();
+  </script>
 </body>
 </html>
