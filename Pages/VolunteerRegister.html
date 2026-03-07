@@ -1343,6 +1343,120 @@
         max-width: 100% !important;
       }
     }
+    /* ================================================================
+       NAME ROW – Two fields side by side (desktop), stacked (mobile)
+       ================================================================ */
+    .name-row-group {
+      max-width: var(--field-max);
+      width: 100%;
+      margin-inline: auto;
+    }
+
+    .name-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.875rem;
+      width: 100%;
+    }
+
+    .name-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .name-field label {
+      font-size: clamp(0.8rem, 1.2vw, 0.88rem);
+      font-weight: 700;
+      color: var(--text-mid);
+      margin: 0 0 0.3rem 0;
+      display: block;
+      padding: 0;
+    }
+
+    .name-field input[type="text"] {
+      width: 100%;
+      height: 46px;
+      padding: 0 0.9rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input) !important;
+      color: var(--text) !important;
+      font-family: var(--font);
+      font-size: 0.93rem;
+      direction: rtl;
+      transition: var(--transition);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      box-sizing: border-box;
+    }
+
+    .name-field input[type="text"]:hover {
+      border-color: var(--border-hover);
+    }
+
+    .name-field input[type="text"]:focus {
+      border-color: var(--border-focus) !important;
+      background: var(--bg-input-focus) !important;
+      box-shadow: 0 0 0 3px rgba(166,124,82,0.11) !important;
+    }
+
+    .name-field input[type="text"].is-invalid {
+      border-color: var(--error-border) !important;
+      background: var(--error-bg) !important;
+      box-shadow: 0 0 0 3px rgba(155,58,58,0.07) !important;
+    }
+
+    @media (max-width: 540px) {
+      .name-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ================================================================
+       FOOTER FIX – full-width, no clipping
+       ================================================================ */
+    footer {
+      position: relative;
+      width: 100%;
+      background: linear-gradient(180deg,
+        #f5efe5 0%, #f4ead8 18%, #e8d4b4 34%,
+        #d8bc90 50%, #c4a070 64%, #9e7449 78%, #614426 100%);
+      overflow: hidden;
+      margin-top: auto;
+      box-sizing: border-box;
+    }
+
+    .footer-wave { display: block; width: 100%; height: 60px; position: relative; z-index: 2; }
+
+    .footer-inner {
+      position: relative; z-index: 3;
+      max-width: 1100px; margin: 0 auto;
+      padding: 0 2rem 3.5rem;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 3rem;
+    }
+
+    .f-logo { font-size: 1.7rem; font-weight: 900; color: rgba(255,255,255,0.92); line-height: 1; }
+    .f-logo span { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 4px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .f-brand p { font-size: 12.5px; color: rgba(255,255,255,0.46); line-height: 1.85; margin-top: 10px; }
+
+    .f-col h4 { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.36); margin-bottom: 14px; font-weight: 700; }
+    .f-col ul li { margin-bottom: 8px; }
+    .f-col ul li a { color: rgba(255,255,255,0.56); font-size: 13px; transition: color 0.2s; }
+    .f-col ul li a:hover { color: #fff; }
+
+    .f-emergency { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.11); border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 8px; transition: background 0.2s; }
+    .f-emergency:hover { background: rgba(255,255,255,0.12); }
+    .f-emergency .num { font-size: 1.85rem; font-weight: 900; color: #fff; line-height: 1; }
+    .f-emergency small { display: block; font-size: 9.5px; letter-spacing: 2px; color: rgba(255,255,255,0.36); margin-top: 3px; text-transform: uppercase; }
+
+    .footer-bar { position: relative; z-index: 3; text-align: center; padding: 12px 24px 14px; font-size: 10.5px; color: rgba(255,255,255,0.2); letter-spacing: 2px; border-top: 1px solid rgba(255,255,255,0.06); }
+    .footer-dune { position: absolute; bottom: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #7a5028, #9a6838, #836030, #a87848, #7c5830); }
+
+
  
   </style>
 
@@ -1423,15 +1537,28 @@
 
             <div class="form-grid">
 
-              <!-- الاسم الكامل -->
-              <div class="form-group">
-                <label for="fullName">الاسم الكامل <span class="req-star" aria-hidden="true">*</span></label>
-                <input type="text" id="fullName" name="fullName"
-                  placeholder="مثال: محمد عبدالله الغامدي"
-                  autocomplete="name"
-                  aria-required="true"
-                  aria-describedby="e-fullName" />
-                <span class="field-error" id="e-fullName" role="alert"></span>
+              <!-- الاسم الأول + اسم العائلة -->
+              <div class="form-group name-row-group">
+                <div class="name-row">
+                  <div class="name-field">
+                    <label for="firstName">الاسم الأول <span class="req-star" aria-hidden="true">*</span></label>
+                    <input type="text" id="firstName" name="firstName"
+                      placeholder="محمد"
+                      autocomplete="given-name"
+                      aria-required="true"
+                      aria-describedby="e-firstName" />
+                    <span class="field-error" id="e-firstName" role="alert"></span>
+                  </div>
+                  <div class="name-field">
+                    <label for="lastName">اسم العائلة <span class="req-star" aria-hidden="true">*</span></label>
+                    <input type="text" id="lastName" name="lastName"
+                      placeholder="العتيبي"
+                      autocomplete="family-name"
+                      aria-required="true"
+                      aria-describedby="e-lastName" />
+                    <span class="field-error" id="e-lastName" role="alert"></span>
+                  </div>
+                </div>
               </div>
 
               <!-- رقم الجوال -->
@@ -1698,29 +1825,21 @@
     
 <!-- ════ FOOTER ════ -->
   <footer>
-
     <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
       <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
     </svg>
     <div class="footer-inner">
-      
-        <div class="footer-brand">
-          <img src="../assest/logoo.PNG" alt="شعار راصد" class="footer-logo" />
-         
-     
+      <div class="f-brand">
+        <div class="f-logo">راصد<span>RASID</span></div>
         <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
       </div>
-
-      
-
       <div class="f-col">
         <h4>روابط سريعة</h4>
         <ul>
           <li><a href="index.html">الصفحة الرئيسية</a></li>
-          <li><a href="login.html">تسجيل الدخول</a></li>
           <li><a href="Regester.html">انضم كمتطوع</a></li>
-          <li><a href="track-report.html">تتبع البلاغ</a></li>
+         
         </ul>
       </div>
       <div class="f-col">
@@ -1824,8 +1943,29 @@
     /* ─────────────────────────────────────────────────────
        Validation helpers
        ───────────────────────────────────────────────────── */
-    const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const RE_PHONE = /^05\d{8}$/;
+    const RE_EMAIL   = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const RE_PHONE   = /^05\d{8}$/;
+    const RE_LETTERS = /^[\u0600-\u06FFa-zA-Z\s]+$/;
+
+    /* Simulated existing IDs in the system */
+    const existingIDs    = ["1234567890", "1098765432", "1122334455"];
+
+    /* Simulated existing phone numbers in the system */
+    const existingPhones = ["0555555555", "0500000000"];
+
+    /* setNameErr – works on .name-field inputs (not .form-group inputs) */
+    function setNameErr(el, errId, msg) {
+      const errEl = document.getElementById(errId);
+      if (!el || !errEl) return;
+      errEl.textContent = msg;
+      if (msg) {
+        el.classList.add('is-invalid');
+        el.setAttribute('aria-invalid', 'true');
+      } else {
+        el.classList.remove('is-invalid');
+        el.setAttribute('aria-invalid', 'false');
+      }
+    }
 
     function setErr(el, errId, msg) {
       const errEl = document.getElementById(errId);
@@ -1856,22 +1996,40 @@
       let ok = true;
 
       if (n === 1) {
-        const name  = document.getElementById('fullName');
+        const firstName = document.getElementById('firstName');
+        const lastName  = document.getElementById('lastName');
         const phone = document.getElementById('phone');
         const email = document.getElementById('email');
         const city  = document.getElementById('city');
 
-        /* name */
-        if (!name.value.trim() || name.value.trim().length < 2) {
-          setErr(name, 'e-fullName', 'الرجاء إدخال الاسم الكامل (حرفان على الأقل).'); ok = false;
-        } else { setErr(name, 'e-fullName', ''); }
+        /* firstName */
+        const fnv = firstName.value.trim();
+        if (!fnv || fnv.length < 2) {
+          setNameErr(firstName, 'e-firstName', 'الاسم الأول يجب أن يحتوي على حرفين على الأقل'); ok = false;
+        } else if (!RE_LETTERS.test(fnv)) {
+          setNameErr(firstName, 'e-firstName', 'الاسم الأول يجب أن يحتوي على أحرف فقط'); ok = false;
+        } else { setNameErr(firstName, 'e-firstName', ''); }
+
+        /* lastName */
+        const lnv = lastName.value.trim();
+        if (!lnv || lnv.length < 2) {
+          setNameErr(lastName, 'e-lastName', 'اسم العائلة يجب أن يحتوي على حرفين على الأقل'); ok = false;
+        } else if (!RE_LETTERS.test(lnv)) {
+          setNameErr(lastName, 'e-lastName', 'اسم العائلة يجب أن يحتوي على أحرف فقط'); ok = false;
+        } else { setNameErr(lastName, 'e-lastName', ''); }
 
         /* phone */
         const pv = phone.value.trim().replace(/\s/g,'');
         if (!pv) {
           setErr(phone, 'e-phone', 'الرجاء إدخال رقم الجوال.'); ok = false;
-        } else if (!RE_PHONE.test(pv)) {
-          setErr(phone, 'e-phone', 'رقم الجوال غير صحيح. مثال: 0512345678'); ok = false;
+        } else if (!/^\d+$/.test(pv)) {
+          setErr(phone, 'e-phone', 'رقم الجوال يجب أن يحتوي على أرقام فقط.'); ok = false;
+        } else if (!pv.startsWith('05')) {
+          setErr(phone, 'e-phone', 'رقم الجوال يجب أن يبدأ بـ 05.'); ok = false;
+        } else if (pv.length !== 10) {
+          setErr(phone, 'e-phone', 'رقم الجوال يجب أن يتكون من 10 أرقام بالضبط.'); ok = false;
+        } else if (existingPhones.includes(pv)) {
+          setErr(phone, 'e-phone', 'رقم الجوال مسجل مسبقاً'); ok = false;
         } else { setErr(phone, 'e-phone', ''); }
 
         /* email */
@@ -1904,18 +2062,31 @@
         const dob      = document.getElementById('dob');
         const fileInput = document.getElementById('idFile');
 
-        /* رقم الهوية – required, 10 digits */
+        /* رقم الهوية – numbers only, exactly 10 digits, not duplicate */
         const nv = natId.value.trim();
         if (!nv) {
           setErr(natId, 'e-natId', 'الرجاء إدخال رقم الهوية أو الإقامة.'); ok = false;
-        } else if (!/^\d{10}$/.test(nv)) {
+        } else if (!/^\d+$/.test(nv)) {
+          setErr(natId, 'e-natId', 'رقم الهوية يجب أن يحتوي على أرقام فقط.'); ok = false;
+        } else if (nv.length !== 10) {
           setErr(natId, 'e-natId', 'رقم الهوية يجب أن يتكون من 10 أرقام بالضبط.'); ok = false;
+        } else if (existingIDs.includes(nv)) {
+          setErr(natId, 'e-natId', 'رقم الهوية مسجل مسبقاً'); ok = false;
         } else { setErr(natId, 'e-natId', ''); }
 
-        /* تاريخ الميلاد – required */
+        /* تاريخ الميلاد – required + min age 18 */
         if (!dob.value) {
           setErr(dob, 'e-dob', 'الرجاء تحديد تاريخ الميلاد.'); ok = false;
-        } else { setErr(dob, 'e-dob', ''); }
+        } else {
+          const today   = new Date();
+          const birth   = new Date(dob.value);
+          let age = today.getFullYear() - birth.getFullYear();
+          const m = today.getMonth() - birth.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+          if (age < 18) {
+            setErr(dob, 'e-dob', 'يجب أن يكون العمر 18 سنة أو أكثر للتسجيل'); ok = false;
+          } else { setErr(dob, 'e-dob', ''); }
+        }
 
         /* الملف – required, max 5MB */
         const errFileEl = document.getElementById('e-file');
@@ -1969,7 +2140,7 @@
       const period = document.querySelector('input[name="period"]:checked')?.value || 'لم تُحدَّد';
 
       const rows = [
-        { k: 'الاسم الكامل',       v: g('fullName') || '—' },
+        { k: 'الاسم الكامل', v: ((g('firstName') + ' ' + g('lastName')).trim()) || '—' },
         { k: 'رقم الجوال',          v: g('phone')    || '—' },
         { k: 'البريد الإلكتروني',   v: g('email')    || '—' },
         { k: 'المدينة',              v: g('city')     || '—' },
@@ -2012,6 +2183,96 @@
        ───────────────────────────────────────────────────── */
     const dobEl = document.getElementById('dob');
     if (dobEl) dobEl.max = new Date().toISOString().split('T')[0];
+
+    /* ─────────────────────────────────────────────────────
+       Real-time inline validation – clear errors on fix
+       ───────────────────────────────────────────────────── */
+    function addNameListener(id, errId, label) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        const v = el.value.trim();
+        if (!v || v.length < 2) {
+          setNameErr(el, errId, label + ' يجب أن يحتوي على حرفين على الأقل');
+        } else if (!RE_LETTERS.test(v)) {
+          setNameErr(el, errId, label + ' يجب أن يحتوي على أحرف فقط');
+        } else {
+          setNameErr(el, errId, '');
+        }
+      });
+    }
+    addNameListener('firstName', 'e-firstName', 'الاسم الأول');
+    addNameListener('lastName',  'e-lastName',  'اسم العائلة');
+
+    document.getElementById('natId')?.addEventListener('input', function () {
+      const v = this.value.trim();
+      // فارغ — امسح الخطأ
+      if (!v) { setErr(this, 'e-natId', ''); return; }
+      // أحرف غير رقمية
+      if (!/^\d+$/.test(v)) {
+        setErr(this, 'e-natId', 'رقم الهوية يجب أن يحتوي على أرقام فقط.');
+        return;
+      }
+      // أقل من 10 — لا تظهر خطأ حتى يكمل الكتابة
+      if (v.length < 10) { setErr(this, 'e-natId', ''); return; }
+      // أكثر من 10
+      if (v.length > 10) {
+        setErr(this, 'e-natId', 'رقم الهوية يجب أن يتكون من 10 أرقام بالضبط.');
+        return;
+      }
+      // بالضبط 10 — تحقق من التكرار
+      if (existingIDs.includes(v)) {
+        setErr(this, 'e-natId', 'رقم الهوية مسجل مسبقاً');
+      } else {
+        setErr(this, 'e-natId', '');
+      }
+    });
+
+    document.getElementById('dob')?.addEventListener('change', function () {
+      if (!this.value) return;
+      const today = new Date();
+      const birth = new Date(this.value);
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+      if (age < 18) {
+        setErr(this, 'e-dob', 'يجب أن يكون العمر 18 سنة أو أكثر للتسجيل');
+      } else {
+        setErr(this, 'e-dob', '');
+      }
+    });
+
+    document.getElementById('phone')?.addEventListener('input', function () {
+      const v = this.value.trim().replace(/\s/g, '');
+      // فارغ — امسح الخطأ
+      if (!v) { setErr(this, 'e-phone', ''); return; }
+      // أحرف غير رقمية
+      if (!/^\d+$/.test(v)) {
+        setErr(this, 'e-phone', 'رقم الجوال يجب أن يحتوي على أرقام فقط.'); return;
+      }
+      // لا يبدأ بـ 05 (بمجرد كتابة رقمين)
+      if (v.length >= 2 && !v.startsWith('05')) {
+        setErr(this, 'e-phone', 'رقم الجوال يجب أن يبدأ بـ 05.'); return;
+      }
+      // أقل من 10 — لا تظهر خطأ حتى يكمل
+      if (v.length < 10) { setErr(this, 'e-phone', ''); return; }
+      // أكثر من 10
+      if (v.length > 10) {
+        setErr(this, 'e-phone', 'رقم الجوال يجب أن يتكون من 10 أرقام بالضبط.'); return;
+      }
+      // بالضبط 10 — تحقق من التكرار
+      if (existingPhones.includes(v)) {
+        setErr(this, 'e-phone', 'رقم الجوال مسجل مسبقاً');
+      } else {
+        setErr(this, 'e-phone', '');
+      }
+    });
+
+    document.getElementById('email')?.addEventListener('input', function () {
+      const v = this.value.trim();
+      if (!v) return setErr(this, 'e-email', '');
+      if (RE_EMAIL.test(v)) setErr(this, 'e-email', '');
+    });
 
     /* ─────────────────────────────────────────────────────
        NEXT button
