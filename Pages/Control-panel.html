@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F5EFE6" />
+  <title>راصد — لوحة التحكم</title>
+  <link rel="icon" href="../assest/logo.PNG" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="../CSS/Rasid.css" />
+  <link rel="stylesheet" href="../CSS/control-panel.css" />
+</head>
+<body>
+
+  <!-- ══════════ HEADER — base.html ══════════ -->
+  <header class="page-header">
+    <div class="header-logo-mark" aria-hidden="true">
+      <img src="../assest/New-logo.JPG.jpeg" alt="شعار راصد" />
+    </div>
+    <div class="header-brand">
+      <h1>راصد</h1>
+      <p>عين الصحراء — لوحة التحكم</p>
+    </div>
+    <nav class="header-nav" aria-label="تنقل سريع">
+      <div class="user-chip" title="حسابي">
+        <span class="avatar" id="userInitial">ي</span>
+        <span class="name" id="userName">يوسف</span>
+        <span class="notif" id="notifCount">3</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <main class="page-body">
+
+    <!-- Heading -->
+    <div class="page-heading">
+      <div class="page-heading-eyebrow" aria-hidden="true">
+        <span></span>لوحة التحكم<span></span>
+      </div>
+      <h2>البلاغات النشطة</h2>
+      <p>جميع البلاغات المنضمة لك — تابع الحالة ولقطة الطائرة لكل بلاغ بشكل مباشر.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon active"><i class="fas fa-circle-exclamation"></i></div>
+        <div>
+          <div class="stat-num" id="statNew">٠</div>
+          <div class="stat-desc">بلاغات جديدة</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon pending"><i class="fas fa-spinner"></i></div>
+        <div>
+          <div class="stat-num" id="statActive">٠</div>
+          <div class="stat-desc">قيد المعالجة</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon resolved"><i class="fas fa-circle-check"></i></div>
+        <div>
+          <div class="stat-num" id="statResolved">٠</div>
+          <div class="stat-desc">مُغلقة اليوم</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon drones"><i class="fas fa-helicopter"></i></div>
+        <div>
+          <div class="stat-num">٣</div>
+          <div class="stat-desc">طائرات نشطة</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon"><i class="fas fa-magnifying-glass"></i></span>
+        <input id="searchInput" type="text" class="search-input"
+          placeholder="ابحث برقم البلاغ أو الموقع…" autocomplete="off" />
+      </div>
+      <div class="filter-chips" id="filterChips">
+        <button class="filter-chip active" data-filter="all"><i class="fas fa-border-all"></i> الكل</button>
+        <button class="filter-chip" data-filter="new"><i class="fas fa-circle-exclamation"></i> جديد</button>
+        <button class="filter-chip" data-filter="active"><i class="fas fa-spinner"></i> نشط</button>
+        <button class="filter-chip" data-filter="resolved"><i class="fas fa-circle-check"></i> مُغلق</button>
+      </div>
+      <button class="toolbar-btn" id="refreshBtn">
+        <i class="fas fa-rotate-right"></i> تحديث
+      </button>
+    </div>
+
+    <!-- Alerts grid -->
+    <div class="alerts-grid" id="alertsGrid"></div>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+      <h3>لا توجد بلاغات</h3>
+      <p>لا توجد بلاغات تطابق معايير البحث أو التصفية الحالية.</p>
+    </div>
+
+  </main>
+
+  <!-- ══════════ FOOTER — base.html ══════════ -->
+  <footer>
+    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
+    </svg>
+    <div class="footer-inner">
+      <div class="f-brand">
+        <div class="f-logo">راصد<span>RASID</span></div>
+        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
+      </div>
+      <div class="f-col">
+        <h4>روابط سريعة</h4>
+        <ul>
+          <li><a href="index.html">الصفحة الرئيسية</a></li>
+          <li><a href="login.html">تسجيل الدخول</a></li>
+          <li><a href="Regester.html">انضم كمتطوع</a></li>
+          <li><a href="track-report.html">تتبع البلاغ</a></li>
+          <li><a href="History.html">السجل التاريخي</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h4>أرقام الطوارئ</h4>
+        <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+        <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+      </div>
+    </div>
+    <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+    <div class="footer-dune"></div>
+  </footer>
+
+  <!-- Detail modal -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">تفاصيل البلاغ</h3>
+        <button class="modal-close" id="modalClose" aria-label="إغلاق"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-screenshot">
+        <canvas id="modalCanvas"></canvas>
+      </div>
+      <div class="modal-body">
+        <div class="modal-grid" id="modalGrid"></div>
+      </div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" aria-live="polite">
+    <div class="toast-box" id="toastBox">
+      <span class="toast-dot"></span>
+      <span id="toastText"></span>
+    </div>
+  </div>
+
+  <script>
+  'use strict';
+
+  /* ════════════════════════════════════════
+     HELPERS
+  ════════════════════════════════════════ */
+  const toAr = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+
+  let toastTimer;
+  function showToast(msg) {
+    const box = document.getElementById('toastBox');
+    document.getElementById('toastText').textContent = msg;
+    box.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => box.classList.remove('show'), 2400);
+  }
+
+  /* ════════════════════════════════════════
+     DATA — alerts for this logged-in user
+  ════════════════════════════════════════ */
+  const ALERTS = [
+    {
+      id: 'RSD-2025-00142',
+      status: 'new',
+      priority: 'high',
+      location: 'نجران — الربع الخالي',
+      coords: 'N 18.23° E 47.51°',
+      reportedAt: 'منذ ٢ دقيقة',
+      drone: 'طائرة راصد-٣',
+      volunteers: '٨ متطوعين',
+      notes: 'رُصد شخص على بُعد ١.٢ كم من آخر موقع معروف.',
+      detection: { x: 0.38, y: 0.28, w: 0.22, h: 0.38, conf: 82 },
+    },
+    {
+      id: 'RSD-2025-00139',
+      status: 'active',
+      priority: 'medium',
+      location: 'حائل — البادية الشمالية',
+      coords: 'N 27.51° E 41.69°',
+      reportedAt: 'منذ ٣٥ دقيقة',
+      drone: 'طائرة راصد-١',
+      volunteers: '٥ متطوعين',
+      notes: 'جارٍ المسح الجوي للقطاع الشمالي الغربي.',
+      detection: { x: 0.55, y: 0.35, w: 0.18, h: 0.30, conf: 67 },
+    },
+    {
+      id: 'RSD-2025-00137',
+      status: 'active',
+      priority: 'medium',
+      location: 'تبوك — البادية الجنوبية',
+      coords: 'N 28.39° E 36.57°',
+      reportedAt: 'منذ ساعة',
+      drone: 'طائرة راصد-٢',
+      volunteers: '١٢ متطوعاً',
+      notes: 'إشارة حرارية محتملة في المربع C٧.',
+      detection: null,
+    },
+    {
+      id: 'RSD-2025-00133',
+      status: 'new',
+      priority: 'high',
+      location: 'الجوف — صحراء الطلح',
+      coords: 'N 29.97° E 39.88°',
+      reportedAt: 'منذ ٥ دقائق',
+      drone: 'طائرة راصد-٣',
+      volunteers: '٦ متطوعين',
+      notes: 'بلاغ جديد — في انتظار تخصيص الفريق.',
+      detection: { x: 0.62, y: 0.42, w: 0.15, h: 0.28, conf: 74 },
+    },
+    {
+      id: 'RSD-2025-00128',
+      status: 'active',
+      priority: 'low',
+      location: 'المدينة المنورة — العُلا',
+      coords: 'N 26.08° E 37.35°',
+      reportedAt: 'منذ ساعتين',
+      drone: 'طائرة راصد-١',
+      volunteers: '٩ متطوعين',
+      notes: 'المسح مستمر — آخر تحديث منذ ١٠ دقائق.',
+      detection: null,
+    },
+    {
+      id: 'RSD-2025-00121',
+      status: 'resolved',
+      priority: 'low',
+      location: 'القصيم — صحراء الدهناء',
+      coords: 'N 26.33° E 43.97°',
+      reportedAt: 'منذ ٤ ساعات',
+      drone: 'طائرة راصد-٢',
+      volunteers: '٧ متطوعين',
+      notes: 'تم العثور على المفقود بحالة جيدة. البلاغ مُغلق.',
+      detection: { x: 0.44, y: 0.32, w: 0.20, h: 0.35, conf: 95 },
+    },
+  ];
+
+  /* ════════════════════════════════════════
+     DRONE SCREENSHOT RENDERER
+     Draws a realistic drone-view scene on canvas
+  ════════════════════════════════════════ */
+  function drawDroneScene(canvas, alert, size = 'card') {
+    const W = canvas.width  = size === 'modal' ? 580 : 420;
+    const H = canvas.height = size === 'modal' ? 326 : 236;
+    const ctx = canvas.getContext('2d');
+
+    // ── Desert terrain background ──
+    const terrainGrad = ctx.createLinearGradient(0, 0, W, H);
+    terrainGrad.addColorStop(0,    '#c8a87a');
+    terrainGrad.addColorStop(0.35, '#b8945e');
+    terrainGrad.addColorStop(0.65, '#a07840');
+    terrainGrad.addColorStop(1,    '#8a6530');
+    ctx.fillStyle = terrainGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Sand texture: random dunes ──
+    const seed = parseInt(alert.id.replace(/\D/g,'')) || 12345;
+    const rng = (() => { let s = seed; return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 4294967296; }; })();
+
+    for (let i = 0; i < 18; i++) {
+      const x = rng() * W;
+      const y = rng() * H;
+      const rx = 30 + rng() * 80;
+      const ry = 8 + rng() * 22;
+      const alpha = 0.04 + rng() * 0.1;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((rng() - 0.5) * 0.6);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${rng() > 0.5 ? '255,240,210' : '80,50,20'},${alpha})`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ── Sparse rocks / shrubs ──
+    for (let i = 0; i < 12; i++) {
+      const x = rng() * W;
+      const y = rng() * H;
+      const r = 2 + rng() * 6;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(60,38,18,${0.15 + rng() * 0.2})`;
+      ctx.fill();
+    }
+
+    // ── Night mode tint for resolved ──
+    if (alert.status === 'resolved') {
+      ctx.fillStyle = 'rgba(10,20,40,0.45)';
+      ctx.fillRect(0, 0, W, H);
+      // subtle thermal palette highlight
+      ctx.fillStyle = 'rgba(255,80,0,0.12)';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // ── Grid overlay (drone HUD) ──
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 0.5;
+    const gStep = W / 8;
+    for (let x = gStep; x < W; x += gStep) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = gStep; y < H; y += gStep) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // ── Detection box ──
+    if (alert.detection) {
+      const d = alert.detection;
+      const bx = d.x * W, by = d.y * H, bw = d.w * W, bh = d.h * H;
+
+      // Glow
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#4ADE80';
+
+      // Box
+      ctx.strokeStyle = '#4ADE80';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(bx, by, bw, bh);
+
+      // Corner ticks
+      ctx.lineWidth = 3;
+      const tk = 10;
+      [
+        [bx, by, bx+tk, by, bx, by+tk],
+        [bx+bw, by, bx+bw-tk, by, bx+bw, by+tk],
+        [bx, by+bh, bx+tk, by+bh, bx, by+bh-tk],
+        [bx+bw, by+bh, bx+bw-tk, by+bh, bx+bw, by+bh-tk],
+      ].forEach(([x1,y1,x2,y2,x3,y3]) => {
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.moveTo(x1,y1); ctx.lineTo(x3,y3); ctx.stroke();
+      });
+      ctx.shadowBlur = 0;
+
+      // "Person" silhouette inside box
+      const cx = bx + bw/2, cy = by + bh*0.28, hr = bh*0.1;
+      ctx.fillStyle = 'rgba(255,160,80,0.75)';
+      ctx.beginPath(); ctx.arc(cx, cy, hr, 0, Math.PI*2); ctx.fill();
+      ctx.fillRect(cx - hr*0.7, cy + hr, hr*1.4, bh*0.38);
+
+      // Label
+      ctx.shadowBlur = 0;
+      const lblW = 100, lblH = 20;
+      const lx = Math.min(bx, W - lblW - 4);
+      const ly = Math.max(by - lblH - 4, 4);
+      ctx.fillStyle = 'rgba(74,222,128,0.9)';
+      ctx.beginPath();
+      ctx.roundRect(lx, ly, lblW, lblH, 4);
+      ctx.fill();
+      ctx.fillStyle = '#0a2010';
+      ctx.font = `bold ${size === 'modal' ? 12 : 10}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`شخص مكتشف · ${d.conf}%`, lx + lblW/2, ly + 13);
+    } else {
+      // No detection — scanning animation frame
+      ctx.strokeStyle = 'rgba(255,220,100,0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+      const scanY = H * 0.5;
+      ctx.beginPath(); ctx.moveTo(0, scanY); ctx.lineTo(W, scanY); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,220,100,0.5)';
+      ctx.font = `bold 10px monospace`;
+      ctx.textAlign = 'right';
+      ctx.fillText('SCANNING...', W - 10, scanY - 6);
+    }
+
+    // ── HUD: coordinates bottom-left ──
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.beginPath();
+    ctx.roundRect(6, H - 22, 120, 16, 4);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(alert.coords, 10, H - 10);
+
+    // ── HUD: REC indicator ──
+    if (alert.status !== 'resolved') {
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath(); ctx.roundRect(W - 58, 8, 50, 16, 4); ctx.fill();
+      ctx.fillStyle = '#E74C3C';
+      ctx.beginPath(); ctx.arc(W - 50, 16, 4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('REC', W - 42, 20);
+    }
+  }
+
+  /* ════════════════════════════════════════
+     STATE
+  ════════════════════════════════════════ */
+  let activeFilter = 'all';
+  let searchQuery  = '';
+  let openModal    = null;
+
+  /* ════════════════════════════════════════
+     STATUS CONFIG
+  ════════════════════════════════════════ */
+  const STATUS_CFG = {
+    new:      { label: 'جديد',      cls: 'badge-new',      icon: 'fa-circle-exclamation' },
+    active:   { label: 'نشط',       cls: 'badge-active',   icon: 'fa-spinner' },
+    resolved: { label: 'مُغلق',     cls: 'badge-resolved', icon: 'fa-circle-check' },
+  };
+
+  /* ════════════════════════════════════════
+     RENDER
+  ════════════════════════════════════════ */
+  function getFiltered() {
+    return ALERTS.filter(a => {
+      if (activeFilter !== 'all' && a.status !== activeFilter) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (!a.id.toLowerCase().includes(q) && !a.location.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function updateStats() {
+    document.getElementById('statNew').textContent     = toAr(ALERTS.filter(a => a.status === 'new').length);
+    document.getElementById('statActive').textContent  = toAr(ALERTS.filter(a => a.status === 'active').length);
+    document.getElementById('statResolved').textContent= toAr(ALERTS.filter(a => a.status === 'resolved').length);
+    document.getElementById('notifCount').textContent  = ALERTS.filter(a => a.status === 'new').length;
+  }
+
+  function render() {
+    const list = getFiltered();
+    const grid  = document.getElementById('alertsGrid');
+    const empty = document.getElementById('emptyState');
+
+    if (list.length === 0) {
+      grid.innerHTML = '';
+      empty.classList.add('visible');
+      return;
+    }
+    empty.classList.remove('visible');
+
+    grid.innerHTML = list.map((a, idx) => {
+      const sc = STATUS_CFG[a.status] || STATUS_CFG.new;
+      return `
+      <article class="alert-card priority-${a.priority}" data-id="${a.id}"
+        style="animation-delay:${idx * 0.06}s">
+        <!-- Screenshot -->
+        <div class="card-screenshot">
+          <canvas class="screenshot-canvas" data-alert-id="${a.id}"></canvas>
+          <div class="screenshot-overlay"></div>
+          ${a.status !== 'resolved' ? `
+          <div class="screenshot-badge">
+            <span class="live-dot"></span> مباشر
+          </div>` : `
+          <div class="screenshot-badge" style="background:rgba(30,20,10,0.75);">
+            <i class="fas fa-lock" style="font-size:0.55rem;"></i> مُغلق
+          </div>`}
+          ${a.detection ? `
+          <div class="conf-bar-wrap">
+            <span class="conf-label">ثقة الرصد</span>
+            <div class="conf-bar"><div class="conf-fill" style="width:${a.detection.conf}%"></div></div>
+            <span class="conf-pct">${a.detection.conf}%</span>
+          </div>` : `
+          <div class="conf-bar-wrap">
+            <span class="conf-label" style="color:rgba(255,220,100,0.6);">جارٍ المسح…</span>
+          </div>`}
+        </div>
+
+        <!-- Body -->
+        <div class="card-body">
+          <div class="card-top">
+            <div>
+              <div class="card-id">${a.id}</div>
+              <div class="card-time"><i class="fas fa-clock"></i> ${a.reportedAt}</div>
+            </div>
+            <span class="status-badge ${sc.cls}">
+              <i class="fas ${sc.icon}"></i>${sc.label}
+            </span>
+          </div>
+
+          <div class="card-info">
+            <div class="info-row"><i class="fas fa-location-dot"></i><span><strong>${a.location}</strong></span></div>
+            <div class="info-row"><i class="fas fa-helicopter"></i><span>${a.drone}</span></div>
+            <div class="info-row"><i class="fas fa-users"></i><span>${a.volunteers}</span></div>
+          </div>
+
+          <div class="card-actions">
+            ${a.status !== 'resolved' ? `
+            <button class="card-btn card-btn-primary btn-assign" data-id="${a.id}">
+              <i class="fas fa-user-check"></i> تولّي البلاغ
+            </button>` : `
+            <button class="card-btn card-btn-ghost" disabled style="opacity:0.5;cursor:default;">
+              <i class="fas fa-circle-check"></i> مُغلق
+            </button>`}
+            <button class="card-btn card-btn-ghost btn-details" data-id="${a.id}">
+              <i class="fas fa-expand"></i>
+            </button>
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+
+    // Draw drone screenshots on each canvas
+    grid.querySelectorAll('.screenshot-canvas').forEach(canvas => {
+      const alert = ALERTS.find(a => a.id === canvas.dataset.alertId);
+      if (alert) drawDroneScene(canvas, alert, 'card');
+    });
+
+    // Attach events
+    grid.querySelectorAll('.btn-assign').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const a = ALERTS.find(x => x.id === btn.dataset.id);
+        if (!a) return;
+        a.status = 'active';
+        updateStats(); render();
+        showToast(`تم تولّي البلاغ ${a.id}`);
+      });
+    });
+
+    grid.querySelectorAll('.btn-details').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        openAlertModal(btn.dataset.id);
+      });
+    });
+
+    grid.querySelectorAll('.card-screenshot').forEach(ss => {
+      ss.addEventListener('click', () => {
+        const card = ss.closest('.alert-card');
+        openAlertModal(card.dataset.id);
+      });
+    });
+  }
+
+  /* ════════════════════════════════════════
+     MODAL
+  ════════════════════════════════════════ */
+  function openAlertModal(id) {
+    const a = ALERTS.find(x => x.id === id);
+    if (!a) return;
+    openModal = id;
+
+    const sc = STATUS_CFG[a.status] || STATUS_CFG.new;
+
+    document.getElementById('modalTitle').textContent = a.id;
+
+    // Draw high-res screenshot
+    const mc = document.getElementById('modalCanvas');
+    drawDroneScene(mc, a, 'modal');
+
+    // Info grid
+    document.getElementById('modalGrid').innerHTML = `
+      <div class="modal-field">
+        <div class="modal-field-label">الموقع</div>
+        <div class="modal-field-value warm">${a.location}</div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-field-label">الإحداثيات</div>
+        <div class="modal-field-value" style="direction:ltr;text-align:right;font-size:0.78rem;">${a.coords}</div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-field-label">وقت الإبلاغ</div>
+        <div class="modal-field-value">${a.reportedAt}</div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-field-label">الطائرة المخصصة</div>
+        <div class="modal-field-value">${a.drone}</div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-field-label">المتطوعون</div>
+        <div class="modal-field-value">${a.volunteers}</div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-field-label">الحالة</div>
+        <div class="modal-field-value ${a.status === 'resolved' ? 'green' : a.status === 'new' ? 'red' : ''}">${sc.label}</div>
+      </div>
+      ${a.detection ? `
+      <div class="modal-field" style="grid-column:1/-1;">
+        <div class="modal-field-label">نتيجة الرصد</div>
+        <div class="modal-field-value green">شخص مكتشف — نسبة الثقة ${a.detection.conf}%</div>
+      </div>` : `
+      <div class="modal-field" style="grid-column:1/-1;">
+        <div class="modal-field-label">نتيجة الرصد</div>
+        <div class="modal-field-value" style="opacity:0.6;">لا يوجد رصد حتى الآن — المسح جارٍ</div>
+      </div>`}
+      <div class="modal-field" style="grid-column:1/-1;">
+        <div class="modal-field-label">ملاحظات</div>
+        <div class="modal-field-value" style="font-weight:500;opacity:0.85;line-height:1.65;">${a.notes}</div>
+      </div>
+    `;
+
+    // Footer actions
+    document.getElementById('modalFooter').innerHTML = a.status !== 'resolved' ? `
+      <button class="card-btn card-btn-primary modal-assign-btn" data-id="${a.id}" style="flex:none;padding:0.48rem 1.3rem;">
+        <i class="fas fa-user-check"></i> تولّي البلاغ
+      </button>
+      <button class="card-btn card-btn-danger modal-close-btn" data-id="${a.id}" style="flex:none;padding:0.48rem 1rem;">
+        <i class="fas fa-circle-xmark"></i> إغلاق البلاغ
+      </button>
+    ` : `
+      <button class="card-btn card-btn-ghost" disabled style="opacity:0.5;cursor:default;flex:none;padding:0.48rem 1rem;">
+        <i class="fas fa-circle-check"></i> البلاغ مُغلق بالفعل
+      </button>
+    `;
+
+    // Modal action events
+    document.querySelector('.modal-assign-btn')?.addEventListener('click', () => {
+      const alert = ALERTS.find(x => x.id === id);
+      if (alert) { alert.status = 'active'; updateStats(); render(); closeModal(); showToast(`تم تولّي البلاغ ${id}`); }
+    });
+    document.querySelector('.modal-close-btn')?.addEventListener('click', () => {
+      const alert = ALERTS.find(x => x.id === id);
+      if (alert) { alert.status = 'resolved'; updateStats(); render(); closeModal(); showToast(`تم إغلاق البلاغ ${id}`); }
+    });
+
+    document.getElementById('modalBackdrop').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalBackdrop').classList.remove('open');
+    openModal = null;
+  }
+
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalBackdrop').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalBackdrop')) closeModal();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && openModal) closeModal(); });
+
+  /* ════════════════════════════════════════
+     FILTER + SEARCH
+  ════════════════════════════════════════ */
+  document.getElementById('filterChips').addEventListener('click', e => {
+    const chip = e.target.closest('[data-filter]');
+    if (!chip) return;
+    document.querySelectorAll('[data-filter]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter = chip.dataset.filter;
+    render();
+  });
+
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value.trim();
+    render();
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', () => {
+    render();
+    showToast('تم التحديث');
+  });
+
+  /* ════════════════════════════════════════
+     INIT
+  ════════════════════════════════════════ */
+  updateStats();
+  render();
+
+  // Redraw canvases on window resize
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      document.querySelectorAll('.screenshot-canvas').forEach(canvas => {
+        const alert = ALERTS.find(a => a.id === canvas.dataset.alertId);
+        if (alert) drawDroneScene(canvas, alert, 'card');
+      });
+    }, 200);
+  });
+
+  </script>
+</body>
+</html>
