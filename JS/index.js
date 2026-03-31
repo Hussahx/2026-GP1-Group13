@@ -993,21 +993,43 @@ setTimeout(() => {
       validateLoginForm();
     }, true);
 
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       loginAttempted = true;
       const ok = validateLoginForm();
-      if (!ok) {
-        // After a failed attempt: allow forgot-link to reveal its message
-        // (user can now click "نسيت كلمة المرور؟" to see the helper)
-        return;
+      if (!ok) return;
+
+      // ── Connect to Firebase ─────────────────────────────
+      const submitBtn = document.getElementById('submitLoginBtn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ التحقق…';
       }
 
-      showToast('تم تسجيل الدخول بنجاح.', 'مرحبًا بك! يمكنك الآن الوصول إلى لوحة التحكم.');
-      closeModal(loginModal);
-      loginForm.reset();
-      loginAttempted = false;
-      resetLoginUI();
+      try {
+        const { loginAndRedirect } = await import('../JS/firebase.js');
+        const result = await loginAndRedirect(
+          lEmail.value.trim(),
+          lPass.value
+        );
+
+        if (!result.success) {
+          // Show the Firebase error inside the form
+          setFieldError(lPass, document.getElementById('lPassErr'), result.error);
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-unlock-keyhole"></i> دخول';
+          }
+          return;
+        }
+        // success → firebase.js already triggered redirect
+      } catch (err) {
+        setFieldError(lPass, document.getElementById('lPassErr'), 'خطأ في الاتصال. حاول مجددًا.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-unlock-keyhole"></i> دخول';
+        }
+      }
     });
   }
 
