@@ -34,17 +34,6 @@ const auth      = getAuth(app);
 const db        = getFirestore(app);
 
 // ── Sign-in with role check ──────────────────────────────────
-/**
- * Signs in the user and redirects based on their Firestore role.
- *
- * Firestore structure expected:
- *   Collection: "User"  →  Document ID: uid
- *   Fields: { role: "admin" | "volunteer" | ... }
- *
- * @param {string} email
- * @param {string} password
- * @returns {Promise<{ success: boolean, error?: string }>}
- */
 export async function loginAndRedirect(email, password) {
   try {
     // 1. Sign in with Firebase Auth
@@ -56,12 +45,11 @@ export async function loginAndRedirect(email, password) {
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
-      // Document missing → treat as unauthorised
       await signOut(auth);
       return { success: false, error: "لم يتم العثور على بيانات المستخدم. تواصل مع الإدارة." };
     }
 
-    const { role } = userSnap.data();
+    const { role, accountStatus } = userSnap.data();
 
     // 3. Redirect based on role
     switch (role) {
@@ -69,10 +57,14 @@ export async function loginAndRedirect(email, password) {
         window.location.href = "../Pages/AdminControlPanel.html";
         break;
       case "volunteer":
-        window.location.href = "../Pages/Control-panel.html";
+        if (accountStatus === "valid") {
+          window.location.href = "../Pages/Control-panel.html";
+        } else {
+          await signOut(auth);
+          return { success: false, error: "حسابك غير مفعّل. تواصل مع الإدارة." };
+        }
         break;
       default:
-        // Unknown role – sign out and inform user
         await signOut(auth);
         return { success: false, error: "صلاحياتك غير كافية للوصول إلى النظام." };
     }
@@ -80,21 +72,12 @@ export async function loginAndRedirect(email, password) {
     return { success: true };
 
   } catch (err) {
-    // Map Firebase error codes to Arabic messages
     const msg = firebaseErrorToArabic(err.code);
     return { success: false, error: msg };
   }
 }
 
 // ── Auth state helper (used on protected pages) ──────────────
-/**
- * Redirects to home if the user is NOT logged in,
- * OR redirects to home if their role doesn't match `requiredRole`.
- *
- * Call this at the top of every protected page's script.
- *
- * @param {string} [requiredRole]  e.g. "admin" – omit to allow any authenticated user
- */
 export async function requireAuth(requiredRole) {
   return new Promise((resolve) => {
     onAuthStateChanged(auth, async (user) => {
