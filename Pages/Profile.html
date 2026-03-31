@@ -381,6 +381,7 @@
           </div>
           <div class="hero-bio">
             <div class="bio-row"><span class="bio-ico">📞</span><span class="bio-val" id="bioPhone" contenteditable="false" dir="ltr">0512345678</span></div>
+            <div class="bio-row"><span class="bio-ico">✉️</span><span class="bio-val" id="bioEmail" contenteditable="false" dir="ltr">sara.hd@gmail.com</span></div>
             <div class="bio-row"><span class="bio-ico">📍</span><span class="bio-val" id="bioCity" contenteditable="false">الرياض</span></div>
             <div class="bio-row"><span class="bio-ico">🪪</span><span class="bio-val" contenteditable="false" dir="ltr">VOL-001 · انضم فبراير 2026</span></div>
           </div>
@@ -508,27 +509,150 @@
   <div class="footer-dune"></div>
 </footer>
 
-<script>
-function toAr(n){return String(n).replace(/\d/g,function(d){return'٠١٢٣٤٥٦٧٨٩'[+d];});}
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged, updateEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-var editFields=['bioName','bioPhone','bioCity'];
-function startEdit(){
-  editFields.forEach(function(id){var el=document.getElementById(id);if(el)el.contentEditable='true';});
-  document.getElementById('saveBtn').classList.add('show');
-  document.getElementById('editBtn').style.display='none';
-  document.getElementById('bioName').focus();
-}
-function saveEdit(){
-  editFields.forEach(function(id){var el=document.getElementById(id);if(el)el.contentEditable='false';});
-  document.getElementById('saveBtn').classList.remove('show');
-  document.getElementById('editBtn').style.display='';
-  showToast('✓ تم حفظ البيانات بنجاح');
-}
-function showToast(msg){
-  var t=document.createElement('div');t.className='p-toast';t.textContent=msg;
-  document.body.appendChild(t);
-  setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},3200);
-}
+  // ── YOUR FIREBASE CONFIG ─────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_AUTH_DOMAIN",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId:             "YOUR_APP_ID"
+  };
+  // ────────────────────────────────────────────────────────────────
+
+  const app  = initializeApp(firebaseConfig);
+  const db   = getFirestore(app);
+  const auth = getAuth(app);
+  let currentUser = null;
+
+  // Load user profile data on auth state change
+  onAuthStateChanged(auth, async function(user) {
+    if (!user) return;
+    currentUser = user;
+    try {
+      const snap = await getDoc(doc(db, "User", user.uid));
+      if (snap.exists()) {
+        const d = snap.data();
+        const fullName = ((d.FirstName || '') + ' ' + (d.LastName || '')).trim();
+        if (fullName) document.getElementById('bioName').textContent  = fullName;
+        if (d.Phone)  document.getElementById('bioPhone').textContent = d.Phone;
+        if (d.Email)  document.getElementById('bioEmail').textContent = d.Email;
+        else if (user.email) document.getElementById('bioEmail').textContent = user.email;
+        if (d.City)   document.getElementById('bioCity').textContent  = d.City;
+      }
+    } catch(e) { console.warn('Could not load profile:', e); }
+  });
+
+  // Expose edit functions globally for onclick handlers
+  window.startEdit = function() {
+    ['bioName','bioPhone','bioEmail'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.contentEditable = 'true';
+    });
+    document.getElementById('saveBtn').classList.add('show');
+    document.getElementById('editBtn').style.display = 'none';
+    document.getElementById('bioName').focus();
+  };
+
+  window.saveEdit = async function() {
+    const nameEl  = document.getElementById('bioName');
+    const phoneEl = document.getElementById('bioPhone');
+    const emailEl = document.getElementById('bioEmail');
+
+    const fullName = (nameEl.textContent || '').trim();
+    const phone    = (phoneEl.textContent || '').trim();
+    const email    = (emailEl.textContent || '').trim();
+
+    // ── Input validation ─────────────────────────────────────────
+    if (!fullName || fullName.length < 2) {
+      showToast('\u26a0\ufe0f الاسم لا يمكن أن يكون فارغاً', 'error');
+      nameEl.focus(); return;
+    }
+    const phoneRegex = /^05\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+      showToast('\u26a0\ufe0f رقم الجوال غير صحيح — يجب أن يبدأ بـ 05 ويحتوي 10 أرقام', 'error');
+      phoneEl.focus(); return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showToast('\u26a0\ufe0f البريد الإلكتروني غير صحيح', 'error');
+      emailEl.focus(); return;
+    }
+    // ─────────────────────────────────────────────────────────────
+
+    // Lock fields immediately
+    ['bioName','bioPhone','bioEmail'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.contentEditable = 'false';
+    });
+    const saveBtnEl = document.getElementById('saveBtn');
+    saveBtnEl.classList.remove('show');
+    document.getElementById('editBtn').style.display = '';
+
+    if (!currentUser) {
+      showToast('\u26a0\ufe0f يجب تسجيل الدخول أولاً', 'error'); return;
+    }
+
+    const parts     = fullName.split(/\s+/);
+    const firstName = parts[0] || '';
+    const lastName  = parts.slice(1).join(' ') || '';
+
+    try {
+      // 1. Update Firestore document
+      await updateDoc(doc(db, "User", currentUser.uid), {
+        FirstName: firstName,
+        LastName:  lastName,
+        Phone:     phone,
+        Email:     email
+      });
+
+      // 2. Sync Firebase Auth email if it changed
+      if (email !== currentUser.email) {
+        try {
+          await updateEmail(currentUser, email);
+        } catch(authErr) {
+          if (authErr.code === 'auth/requires-recent-login') {
+            showToast('\u26a0\ufe0f لتغيير البريد يجب إعادة تسجيل الدخول مجدداً', 'error');
+            return;
+          }
+          console.warn('Auth email update skipped:', authErr.message);
+        }
+      }
+
+      showToast('\u2713 تم حفظ البيانات وتحديثها في قاعدة البيانات', 'success');
+    } catch(e) {
+      console.error('Firestore update error:', e);
+      showToast('\u2717 حدث خطأ أثناء الحفظ — حاول مرة أخرى', 'error');
+    }
+  };
+
+  window.showToast = function(msg, type) {
+    type = type || 'success';
+    var existing = document.querySelector('.p-toast');
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+    var t = document.createElement('div');
+    t.className = 'p-toast';
+    if (type === 'error') {
+      t.style.borderRightColor = '#c0392b';
+      t.style.color = '#7a1a1a';
+      t.style.background = '#fff5f5';
+    }
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 3600);
+  };
+</script>
+
+<script>
+function toAr(n){return String(n).replace(/\d/g,function(d){return '\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669'[+d];});}
+
+/* startEdit / saveEdit / showToast are defined in the Firebase module above */
 
 /* ══ DRONE POPUP — يطلع تحت الأيقونة مباشرة ══ */
 var unread = 0;
