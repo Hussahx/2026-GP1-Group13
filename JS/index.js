@@ -1,4 +1,4 @@
-/* script.js */
+ /* script.js */
 /* ============================================================
    RASID – EYES OF THE DESERT
    Main JavaScript – Responsive + RTL aware
@@ -1073,22 +1073,30 @@ if (!rFile || !rFile.files.length) {
       validateLoginForm();
     }, true);
 
-    loginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      loginAttempted = true;
-      const ok = validateLoginForm();
-      if (!ok) {
-        // After a failed attempt: allow forgot-link to reveal its message
-        // (user can now click "نسيت كلمة المرور؟" to see the helper)
-        return;
-      }
+    loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  loginAttempted = true;
 
-      showToast('تم تسجيل الدخول بنجاح.', 'مرحبًا بك! يمكنك الآن الوصول إلى لوحة التحكم.');
-      closeModal(loginModal);
-      loginForm.reset();
-      loginAttempted = false;
-      resetLoginUI();
-    });
+  const ok = validateLoginForm();
+  if (!ok) return;
+
+  const email = lEmail.value;
+  const password = lPass.value;
+
+  try {
+    const { loginAndRedirect } = await import('../JS/firebase.js');
+
+    const result = await loginAndRedirect(email, password);
+
+    if (!result.success) {
+      showToast("خطأ", result.error);
+    }
+
+  } catch (err) {
+    console.error(err);
+    showToast("خطأ", "فشل الاتصال بالنظام");
+  }
+});
   }
 
   /* ============================================================

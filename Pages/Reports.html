@@ -199,17 +199,31 @@
     </footer>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       إضافة Firebase — type=module مطلوب للـ ES imports
-       لا يؤثر على أي كود موجود
-  ══════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════════
+       FIREBASE MODULE SCRIPT
+       ─ Uses onAuthStateChanged (existing Auth setup)
+       ─ Uses onSnapshot for real-time Firestore updates
+       ─ Exposes window._fbTakeOver / window._fbJoin to classic script
+       ─ HTML and CSS untouched
+  ═══════════════════════════════════════════════════════════════ -->
   <script type="module">
-    import { initializeApp }
+    import { initializeApp, getApps }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getFirestore, collection, getDocs, doc, updateDoc, orderBy, query }
-      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import {
+      getFirestore,
+      collection,
+      onSnapshot,
+      doc,
+      updateDoc,
+      arrayUnion,
+      orderBy,
+      query
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-    var firebaseConfig = {
+    // ── Firebase init (re-use existing app if already initialised) ──
+    const firebaseConfig = {
       apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
       authDomain:        'rasid-1bb06.firebaseapp.com',
       projectId:         'rasid-1bb06',
@@ -218,107 +232,181 @@
       appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
       measurementId:     'G-MZ3KB7WBK4'
     };
+    const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
 
-    var app = initializeApp(firebaseConfig);
-    var db  = getFirestore(app);
-
-    function toArNum(n){
-      return String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[+d];});
+    // ── Helpers ─────────────────────────────────────────────────────
+    function toArNum(n) {
+      return String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[+d]);
     }
-    function formatArDate(date){
-      var months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-      return date.getDate()+' '+months[date.getMonth()]+' '+date.getFullYear();
+    function formatArDate(date) {
+      const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                      'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+      return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
     }
 
-    function docToReport(data, docId){
-      var rid  = data.reportId || docId;
-      var ldDisplay = data.lastSeen || '';
-      if(!ldDisplay && data.reportTime && data.reportTime.toDate){
+    // ── Convert Firestore doc → object shape used by buildCards ─────
+    function docToReport(data, docId, currentUid) {
+      const rid        = data.reportId || docId;
+      const teamMembers = Array.isArray(data.teamMembers) ? data.teamMembers : [];
+
+      let ldDisplay = data.lastSeen || '';
+      if (!ldDisplay && data.reportTime?.toDate) {
         ldDisplay = formatArDate(data.reportTime.toDate());
       }
-      var daysText = '—';
-      if(data.reportTime && data.reportTime.toDate){
-        var diff = Math.floor((Date.now()-data.reportTime.toDate().getTime())/86400000);
-        if(diff===0)       daysText='منذ اليوم';
-        else if(diff===1)  daysText='منذ يوم';
-        else if(diff<=10)  daysText='منذ '+toArNum(diff)+' أيام';
-        else               daysText='منذ '+toArNum(diff)+' يوماً';
+
+      let daysText = '—';
+      if (data.reportTime?.toDate) {
+        const diff = Math.floor((Date.now() - data.reportTime.toDate().getTime()) / 86400000);
+        if (diff === 0)      daysText = 'منذ اليوم';
+        else if (diff === 1) daysText = 'منذ يوم';
+        else if (diff <= 10) daysText = 'منذ ' + toArNum(diff) + ' أيام';
+        else                 daysText = 'منذ ' + toArNum(diff) + ' يوماً';
       }
-      var age  = data.age          || '—';
-      var hlth = data.healthStatus || 'لا يوجد';
-      var veh  = data.vehicle      || '—';
-      var loc  = data.location     || '—';
-      var nm   = data.missingPersonName || '—';
-      var dt   = data.reportTime && data.reportTime.toDate
-                   ? data.reportTime.toDate().getTime() : 0;
+
+      const age  = data.age          || '—';
+      const hlth = data.healthStatus || 'لا يوجد';
+      const veh  = data.vehicle      || '—';
+      const loc  = data.location     || '—';
+      const nm   = data.missingPersonName || '—';
+      const dt   = data.reportTime?.toDate ? data.reportTime.toDate().getTime() : 0;
+
+      // Determine if current user is the creator or a team member
+      const isCreator  = currentUid && data.createdBy === currentUid;
+      const isMember   = currentUid && teamMembers.includes(currentUid);
+      const userInTeam = isCreator || isMember;
+
       return {
-        _docId: docId,
-        id:   rid,
-        ar:   rid,
-        nm:   nm,
-        loc:  loc,
-        days: daysText,
-        ld:   ldDisplay,
-        dt:   dt,
-        age:  age,
-        hlth: hlth,
-        status: data.status || 'new',
+        _docId:      docId,
+        _teamMembers: teamMembers,
+        _createdBy:  data.createdBy || '',
+        id:    rid,
+        ar:    rid,
+        nm,
+        loc,
+        days:  daysText,
+        ld:    ldDisplay,
+        dt,
+        age,
+        hlth,
+        status:  data.status || 'new',
+        role:    isCreator ? 'leader' : 'member',
+        userInTeam,
         ldr:  data.leader      || '',
         lph:  data.leaderPhone || '',
         upd:  data.lastUpdate  || '—',
-        det:{
-          'العمر':          age+(age!=='—'?' سنة':''),
-          'تاريخ الفقدان': ldDisplay,
-          'الحالة الصحية': hlth,
-          'المركبة':        veh,
-          'الموقع':         loc,
-          'جهة التواصل':   data.contact||'—'
+        det: {
+          'العمر':           age + (age !== '—' ? ' سنة' : ''),
+          'تاريخ الفقدان':  ldDisplay,
+          'الحالة الصحية':  hlth,
+          'المركبة':         veh,
+          'الموقع':          loc,
+          'جهة التواصل':    data.contact || '—'
         },
-        desc: data.description||'لا توجد تفاصيل إضافية.',
-        mbr:  []
+        desc: data.description || 'لا توجد تفاصيل إضافية.',
+        mbr:  []   // visual avatars — kept empty (team shown via mTeam section)
       };
     }
 
-    async function loadReports(){
-      try{
-        var q    = query(collection(db,'Report'), orderBy('reportTime','desc'));
-        var snap = await getDocs(q);
-        NR.length=0;
-        AR.length=0;
-        MR.length=0;
-        snap.forEach(function(docSnap){
-          var r = docToReport(docSnap.data(), docSnap.id);
-          if(r.status==='active'){
+    // ── Real-time listener — runs once per Auth state ────────────────
+    let unsubscribeSnapshot = null;
+
+    function startListening(currentUid) {
+      // Cancel any previous listener
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
+      const q = query(collection(db, 'Report'), orderBy('reportTime', 'desc'));
+
+      unsubscribeSnapshot = onSnapshot(q, (snap) => {
+        // Clear all three arrays in-place (keeps same reference for existing code)
+        NR.length = 0;
+        AR.length = 0;
+        MR.length = 0;
+
+        snap.forEach((docSnap) => {
+          const r = docToReport(docSnap.data(), docSnap.id, currentUid);
+
+          if (r.status === 'active') {
             AR.push(r);
-          } else if(r.status==='org'){
-            r.role='member';
+          } else if (r.status === 'org' || r.userInTeam) {
+            // Goes to MR if user is in team OR status is 'org'
             MR.push(r);
           } else {
             NR.push(r);
           }
         });
-        render();
-      } catch(err){
-        console.error('Firebase loadReports error:',err);
-      }
+
+        render(); // re-render UI whenever Firestore changes
+      }, (err) => {
+        console.error('onSnapshot error:', err);
+      });
     }
 
-    async function updateStatus(docId, newStatus){
-      try{
-        await updateDoc(doc(db,'Report',docId),{status:newStatus});
-      } catch(err){
-        console.error('Firebase updateDoc error:',err);
+    // ── Wait for Auth state, then start listener ─────────────────────
+    // Uses the EXISTING Auth instance — no new login system
+    onAuthStateChanged(auth, (user) => {
+      const uid = user ? user.uid : null;
+
+      // Update name chip if user logged in
+      if (user) {
+        const nameEl    = document.getElementById('userName');
+        const initialEl = document.getElementById('userInitial');
+        if (user.displayName && nameEl)    nameEl.textContent    = user.displayName;
+        if (user.displayName && initialEl) initialEl.textContent = user.displayName.charAt(0);
       }
-    }
 
-    // تعريض الدوال للكود الكلاسيكي
-    window._fbUpdateStatus = updateStatus;
+      startListening(uid);
+    });
 
-    // تشغيل الجلب فور تحميل الصفحة
-    loadReports();
+    // ── Firestore action: takeover ────────────────────────────────────
+    // Called from classic script via window._fbTakeOver(docId, uid)
+    window._fbTakeOver = async function(docId, uid) {
+      if (!docId || !uid) return;
+      try {
+        await updateDoc(doc(db, 'Report', docId), {
+          status:       'active',
+          createdBy:    uid,
+          teamMembers:  arrayUnion(uid)
+        });
+      } catch (err) {
+        console.error('_fbTakeOver error:', err);
+      }
+    };
+
+    // ── Firestore action: join ────────────────────────────────────────
+    // Called from classic script via window._fbJoin(docId, uid)
+    window._fbJoin = async function(docId, uid) {
+      if (!docId || !uid) return;
+      try {
+        await updateDoc(doc(db, 'Report', docId), {
+          status:      'org',
+          teamMembers: arrayUnion(uid)
+        });
+      } catch (err) {
+        console.error('_fbJoin error:', err);
+      }
+    };
+
+    // ── Expose current user UID to classic script ─────────────────────
+    // Classic script reads window._fbCurrentUid before calling actions
+    onAuthStateChanged(auth, (user) => {
+      window._fbCurrentUid = user ? user.uid : null;
+    });
+
   </script>
 
-  <!-- الكود الأصلي — لم يُعدَّل سوى: NR/AR/MR تبدأ فارغة + _docId في doTakeOver/doJoin -->
+  <!-- ═══════════════════════════════════════════════════════════════
+       CLASSIC SCRIPT — original code
+       ONLY changes vs. original:
+         1. NR / AR / MR start as [] (Firebase fills them)
+         2. doTakeOver calls window._fbTakeOver(r._docId, uid)
+         3. doJoin calls window._fbJoin(r._docId, uid)
+         Everything else is byte-for-byte identical.
+  ═══════════════════════════════════════════════════════════════ -->
   <script>
     var TAB  = 'all';
     var SRCH = '';
@@ -341,7 +429,7 @@
     };
     function gm(k){ return TEAM[k]||{n:'متطوع '+k,p:'—'}; }
 
-    // تبدأ فارغة — يملأها loadReports() من Firebase
+    // ── Filled by Firebase onSnapshot — do NOT pre-populate ──────────
     var NR = [];
     var AR = [];
     var MR = [];
@@ -503,51 +591,39 @@
       if(sO) document.getElementById('gOrg').innerHTML = buildCards(applyFilter(applySort(MR)),'org');
     }
 
+    // ── doTakeOver — now calls Firebase; UI update comes via onSnapshot ──
     function doTakeOver(id){
       var idx=-1;
       for(var i=0;i<NR.length;i++) if(NR[i].id===id){idx=i;break;}
       if(idx<0) return;
       for(var j=0;j<MR.length;j++) if(MR[j].id===id){notify('أنت بالفعل مسجّل في هذا البلاغ','i');return;}
 
-      var r=JSON.parse(JSON.stringify(NR[idx]));
-      r.role='leader'; r.ldr='أنت — القائد'; r.lph='0512345678'; r.upd='الآن';
-      r.mbr=[{i:'أن',c:'#9a7440'}];
+      var r = NR[idx];
+      var uid = window._fbCurrentUid || null;
 
-      // تحديث status في Firestore → active
-      if(window._fbUpdateStatus && r._docId){
-        window._fbUpdateStatus(r._docId, 'active');
+      // Write to Firestore → onSnapshot will re-render automatically
+      if(window._fbTakeOver && r._docId){
+        window._fbTakeOver(r._docId, uid);
       }
 
-      NR.splice(idx,1);
-      MR.unshift(r);
-      render();
       notify('تولّيت البلاغ '+r.ar+' — أنت الآن القائد','s');
-
-      setTimeout(function(){
-        var m=null;
-        for(var k=0;k<MR.length;k++) if(MR[k].id===id){m=MR[k];break;}
-        if(m){ m.mbr.push({i:'سا',c:'#b8965e'}); render(); notify('انضم سالم الشهراني لبلاغك '+r.ar,'w'); }
-      },5000);
     }
 
+    // ── doJoin — now calls Firebase; UI update comes via onSnapshot ──────
     function doJoin(id){
       var idx=-1;
       for(var i=0;i<AR.length;i++) if(AR[i].id===id){idx=i;break;}
       if(idx<0) return;
       for(var j=0;j<MR.length;j++) if(MR[j].id===id){notify('أنت منضم لهذا البلاغ بالفعل','i');return;}
 
-      var r=JSON.parse(JSON.stringify(AR[idx]));
-      r.role='member';
-      r.mbr=r.mbr.concat([{i:'أن',c:'#9a7440'}]);
+      var r = AR[idx];
+      var uid = window._fbCurrentUid || null;
 
-      // تحديث status في Firestore → org
-      if(window._fbUpdateStatus && r._docId){
-        window._fbUpdateStatus(r._docId, 'org');
+      // Write to Firestore → onSnapshot will re-render automatically
+      if(window._fbJoin && r._docId){
+        window._fbJoin(r._docId, uid);
       }
 
-      AR.splice(idx,1);
-      MR.unshift(r);
-      render();
       notify('انضممت لبلاغ '+r.ar+' كعضو في فريق '+r.ldr,'s');
     }
 
