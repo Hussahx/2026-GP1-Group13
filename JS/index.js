@@ -811,42 +811,122 @@ if (!rFile || !rFile.files.length) {
   }
 
   if (reportForm) {
-    reportForm.addEventListener('blur', (e) => {
-      const t = e.target;
-      if (!(t instanceof HTMLElement)) return;
-      if (!['rName', 'rContact', 'rLocation', 'rDesc'].includes(t.id)) return;
-      validateReportForm();
-    }, true);
 
-    reportForm.addEventListener('submit', (e) => {
+    reportForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      console.log("MODAL SUBMIT WORKING");
 
-  const ok = validateReportForm();
-  if (!ok) return;
+      const submitBtn = document.getElementById('submitReportBtn');
 
-  // ✅ اظهار رسالة النجاح
-if (reportSuccess)
-  reportSuccess.hidden = false;
-reportSuccess.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
+      const nameVal    = String(rName?.value    || '').trim();
+      const contactVal = String(rContact?.value || '').trim();
+      const locVal     = String(rLocation?.value || '').trim();
+      const descVal    = String(rDesc?.value    || '').trim();
+      const ageVal     = String(document.getElementById('rAge')?.value    || '').trim();
+      const healthVal  = String(document.getElementById('rHealth')?.value || '').trim();
+      const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
 
-setTimeout(() => {
+      let ok = true;
 
-  // نخلي المستخدم يشوف الرسالة أول
-  reportForm.reset();
+      if (!nameVal || nameVal.length < 2) {
+        setFieldError(rName, document.getElementById('rNameErr'), 'الرجاء إدخال الاسم (حرفين على الأقل).');
+        ok = false;
+      } else {
+        setFieldError(rName, document.getElementById('rNameErr'), '');
+      }
 
-  if (reportSuccess)
-    reportSuccess.hidden = true;
+      if (!contactVal || !(isValidEmail(contactVal) || isValidSaudiPhone(contactVal))) {
+        setFieldError(rContact, document.getElementById('rContactErr'), 'الرجاء إدخال بريد إلكتروني صحيح أو رقم سعودي بصيغة 05xxxxxxxx.');
+        ok = false;
+      } else {
+        setFieldError(rContact, document.getElementById('rContactErr'), '');
+      }
 
-  closeModal(reportModal);
+      if (!locVal) {
+        setFieldError(rLocation, document.getElementById('rLocationErr'), 'الرجاء إدخال الموقع.');
+        ok = false;
+      } else {
+        setFieldError(rLocation, document.getElementById('rLocationErr'), '');
+      }
 
-  if (submitBtn)
-    submitBtn.disabled = false;
+      if (!descVal || descVal.length < 10) {
+        setFieldError(rDesc, document.getElementById('rDescErr'), 'الرجاء إدخال وصف البلاغ (10 أحرف على الأقل).');
+        ok = false;
+      } else {
+        setFieldError(rDesc, document.getElementById('rDescErr'), '');
+      }
 
-}, 3000);
-      
+      if (!ok) {
+        const firstInvalid = reportForm.querySelector('.is-invalid');
+        if (firstInvalid) firstInvalid.focus();
+        return;
+      }
+
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getFirestore, collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+        const firebaseConfig = {
+          apiKey:            "AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0",
+          authDomain:        "rasid-1bb06.firebaseapp.com",
+          projectId:         "rasid-1bb06",
+          storageBucket:     "rasid-1bb06.firebasestorage.app",
+          messagingSenderId: "668525115587",
+          appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
+          measurementId:     "G-MZ3KB7WBK4"
+        };
+
+        const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+        const db  = getFirestore(app);
+
+        const reportId = 'RASID-' + Math.floor(10000 + Math.random() * 90000);
+
+        await addDoc(collection(db, 'Report'), {
+          reportId,
+          missingPersonName: nameVal,
+          age:               ageVal,
+          healthStatus:      healthVal,
+          vehicle:           vehicleVal,
+          location:          locVal,
+          description:       descVal,
+          contact:           contactVal,
+          reportTime:        new Date(),
+          status:"new"
+        });
+
+      } catch (err) {
+        console.error('Firebase save error:', err);
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+      }
+
+      // Clear form + close modal
+      reportForm.reset();
+      if (rFile)     rFile.value = '';
+      if (rFileName) rFileName.textContent = 'اضغط لاختيار ملف (PDF، JPG، PNG)';
+      resetReportUI();
+      closeModal(reportModal);
+
+      if (submitBtn) submitBtn.disabled = false;
+
+      // Show success banner in main page AFTER modal closes
+      setTimeout(() => {
+        const banner = document.getElementById('reportSuccessBanner');
+        if (!banner) return;
+        banner.style.opacity = '0';
+        banner.style.display = 'flex';
+        requestAnimationFrame(() => {
+          banner.style.transition = 'opacity 0.4s ease';
+          banner.style.opacity = '1';
+        });
+        setTimeout(() => {
+          banner.style.opacity = '0';
+          setTimeout(() => { banner.style.display = 'none'; }, 400);
+        }, 4000);
+      }, 300);
+
     });
   }
 
@@ -993,43 +1073,21 @@ setTimeout(() => {
       validateLoginForm();
     }, true);
 
-    loginForm.addEventListener('submit', async (e) => {
+    loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       loginAttempted = true;
       const ok = validateLoginForm();
-      if (!ok) return;
-
-      // ── Connect to Firebase ─────────────────────────────
-      const submitBtn = document.getElementById('submitLoginBtn');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ التحقق…';
+      if (!ok) {
+        // After a failed attempt: allow forgot-link to reveal its message
+        // (user can now click "نسيت كلمة المرور؟" to see the helper)
+        return;
       }
 
-      try {
-        const { loginAndRedirect } = await import('../JS/firebase.js');
-        const result = await loginAndRedirect(
-          lEmail.value.trim(),
-          lPass.value
-        );
-
-        if (!result.success) {
-          // Show the Firebase error inside the form
-          setFieldError(lPass, document.getElementById('lPassErr'), result.error);
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-unlock-keyhole"></i> دخول';
-          }
-          return;
-        }
-        // success → firebase.js already triggered redirect
-      } catch (err) {
-        setFieldError(lPass, document.getElementById('lPassErr'), 'خطأ في الاتصال. حاول مجددًا.');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-unlock-keyhole"></i> دخول';
-        }
-      }
+      showToast('تم تسجيل الدخول بنجاح.', 'مرحبًا بك! يمكنك الآن الوصول إلى لوحة التحكم.');
+      closeModal(loginModal);
+      loginForm.reset();
+      loginAttempted = false;
+      resetLoginUI();
     });
   }
 
