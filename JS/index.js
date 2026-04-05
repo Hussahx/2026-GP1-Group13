@@ -895,12 +895,32 @@ if (!rFile || !rFile.files.length) {
           reportTime:        new Date(),
           status:"new"
         });
+         // ── EmailJS: send confirmation email (only if contact is an email) ──
+      const isEmailContact = isValidEmail(contactVal);
+      if (isEmailContact) {
+        try {
+          emailjs.init('jl8cOTzNL4mqFGXJW');
+          await emailjs.send(
+            'service_ilejgsc',
+            'template_tov9o4t',
+            {
+              report_id: reportId,
+              to_email:  contactVal
+            }
+          );
+          console.log('EmailJS sent — Report ID:', reportId);
+        } catch (emailErr) {
+          // Silent fail — report is already saved in Firebase
+          console.error('EmailJS error:', emailErr);
+        }
+      }
 
       } catch (err) {
         console.error('Firebase save error:', err);
         if (submitBtn) submitBtn.disabled = false;
         return;
       }
+
 
       // Clear form + close modal
       reportForm.reset();
