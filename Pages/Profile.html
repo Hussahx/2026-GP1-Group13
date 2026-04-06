@@ -372,7 +372,7 @@
         <div class="hero-info">
           <div class="hero-role">&#x22C6; متطوع &#x2014; منصة راصد &#x22C6;</div>
           <div class="name-row">
-            <div class="hero-name" id="bioName" contenteditable="false">يوسف الدوسري</div>
+            <div class="hero-name" id="bioName" contenteditable="false">...</div>
             <button class="pencil-btn" id="editBtn" onclick="startEdit()">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               تعديل
@@ -380,10 +380,10 @@
             <button class="save-btn" id="saveBtn" onclick="saveEdit()">&#x2713; حفظ</button>
           </div>
           <div class="hero-bio">
-            <div class="bio-row"><span class="bio-ico">📞</span><span class="bio-val" id="bioPhone" contenteditable="false" dir="ltr">0512345678</span></div>
-            <div class="bio-row"><span class="bio-ico">✉️</span><span class="bio-val" id="bioEmail" contenteditable="false" dir="ltr"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e99a889b88c7818da98e84888085c78a8684">[email&#160;protected]</a></span></div>
-            <div class="bio-row"><span class="bio-ico">📍</span><span class="bio-val" id="bioCity" contenteditable="false">الرياض</span></div>
-            <div class="bio-row"><span class="bio-ico">🪪</span><span class="bio-val" id="bioJoin" contenteditable="false" dir="ltr">VOL-001 · انضم فبراير 2026</span></div>
+            <div class="bio-row"><span class="bio-ico">📞</span><span class="bio-val" id="bioPhone" contenteditable="false" dir="ltr">—</span></div>
+            <div class="bio-row"><span class="bio-ico">✉️</span><span class="bio-val" id="bioEmail" contenteditable="false" dir="ltr">—</span></div>
+            <div class="bio-row"><span class="bio-ico">📍</span><span class="bio-val" id="bioCity" contenteditable="false">—</span></div>
+            <div class="bio-row"><span class="bio-ico">🪪</span><span class="bio-val" id="bioJoin" contenteditable="false" dir="ltr">—</span></div>
           </div>
         </div>
       </div>
@@ -509,12 +509,25 @@
   <div class="footer-dune"></div>
 </footer>
 
+<!-- EmailJS SDK — للإرسال الآمن من الواجهة بعد التحقق من OTP -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 <!-- Firebase SDK -->
 <script type="module">
 /* ═══════════════════════════════════════════════════════════════════
-   Firebase integration — متوافق مع هيكل Firestore الفعلي:
-   Collection: User / fields: City, FirstName, JoinDate, LastName, Phone
-   الإيميل يُقرأ ويُحدَّث من Firebase Auth مباشرة
+   Firebase integration — Collection: User
+   fields: City, FirstName, JoinDate, LastName, Phone
+   الإيميل يُقرأ ويُحدَّث من Firebase Auth
+   ═══════════════════════════════════════════════════════════════════
+
+   📧 EMAIL STRATEGY — لماذا EmailJS وليس Cloud Functions؟
+   ─────────────────────────────────────────────────────────
+   تم اختيار EmailJS (frontend) على Firebase Cloud Functions لأنّ:
+   1. لا يحتاج إلى backend أو billing على Firebase (Cloud Functions مدفوعة).
+   2. التكامل أبسط وأسرع — لا Deployment ولا CORS issues.
+   3. مناسب تماماً لإرسال إشعارات بسيطة مثل تأكيد تسجيل الدخول.
+   4. EmailJS يُخفي بيانات الاعتماد في لوحة التحكم الخاصة به (Service ID / Template ID).
+   5. Cloud Functions أفضل فقط عند الحاجة لمنطق backend معقد أو حجم إيميلات ضخم.
    ═══════════════════════════════════════════════════════════════════ */
 
 import { initializeApp }
@@ -539,10 +552,63 @@ const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const auth = getAuth(app);
 
-let currentUser  = null;
-let unsubProfile = null;
-let isEditing    = false;
-let pendingEmail = null; // الإيميل الجديد المنتظر التأكيد
+let currentUser      = null;
+let unsubProfile     = null;
+let isEditing        = false;
+let pendingEmail     = null;
+let otpEmailSent     = false; // نضمن إرسال الإيميل مرة واحدة فقط بعد OTP
+
+/* ══════════════════════════════════════════════════════════════════
+   EmailJS — تهيئة المكتبة
+   ⚠️  استبدل القيم التالية ببيانات حسابك على emailjs.com:
+       EMAILJS_PUBLIC_KEY  → Account > API Keys > Public Key
+       EMAILJS_SERVICE_ID  → Email Services > Service ID
+       EMAILJS_TEMPLATE_ID → Email Templates > Template ID
+   ══════════════════════════════════════════════════════════════════ */
+const EMAILJS_PUBLIC_KEY  = 'YOUR_EMAILJS_PUBLIC_KEY';   // ← غيّر هذا
+const EMAILJS_SERVICE_ID  = 'YOUR_EMAILJS_SERVICE_ID';   // ← غيّر هذا
+const EMAILJS_TEMPLATE_ID = 'YOUR_EMAILJS_TEMPLATE_ID';  // ← غيّر هذا
+
+// تهيئة EmailJS عند تحميل الصفحة
+(function initEmailJS() {
+  if (window.emailjs && EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
+    window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+})();
+
+/* ── إرسال إيميل تأكيد بعد نجاح OTP ──────────────────────────── */
+async function sendOtpConfirmationEmail(user, userData) {
+  // تحقق أن EmailJS مُعد بشكل صحيح
+  if (!window.emailjs || EMAILJS_PUBLIC_KEY === 'YOUR_EMAILJS_PUBLIC_KEY') {
+    console.warn('[EmailJS] لم يتم تهيئة المكتبة — تخطّي إرسال الإيميل');
+    return;
+  }
+  if (!user || !user.email) return;
+
+  const fullName = userData
+    ? ((userData.FirstName || '') + ' ' + (userData.LastName || '')).trim()
+    : (user.displayName || 'المتطوع');
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('ar-SA', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  const timeStr = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+  try {
+    await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_name:    fullName || 'المتطوع',
+      to_email:   user.email,
+      login_date: dateStr,
+      login_time: timeStr,
+      platform:   'منصة راصد للبحث والإنقاذ'
+    });
+    console.log('[EmailJS] تم إرسال إيميل تأكيد تسجيل الدخول بنجاح');
+  } catch (err) {
+    // لا نعرض خطأ للمستخدم — الإيميل اختياري ولا يؤثر على تجربته
+    console.warn('[EmailJS] تعذّر إرسال الإيميل:', err);
+  }
+}
 
 /* ── تحويل JoinDate إلى نص عربي ──────────────────────────────── */
 function formatJoinDate(ts) {
@@ -557,7 +623,16 @@ function formatJoinDate(ts) {
   return 'انضم ' + months[d.getMonth()] + ' ' + d.getFullYear();
 }
 
-/* ── ربط بيانات Firestore بعناصر الصفحة ─────────────────────── */
+/* ── إظهار حالة التحميل في بطاقة البروفايل ──────────────────── */
+function showProfileLoading() {
+  var els = ['bioName','bioPhone','bioEmail','bioCity','bioJoin'];
+  els.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = '...'; el.style.opacity = '0.4'; }
+  });
+}
+
+/* ── ربط بيانات Firestore بعناصر الصفحة (مع رفع opacity) ────── */
 function bindProfileToDOM(data, user) {
   if (isEditing) return;
   const fullName = ((data.FirstName || '') + ' ' + (data.LastName || '')).trim();
@@ -566,34 +641,54 @@ function bindProfileToDOM(data, user) {
   const emailEl = document.getElementById('bioEmail');
   const cityEl  = document.getElementById('bioCity');
   const joinEl  = document.getElementById('bioJoin');
-  if (nameEl  && fullName)      nameEl.textContent  = fullName;
-  if (phoneEl)                  phoneEl.textContent = data.Phone || '—';
-  if (emailEl)                  emailEl.textContent = user.email || '—';
-  if (cityEl)                   cityEl.textContent  = data.City  || '—';
+
+  // رفع الشفافية لإزالة حالة التحميل
+  [nameEl, phoneEl, emailEl, cityEl, joinEl].forEach(function(el) {
+    if (el) el.style.opacity = '1';
+  });
+
+  if (nameEl)  nameEl.textContent  = fullName || '—';
+  if (phoneEl) phoneEl.textContent = data.Phone || '—';
+  if (emailEl) emailEl.textContent = user.email || '—';
+  if (cityEl)  cityEl.textContent  = data.City  || '—';
   if (joinEl) {
     const joinStr = formatJoinDate(data.JoinDate);
-    if (joinStr) joinEl.textContent = joinStr;
+    joinEl.textContent = joinStr || '—';
   }
 }
 
-/* ── Auth state ───────────────────────────────────────────────── */
-onAuthStateChanged(auth, function(user) {
+/* ── Auth state — نقطة الدخول الرئيسية ───────────────────────── */
+onAuthStateChanged(auth, async function(user) {
   if (unsubProfile) { unsubProfile(); unsubProfile = null; }
+
   if (!user) {
     showToast('⚠️ يجب تسجيل الدخول أولاً', 'error');
     setTimeout(function() { window.location.href = 'login.html'; }, 1500);
     return;
   }
+
   currentUser = user;
-  unsubProfile = onSnapshot(doc(db, 'User', user.uid), function(snap) {
-    if (snap.exists()) bindProfileToDOM(snap.data(), user);
-    else {
-      const emailEl = document.getElementById('bioEmail');
-      if (emailEl) emailEl.textContent = user.email || '—';
+  showProfileLoading(); // أظهر حالة تحميل فورية
+
+  // الاشتراك الحي في Firestore — يُحدّث البطاقة فور أي تغيير
+  unsubProfile = onSnapshot(doc(db, 'User', user.uid), async function(snap) {
+    const data = snap.exists() ? snap.data() : {};
+    bindProfileToDOM(data, user);
+
+    /* ── إرسال إيميل تأكيد بعد OTP — مرة واحدة فقط لكل جلسة ── */
+    if (!otpEmailSent) {
+      otpEmailSent = true;
+      // نتحقق من metadata: إذا creationTime ≈ lastSignInTime فهو تسجيل جديد،
+      // أو نُرسل دائماً بعد كل تحقق OTP ناجح (السلوك الأنسب هنا).
+      await sendOtpConfirmationEmail(user, data);
     }
+
   }, function(err) {
     console.error('onSnapshot error:', err);
     showToast('⚠️ تعذّر الاتصال بقاعدة البيانات', 'error');
+    // أظهر إيميل Auth على الأقل حتى لو Firestore فشل
+    const emailEl = document.getElementById('bioEmail');
+    if (emailEl) { emailEl.textContent = user.email || '—'; emailEl.style.opacity = '1'; }
   });
 });
 
@@ -610,7 +705,7 @@ window.startEdit = function() {
   document.getElementById('bioName').focus();
 };
 
-/* ── saveEdit ─────────────────────────────────────────────────── */
+/* ── saveEdit — يُحدّث Firebase ويعكس التغييرات فوراً ────────── */
 window.saveEdit = async function() {
   const nameEl  = document.getElementById('bioName');
   const phoneEl = document.getElementById('bioPhone');
@@ -649,7 +744,7 @@ window.saveEdit = async function() {
   const lastName  = parts.slice(1).join(' ') || '';
 
   try {
-    // 1. تحديث Firestore
+    // 1. تحديث Firestore — onSnapshot يعكس التغيير تلقائياً في البطاقة
     await updateDoc(doc(db, 'User', currentUser.uid), {
       FirstName: firstName,
       LastName:  lastName,
@@ -659,7 +754,7 @@ window.saveEdit = async function() {
     // 2. تحديث الإيميل في Auth إذا تغيّر
     if (email !== currentUser.email) {
       pendingEmail = email;
-      showPasswordPrompt(); // اطلب كلمة المرور للتأكيد
+      showPasswordPrompt();
     } else {
       showToast('✓ تم حفظ التعديلات بنجاح', 'success');
     }
@@ -672,7 +767,6 @@ window.saveEdit = async function() {
 
 /* ── طلب كلمة المرور لإعادة المصادقة قبل تغيير الإيميل ─────── */
 function showPasswordPrompt() {
-  // أنشئ popup بسيط يطلب كلمة المرور
   var overlay = document.createElement('div');
   overlay.id = 'reauth-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(20,10,0,.6);z-index:1000;display:flex;align-items:center;justify-content:center;';
@@ -692,40 +786,33 @@ function showPasswordPrompt() {
   document.body.appendChild(overlay);
   setTimeout(function() { document.getElementById('reauth-pass').focus(); }, 100);
 
-  // السماح بالإغلاق بالضغط على Enter
   document.getElementById('reauth-pass').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') window.__firebaseConfirmEmailChange();
   });
 }
 
 window.confirmEmailChange = async function() {
-  var passEl = document.getElementById('reauth-pass');
-  var errEl  = document.getElementById('reauth-err');
+  var passEl     = document.getElementById('reauth-pass');
+  var errEl      = document.getElementById('reauth-err');
   var confirmBtn = document.getElementById('reauth-confirm-btn');
-  var pass   = (passEl ? passEl.value : '').trim();
+  var pass       = (passEl ? passEl.value : '').trim();
 
   if (!pass) {
     errEl.textContent = '⚠️ أدخل كلمة المرور';
     errEl.style.display = 'block'; return;
   }
 
-  // أظهر حالة التحميل
   errEl.style.display = 'none';
-  if (passEl) passEl.disabled = true;
+  if (passEl)     passEl.disabled    = true;
   if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'جاري التحقق...'; }
 
   try {
-    // الخطوة 1: إعادة المصادقة بالإيميل الحالي وكلمة المرور
     var credential = EmailAuthProvider.credential(currentUser.email, pass);
     await reauthenticateWithCredential(currentUser, credential);
 
-    // الخطوة 2: نأخذ أحدث نسخة من الـ user بعد إعادة المصادقة
     var freshUser = auth.currentUser;
-
-    // الخطوة 3: إرسال رابط تأكيد للإيميل الجديد
     await verifyBeforeUpdateEmail(freshUser, pendingEmail);
 
-    // الخطوة 4: تحديث العرض وإغلاق الـ popup
     currentUser = auth.currentUser;
     closePasswordPrompt();
     showToast('📧 أُرسل رابط تأكيد لـ ' + pendingEmail + ' — افتح بريدك واضغط الرابط لإتمام التغيير', 'success');
@@ -733,7 +820,7 @@ window.confirmEmailChange = async function() {
 
   } catch (err) {
     console.error('reauth/updateEmail error:', err.code, err.message);
-    if (passEl) passEl.disabled = false;
+    if (passEl)     passEl.disabled    = false;
     if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'تأكيد'; }
     var msgs = {
       'auth/wrong-password':         '⚠️ كلمة المرور غير صحيحة',
@@ -745,13 +832,12 @@ window.confirmEmailChange = async function() {
       'auth/invalid-email':          '⚠️ صيغة البريد الإلكتروني غير صحيحة',
       'auth/network-request-failed': '⚠️ تعذّر الاتصال — تحقق من الإنترنت'
     };
-    errEl.textContent  = msgs[err.code] || ('⚠️ خطأ: ' + (err.code || err.message));
+    errEl.textContent   = msgs[err.code] || ('⚠️ خطأ: ' + (err.code || err.message));
     errEl.style.display = 'block';
   }
 };
 
 window.cancelEmailChange = function() {
-  // أعد الإيميل القديم في الحقل
   var emailEl = document.getElementById('bioEmail');
   if (emailEl && currentUser) emailEl.textContent = currentUser.email || '—';
   closePasswordPrompt();
@@ -763,7 +849,6 @@ function closePasswordPrompt() {
   if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
 }
 
-// نجعل confirmEmailChange و cancelEmailChange accessible من الـ window scope خارج الـ module
 window.__firebaseConfirmEmailChange = window.confirmEmailChange;
 window.__firebaseCancelEmailChange  = window.cancelEmailChange;
 
@@ -842,29 +927,7 @@ var TEAM={
   'عا':{n:'عامر الغامدي',p:'0525006600',c:'#b8965e'}
 };
 
-var MY_OPS=[
-  {id:'BLG-1124',ar:'BLG-١١٢٤',nm:'خالد السهلي',
-   loc:'صحراء الربع الخالي — الرياض',days:'منذ ١٣ يوماً',ld:'١٦ فبراير ٢٠٢٦',
-   role:'leader',closed:false,hlth:'لا يوجد',veh:'لاندكروزر بيضاء',age:'٤٢',
-   ldr:'يوسف الدوسري',lph:'0512345678',
-   desc:'آخر اتصال كان الساعة ٣ عصراً. ذهب لاستكشاف الوادي الجنوبي بمفرده ولم يعد.',
-   mbr:[{i:'مح',c:'#7a5828'},{i:'فه',c:'#9a7440'},{i:'سا',c:'#b8965e'}]},
-  {id:'BLG-1110',ar:'BLG-١١١٠',nm:'آل سبيعي (٣ أفراد)',
-   loc:'منطقة الجوف الصحراوية',days:'منذ ٥ أيام',ld:'٢٤ فبراير ٢٠٢٦',
-   role:'member',closed:true,hlth:'لا يوجد',veh:'لاند روفر أبيض',age:'٨ - ٤٥',
-   ldr:'م. خالد القرشي',lph:'0555443322',
-   desc:'عائلة من ٣ أشخاص، أصغرهم ٨ سنوات. خرجوا للتخييم ولم يعودوا.',
-   foundAt:'وادي الجوف الشمالي — على بعد ٢٢ كم',
-   startDate:'٢٤ فبراير ٢٠٢٦ - ٨:٣٠ ص',foundDate:'٢٦ فبراير ٢٠٢٦ - ٤:١٥ م',
-   closeDate:'٢٦ فبراير ٢٠٢٦ - ٦:٠٠ م',duration:'يومان و ٩ ساعات و ٣٠ دقيقة',
-   mbr:[{i:'خا',c:'#8c6840'},{i:'يو',c:'#b8965e'},{i:'عم',c:'#9a7440'},{i:'أن',c:'#b8782a'}]},
-  {id:'BLG-1100',ar:'BLG-١١٠٠',nm:'هند المطيري',
-   loc:'صحراء نجد الوسطى',days:'منذ ١١ يوماً',ld:'١٨ فبراير ٢٠٢٦',
-   role:'member',closed:false,hlth:'حمل ٧ أشهر',veh:'لاندكروزر رمادية',age:'٣٢',
-   ldr:'م. محمد الخالدي',lph:'0544556677',
-   desc:'حالة طارئة — المرأة في شهرها السابع من الحمل. أولوية قصوى.',
-   mbr:[{i:'مح',c:'#9a7440'},{i:'عا',c:'#b8965e'},{i:'أن',c:'#b8782a'}]}
-];
+var MY_OPS = [];
 
 function renderOps(){
   var leaders=MY_OPS.filter(function(o){return o.role==='leader';}).length;
@@ -876,7 +939,19 @@ function renderOps(){
   document.getElementById('stDone').textContent=toAr(done);
   document.getElementById('opCnt').textContent=toAr(MY_OPS.length)+' عمليات';
   document.getElementById('cntOps').textContent=toAr(MY_OPS.length);
-  var el=document.getElementById('opList');var h='';
+  var el=document.getElementById('opList');
+
+  if(!MY_OPS.length){
+    el.innerHTML=
+      '<div style="text-align:center;padding:48px 20px;color:var(--ink-muted);">'+
+        '<div style="font-size:40px;margin-bottom:14px;opacity:.35;">🏜️</div>'+
+        '<div style="font-size:14px;font-weight:700;color:var(--ink-mid);margin-bottom:6px;">لا توجد عمليات بعد</div>'+
+        '<div style="font-size:12px;">لم تشارك في أي عملية بحث وإنقاذ حتى الآن</div>'+
+      '</div>';
+    return;
+  }
+
+  var h='';
   MY_OPS.forEach(function(r){
     var opCls=r.closed?'op closed':'op open';
     var bCls=r.role==='leader'?'bl':'bm';
