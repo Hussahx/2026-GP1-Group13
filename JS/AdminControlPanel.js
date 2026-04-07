@@ -1,4 +1,4 @@
- const API = {};
+const API = {};
 
     const STORAGE_KEY = "admin_pending_requests_v1";
     let requests = [];
