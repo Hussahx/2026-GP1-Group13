@@ -54,15 +54,19 @@ export async function loginAndRedirect(email, password) {
     // 3. Redirect based on role
     switch (role) {
       case "admin":
-        window.location.href = "../Pages/AdminControlPanel.html";
+        window.location.href = "/Pages/AdminControlPanel.html";
         break;
       case "volunteer":
+
         if (accountStatus === "valid") {
           window.location.href = "../Pages/Control-panel.html";
         } else {
           await signOut(auth);
           return { success: false, error: "حسابك غير مفعّل. تواصل مع الإدارة." };
         }
+
+        window.location.href = "/Pages/Control-panel.html";
+
         break;
       default:
         await signOut(auth);
@@ -82,14 +86,14 @@ export async function requireAuth(requiredRole) {
   return new Promise((resolve) => {
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        window.location.href = "../Pages/index.html";
+        window.location.href = "/Pages/index.html";
         return;
       }
       if (requiredRole) {
         const snap = await getDoc(doc(db, "User", user.uid));
         const role = snap.exists() ? snap.data().role : null;
         if (role !== requiredRole) {
-          window.location.href = "../Pages/index.html";
+          window.location.href = "/Pages/index.html";
           return;
         }
       }
@@ -101,7 +105,7 @@ export async function requireAuth(requiredRole) {
 // ── Sign-out helper ──────────────────────────────────────────
 export async function logout() {
   await signOut(auth);
-  window.location.href = "../Pages/index.html";
+  window.location.href = "/Pages/index.html";
 }
 
 // ── Error code → Arabic message ──────────────────────────────
