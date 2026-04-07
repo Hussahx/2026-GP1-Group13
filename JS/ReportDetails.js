@@ -1,4 +1,4 @@
-// ../JS/RealTimeReportDetails.js
+// /JS/RealTimeReportDetails.js
 (() => {
   "use strict";
 
