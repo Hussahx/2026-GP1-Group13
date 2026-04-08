@@ -66,72 +66,190 @@ const API = {};
       return demo;
     }
 
-    async function fetchPendingRequests(){
-      return seedIfEmpty();
-    }
 
-    async function acceptRequest(id){
-      requests = requests.filter(r => r.id !== id);
-      saveLocal();
-    }
 
-    async function rejectRequest(id, reason){
-      requests = requests.filter(r => r.id !== id);
-      saveLocal();
 
-      const logKey = "admin_rejected_log_v1";
-      const log = (()=>{ try { return JSON.parse(localStorage.getItem(logKey)||"[]"); } catch { return []; } })();
-      log.unshift({ id, reason: reason || "", at: Date.now() });
-      localStorage.setItem(logKey, JSON.stringify(log.slice(0,200)));
-    }
+    function normalizeTimestamp(ts) {
+  if (!ts) return Date.now();
+  if (typeof ts === "number") return ts;
+  if (typeof ts.toDate === "function") return ts.toDate().getTime();
+  return Date.now();
+}
 
-    function render(){
-      const list = $("#list");
-      list.innerHTML = "";
 
-      if(filtered.length === 0){
-        $("#empty").style.display = "block";
-      } else {
-        $("#empty").style.display = "none";
-      }
 
-      for(const r of filtered){
-        const created = new Date(r.createdAt || Date.now());
-        const html = `
-          <article class="card request-card" data-id="${escapeHtml(r.id)}">
-            <div class="req-avatar" aria-hidden="true">${escapeHtml(initials(r.name))}</div>
 
-            <div class="req-meta">
-              <div class="req-title">
-                <span>${escapeHtml(r.name || "بدون اسم")}</span>
-                <span class="tag"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>معلّق</span>
-                <span class="tag"><i class="fa-regular fa-calendar" aria-hidden="true"></i>${escapeHtml(formatDateTime(created))}</span>
-              </div>
 
-              <div class="req-sub">
-                <span><i class="fa-regular fa-envelope" aria-hidden="true"></i> ${escapeHtml(r.email || "—")}</span>
-                <span><i class="fa-solid fa-phone" aria-hidden="true"></i> ${escapeHtml(r.phone || "—")}</span>
-              </div>
+    async function fetchPendingRequests() {
+  const [{ db }, fsMod] = await Promise.all([
+    import('/JS/firebase.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+  ]);
+
+  const { collection, query, where, getDocs } = fsMod;
+
+  const q = query(
+    collection(db, "Volunteer"),
+    where("ApprovalStatus", "==", "pending")
+  );
+
+  const volunteerSnap = await getDocs(q);
+
+  const rows = volunteerSnap.docs.map((vDoc) => {
+    const volunteer = vDoc.data();
+
+    const fullName = `${volunteer.FirstName || ""} ${volunteer.LastName || ""}`.trim();
+
+    return {
+      id: vDoc.id,
+      name: fullName || "بدون اسم",
+      email: volunteer.Email || "—",
+      phone: volunteer.Phone || "—",
+      city: volunteer.City || "—",
+      nationalId: volunteer.NationalID || "—",
+      dob: volunteer.DOB || "—",
+      skills: Array.isArray(volunteer.Skills) ? volunteer.Skills : [],
+      availableDays: Array.isArray(volunteer.AvailableDays) ? volunteer.AvailableDays : [],
+      availablePeriod: volunteer.AvailablePeriods || "—",
+      nationalFile: volunteer.NationalFile || "",
+      createdAt: normalizeTimestamp(volunteer.JoinDate)
+    };
+  });
+
+  return rows.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+}
+
+
+   async function acceptRequest(id) {
+  const [{ db }, fsMod] = await Promise.all([
+    import('/JS/firebase.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+  ]);
+
+  const { doc, getDoc, setDoc, updateDoc, serverTimestamp } = fsMod;
+
+  const volunteerRef = doc(db, "Volunteer", id);
+  const volunteerSnap = await getDoc(volunteerRef);
+
+  if (!volunteerSnap.exists()) {
+    throw new Error("الطلب غير موجود");
+  }
+
+  const volunteer = volunteerSnap.data();
+
+  await setDoc(doc(db, "User", id), {
+    FirstName: volunteer.FirstName || '',
+    LastName: volunteer.LastName || '',
+    Email: volunteer.Email || '',
+    Phone: volunteer.Phone || '',
+    CreatedAt: serverTimestamp(),
+    Role: "volunteer"
+  });
+
+  await updateDoc(volunteerRef, {
+    ApprovalStatus: "approved",
+    Status: "active",
+    approvedAt: serverTimestamp()
+  });
+}
+
+
+  async function rejectRequest(id, reason) {
+  const [{ db }, fsMod] = await Promise.all([
+    import('/JS/firebase.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+  ]);
+
+  const { doc, updateDoc } = fsMod;
+
+  await updateDoc(doc(db, "Volunteer", id), {
+    ApprovalStatus: "rejected",
+    Status: "rejected",
+    RejectionReason: reason || ""
+  });
+}
+
+
+function render() {
+  const list = $("#list");
+  list.innerHTML = "";
+
+  if (filtered.length === 0) {
+    $("#empty").style.display = "block";
+  } else {
+    $("#empty").style.display = "none";
+  }
+
+  for (const r of filtered) {
+    const created = new Date(r.createdAt || Date.now());
+    const skillsText = r.skills.length ? r.skills.join("، ") : "—";
+    const daysText = r.availableDays.length ? r.availableDays.join("، ") : "—";
+    const fileLink = r.nationalFile
+      ? `<a href="${escapeHtml(r.nationalFile)}" target="_blank" rel="noopener noreferrer">عرض الملف</a>`
+      : "—";
+
+    const html = `
+      <article class="card request-card" data-id="${escapeHtml(r.id)}" style="padding: 0; overflow: hidden;">
+        
+        <div class="req-main" data-toggle="details"
+             style="display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem; cursor:pointer;">
+
+          <!-- RIGHT: avatar -->
+          <div class="req-avatar" aria-hidden="true">${escapeHtml(initials(r.name))}</div>
+
+          <!-- CENTER: meta -->
+          <div class="req-meta" style="flex:1; min-width:0;">
+            <div class="req-title">
+              <span>${escapeHtml(r.name || "بدون اسم")}</span>
+              <span class="tag"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>معلّق</span>
+              <span class="tag"><i class="fa-regular fa-calendar" aria-hidden="true"></i>${escapeHtml(formatDateTime(created))}</span>
             </div>
-
-            <div class="req-actions">
-              <button class="btn" type="button" data-action="accept" title="قبول الطلب" style="height:44px;">
-                <i class="fa-solid fa-check" aria-hidden="true"></i>
-                <span class="btn-label">قبول</span>
-              </button>
-              <button class="btn danger" type="button" data-action="reject" title="حذف/رفض الطلب مع سبب" style="height:44px;">
-                <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                <span class="btn-label">حذف</span>
-              </button>
+            <div class="req-sub">
+              <span><i class="fa-regular fa-envelope" aria-hidden="true"></i> ${escapeHtml(r.email || "—")}</span>
+              <span><i class="fa-solid fa-phone" aria-hidden="true"></i> ${escapeHtml(r.phone || "—")}</span>
             </div>
-          </article>
-        `;
-        list.insertAdjacentHTML("beforeend", html);
-      }
+          </div>
 
-      updateHeader();
-    }
+          <!-- LEFT: actions -->
+          <div class="req-actions" style="display:flex; gap:.6rem; flex-shrink:0;">
+            <button class="btn" type="button" data-action="accept" title="قبول الطلب" style="height:44px;">
+              <i class="fa-solid fa-check" aria-hidden="true"></i>
+              <span class="btn-label">قبول</span>
+            </button>
+            <button class="btn danger" type="button" data-action="reject" title="رفض الطلب" style="height:44px;">
+              <i class="fa-solid fa-trash" aria-hidden="true"></i>
+              <span class="btn-label">حذف</span>
+            </button>
+          </div>
 
+        </div>
+
+        <div class="req-details"
+             style="display:${r.isOpen ? 'block' : 'none'}; padding:0 1rem 1rem; border-top:1px solid rgba(166,124,82,0.12); background:rgba(245,239,230,0.28);">
+          
+          <div class="req-sub" style="margin-top:12px; flex-wrap:wrap;">
+            <span><strong>المدينة:</strong> ${escapeHtml(r.city)}</span>
+            <span><strong>رقم الهوية:</strong> ${escapeHtml(r.nationalId)}</span>
+            <span><strong>تاريخ الميلاد:</strong> ${escapeHtml(r.dob)}</span>
+          </div>
+
+          <div class="req-sub" style="margin-top:12px; flex-wrap:wrap;">
+            <span><strong>المهارات:</strong> ${escapeHtml(skillsText)}</span>
+            <span><strong>الأيام المتاحة:</strong> ${escapeHtml(daysText)}</span>
+            <span><strong>الفترة:</strong> ${escapeHtml(r.availablePeriod)}</span>
+          </div>
+
+          <div class="req-sub" style="margin-top:12px; flex-wrap:wrap;">
+            <span><strong>ملف الهوية:</strong> ${fileLink}</span>
+          </div>
+        </div>
+      </article>
+    `;
+    list.insertAdjacentHTML("beforeend", html);
+  }
+
+  updateHeader();
+}
     function applyFilter(){
       const q = $("#searchInput").value.trim().toLowerCase();
       if(!q){
@@ -166,32 +284,46 @@ const API = {};
       showToast("تم التحديث");
     });
 
-    $("#list").addEventListener("click", async (e)=>{
-      const btn = e.target.closest("button[data-action]");
-      if(!btn) return;
-      const card = e.target.closest("[data-id]");
-      const id = card?.getAttribute("data-id");
-      if(!id) return;
+ $("#list").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-action]");
+  const card = e.target.closest("[data-id]");
+  const id = card?.getAttribute("data-id");
+  if (!id) return;
 
-      const action = btn.getAttribute("data-action");
-      if(action === "accept"){
-        btn.disabled = true;
-        btn.classList.add("loading");
-        try{
-          await acceptRequest(id);
-          showToast("تم قبول الطلب");
-          await reload(false);
-        }catch(err){
-          console.error(err);
-          showToast("حدث خطأ أثناء القبول");
-          btn.disabled = false;
-        }finally{
-          btn.classList.remove("loading");
-        }
-      } else if(action === "reject"){
-        openRejectModal(id);
+  if (btn) {
+    const action = btn.getAttribute("data-action");
+
+    if (action === "accept") {
+      btn.disabled = true;
+      btn.classList.add("loading");
+      try {
+        await acceptRequest(id);
+        showToast("تم قبول الطلب");
+        await reload(false);
+      } catch (err) {
+        console.error(err);
+        showToast("حدث خطأ أثناء القبول");
+        btn.disabled = false;
+      } finally {
+        btn.classList.remove("loading");
       }
-    });
+      return;
+    }
+
+    if (action === "reject") {
+      openRejectModal(id);
+      return;
+    }
+  }
+
+  const toggleArea = e.target.closest('[data-toggle="details"]');
+  if (toggleArea) {
+    requests = requests.map((r) =>
+      r.id === id ? { ...r, isOpen: !r.isOpen } : r
+    );
+    applyFilter();
+  }
+});
 
     $("#closeModalBtn").addEventListener("click", closeRejectModal);
     $("#cancelRejectBtn").addEventListener("click", closeRejectModal);
