@@ -1310,6 +1310,122 @@ body {
   .profile-page .p-main { padding: 24px 16px 50px; }
   .profile-page .name-input { width: 250px; }
 }
+
+/* ══ زر حذف الحساب ══ */
+.delete-account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(192,57,43,0.08);
+  color: #c0392b;
+  border: 1.5px solid rgba(192,57,43,0.28);
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  flex-shrink: 0;
+  backdrop-filter: blur(8px);
+}
+.delete-account-btn:hover {
+  background: rgba(192,57,43,0.15);
+  border-color: rgba(192,57,43,0.5);
+}
+.delete-account-btn:active { opacity: .8; }
+
+/* ══ Overlay تأكيد الحذف ══ */
+.del-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,10,0,.62);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s;
+}
+.del-overlay.on {
+  opacity: 1;
+  pointer-events: all;
+}
+.del-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 28px 26px;
+  width: 340px;
+  max-width: 90vw;
+  font-family: 'Tajawal', sans-serif;
+  direction: rtl;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(0,0,0,.22);
+  transform: translateY(16px) scale(.97);
+  transition: transform .24s cubic-bezier(.34,1.56,.64,1);
+}
+.del-overlay.on .del-card {
+  transform: translateY(0) scale(1);
+}
+.del-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff0ee;
+  border: 2px solid #ffd0cc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 24px;
+}
+.del-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #2c1a08;
+  margin-bottom: 8px;
+}
+.del-sub {
+  font-size: 13px;
+  color: #7a5838;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+.del-sub strong { color: #c0392b; }
+.del-actions {
+  display: flex;
+  gap: 10px;
+}
+.del-confirm-btn {
+  flex: 1;
+  padding: 12px;
+  background: linear-gradient(135deg, #c0392b, #96281b);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.del-confirm-btn:active { opacity: .8; }
+.del-confirm-btn:disabled { opacity: .5; cursor: not-allowed; }
+.del-cancel-btn {
+  flex: 1;
+  padding: 12px;
+  background: #f5efe6;
+  color: #7a5838;
+  border: 1.5px solid rgba(166,124,82,.2);
+  border-radius: 12px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.del-cancel-btn:hover { background: #ede0cc; }
 </style>
 </head>
 <body>
@@ -1340,8 +1456,8 @@ body {
       <div class="hero-role">&#x22C6; متطوع &mdash; منصة راصد &#x22C6;</div>
 
       <div class="name-row" id="editWrap">
-        <div class="hero-name display-only" id="bioNameDisplay">يوسف الدوسري</div>
-        <input type="text" id="bioNameInput" class="edit-input name-input" value="يوسف الدوسري" maxlength="40">
+        <div class="hero-name display-only" id="bioNameDisplay">...</div>
+        <input type="text" id="bioNameInput" class="edit-input name-input" value="" maxlength="40">
 
         <button class="pencil-btn" id="editBtn" onclick="startEdit()">
           <svg viewBox="0 0 24 24">
@@ -1352,23 +1468,35 @@ body {
         </button>
 
         <button class="save-btn" id="saveBtn" onclick="saveEdit()">&#x2713; حفظ</button>
+
+        <button class="delete-account-btn" id="deleteAccountBtn" onclick="confirmDeleteAccount()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0;">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+          حذف حسابي
+        </button>
       </div>
 
       <div class="hero-bio">
         <div class="bio-row">
           <span class="bio-ico">📞</span>
-          <span class="bio-val display-only" id="bioPhoneDisplay" dir="ltr">0512345678</span>
-          <input type="text" id="bioPhoneInput" class="edit-input phone-input" value="0512345678" maxlength="10" inputmode="numeric" dir="ltr">
+          <span class="bio-val display-only" id="bioPhoneDisplay" dir="ltr">—</span>
+          <input type="text" id="bioPhoneInput" class="edit-input phone-input" value="" maxlength="10" inputmode="numeric" dir="ltr">
+        </div>
+
+        <div class="bio-row">
+          <span class="bio-ico">✉️</span>
+          <span class="bio-val" id="bioEmail" dir="ltr" style="opacity:.75;">—</span>
         </div>
 
         <div class="bio-row">
           <span class="bio-ico">📍</span>
-          <span class="bio-val" id="bioCity">الرياض</span>
+          <span class="bio-val" id="bioCity">—</span>
         </div>
 
         <div class="bio-row">
           <span class="bio-ico">🪪</span>
-          <span class="bio-val" dir="ltr">VOL-001 · انضم فبراير 2026</span>
+          <span class="bio-val" id="bioJoin" dir="ltr">—</span>
         </div>
       </div>
 
@@ -1481,6 +1609,23 @@ body {
   </div>
 </div>
 
+<!-- Modal تأكيد حذف الحساب -->
+<div class="del-overlay" id="delOverlay">
+  <div class="del-card">
+    <div class="del-icon">🗑️</div>
+    <div class="del-title">حذف الحساب</div>
+    <div class="del-sub">
+      هل أنت متأكد أنك تريد حذف حسابك؟<br>
+      سيتم تغيير حالة حسابك إلى <strong>غير فعّال</strong><br>
+      ولن تتمكن من الوصول للمنصة.
+    </div>
+    <div class="del-actions">
+      <button class="del-confirm-btn" id="delConfirmBtn" onclick="executeDeleteAccount()">نعم، احذف حسابي</button>
+      <button class="del-cancel-btn" onclick="closeDeleteModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
@@ -1510,80 +1655,265 @@ body {
   <div class="footer-dune"></div>
 </footer>
 
-<script>
-function toAr(n){
-  return String(n).replace(/\d/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'[+d]; });
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0",
+  authDomain:        "rasid-1bb06.firebaseapp.com",
+  projectId:         "rasid-1bb06",
+  storageBucket:     "rasid-1bb06.firebasestorage.app",
+  messagingSenderId: "668525115587",
+  appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
+  measurementId:     "G-MZ3KB7WBK4"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+let currentUser  = null;
+let unsubProfile = null;
+let unsubReports = null;
+
+/* ── تحويل تاريخ الانضمام ── */
+function formatJoinDate(ts) {
+  if (!ts) return null;
+  let d;
+  if (typeof ts.toDate === 'function') d = ts.toDate();
+  else if (ts instanceof Date)         d = ts;
+  else                                 d = new Date(ts);
+  if (isNaN(d.getTime())) return null;
+  const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                  'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  return 'انضم ' + months[d.getMonth()] + ' ' + d.getFullYear();
 }
 
-/* edit */
-var isEditing = false;
+/* ── ربط بيانات Firestore بعناصر الصفحة ── */
+function bindProfileToDOM(data, user) {
+  const fullName = ((data.FirstName || '') + ' ' + (data.LastName || '')).trim();
 
-function startEdit(){
-  if(isEditing) return;
-  isEditing = true;
+  var nameDisplay = document.getElementById('bioNameDisplay');
+  var nameInput   = document.getElementById('bioNameInput');
+  var phoneDisplay = document.getElementById('bioPhoneDisplay');
+  var phoneInput   = document.getElementById('bioPhoneInput');
+  var emailEl      = document.getElementById('bioEmail');
+  var cityEl       = document.getElementById('bioCity');
+  var joinEl       = document.getElementById('bioJoin');
+
+  if (nameDisplay) nameDisplay.textContent = fullName || '—';
+  if (nameInput)   nameInput.value         = fullName || '';
+  if (phoneDisplay) phoneDisplay.textContent = data.Phone || '—';
+  if (phoneInput)   phoneInput.value         = data.Phone || '';
+  if (emailEl)      emailEl.textContent      = user.email  || '—';
+  if (cityEl)       cityEl.textContent       = data.City   || '—';
+  if (joinEl) {
+    const joinStr = formatJoinDate(data.JoinDate);
+    joinEl.textContent = joinStr || '—';
+  }
+}
+
+/* ── showToast مع نوع (success/error) ── */
+window.showToast = function(msg, type) {
+  var existing = document.querySelector('.p-toast');
+  if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+  var t = document.createElement('div');
+  t.className = 'p-toast';
+  if (type === 'error') {
+    t.style.borderRightColor = '#c0392b';
+    t.style.color            = '#7a1a1a';
+    t.style.background       = '#fff5f5';
+  }
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 3500);
+};
+
+/* ── حذف الحساب (تغيير accountStatus إلى invalid) ── */
+window.confirmDeleteAccount = function() {
+  document.getElementById('delOverlay').classList.add('on');
+};
+
+window.closeDeleteModal = function() {
+  document.getElementById('delOverlay').classList.remove('on');
+};
+
+window.executeDeleteAccount = async function() {
+  if (!currentUser) { window.showToast('⚠️ يجب تسجيل الدخول أولاً', 'error'); return; }
+
+  var btn = document.getElementById('delConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = 'جاري التنفيذ...';
+
+  try {
+    await updateDoc(doc(db, 'User', currentUser.uid), {
+      accountStatus: 'invalid'
+    });
+
+    window.closeDeleteModal();
+    window.showToast('تم تعطيل حسابك بنجاح', 'success');
+
+    // تسجيل الخروج وتحويله بعد ثانيتين
+    setTimeout(function() {
+      window.location.href = 'index.html';
+    }, 2000);
+
+  } catch (e) {
+    console.error('deleteAccount error:', e);
+    btn.disabled = false;
+    btn.textContent = 'نعم، احذف حسابي';
+    window.showToast('✗ حدث خطأ — حاول مرة أخرى', 'error');
+  }
+};
+
+/* ── startEdit ── */
+window.startEdit = function() {
+  if (!currentUser) { window.showToast('⚠️ يجب تسجيل الدخول أولاً', 'error'); return; }
+  if (window._isEditing) return;
+  window._isEditing = true;
 
   var wrap = document.getElementById('editWrap');
   wrap.classList.add('edit-mode');
 
   document.getElementById('bioPhoneDisplay').classList.add('display-only');
-  document.getElementById('bioNameInput').style.display = 'inline-block';
+  document.getElementById('bioNameInput').style.display  = 'inline-block';
   document.getElementById('bioPhoneInput').style.display = 'inline-block';
-
   document.getElementById('editBtn').style.display = 'none';
   document.getElementById('saveBtn').classList.add('show');
-
   document.getElementById('bioNameInput').focus();
   document.getElementById('phoneError').classList.remove('show');
-}
+};
 
-function saveEdit(){
-  if(!isEditing) return;
+/* ── saveEdit — يحفظ في Firebase ── */
+window.saveEdit = async function() {
+  if (!window._isEditing) return;
 
-  var nameInput = document.getElementById('bioNameInput');
+  var nameInput  = document.getElementById('bioNameInput');
   var phoneInput = document.getElementById('bioPhoneInput');
   var phoneError = document.getElementById('phoneError');
 
-  var newName = nameInput.value.trim();
+  var newName  = nameInput.value.trim();
   var newPhone = phoneInput.value.trim();
 
-  if(!/^05\d{8}$/.test(newPhone)){
+  if (!/^05\d{8}$/.test(newPhone)) {
     phoneError.classList.add('show');
     phoneInput.focus();
     return;
   }
-
   phoneError.classList.remove('show');
 
-  if(newName === ''){
-    newName = 'يوسف الدوسري';
-    nameInput.value = newName;
-  }
+  if (!newName) newName = document.getElementById('bioNameDisplay').textContent || '—';
+  if (!currentUser) { window.showToast('⚠️ يجب تسجيل الدخول أولاً', 'error'); return; }
 
-  document.getElementById('bioNameDisplay').textContent = newName;
+  // أغلق وضع التعديل فوراً (UI سريع)
+  window._isEditing = false;
+  document.getElementById('bioNameDisplay').textContent  = newName;
   document.getElementById('bioPhoneDisplay').textContent = newPhone;
-
-  document.getElementById('bioNameInput').style.display = 'none';
+  document.getElementById('bioNameInput').style.display  = 'none';
   document.getElementById('bioPhoneInput').style.display = 'none';
   document.getElementById('bioPhoneDisplay').classList.remove('display-only');
-
   document.getElementById('editWrap').classList.remove('edit-mode');
-
   document.getElementById('saveBtn').classList.remove('show');
   document.getElementById('editBtn').style.display = '';
 
-  isEditing = false;
-  showToast('✓ تم حفظ البيانات بنجاح');
+  const parts     = newName.split(/\s+/);
+  const firstName = parts[0] || '';
+  const lastName  = parts.slice(1).join(' ') || '';
+
+  try {
+    await updateDoc(doc(db, 'User', currentUser.uid), {
+      FirstName: firstName,
+      LastName:  lastName,
+      Phone:     newPhone
+    });
+    window.showToast('✓ تم حفظ البيانات بنجاح', 'success');
+  } catch (e) {
+    console.error('updateDoc error:', e);
+    window.showToast('✗ حدث خطأ أثناء الحفظ', 'error');
+  }
+};
+
+/* ── Auth state ── */
+onAuthStateChanged(auth, function(user) {
+  if (unsubProfile) { unsubProfile(); unsubProfile = null; }
+  if (unsubReports) { unsubReports(); unsubReports = null; }
+
+  if (!user) {
+    window.showToast('⚠️ يجب تسجيل الدخول أولاً', 'error');
+    setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+    return;
+  }
+
+  currentUser = user;
+
+  /* الاشتراك الحي في بيانات المستخدم */
+  unsubProfile = onSnapshot(doc(db, 'User', user.uid), function(snap) {
+    const data = snap.exists() ? snap.data() : {};
+    bindProfileToDOM(data, user);
+  }, function(err) {
+    console.error('onSnapshot user error:', err);
+    var emailEl = document.getElementById('bioEmail');
+    if (emailEl) emailEl.textContent = user.email || '—';
+  });
+
+  /* الاشتراك الحي في بلاغات المستخدم */
+  const reportsQuery = query(
+    collection(db, 'Reports'),
+    where('userId', '==', user.uid)
+  );
+  unsubReports = onSnapshot(reportsQuery, function(snapshot) {
+    var ops = [];
+    snapshot.forEach(function(docSnap) {
+      var d = docSnap.data();
+      ops.push({
+        id:        docSnap.id,
+        ar:        d.reportId      || docSnap.id,
+        nm:        d.missingName   || d.nm    || '—',
+        loc:       d.location      || d.loc   || '—',
+        days:      d.duration      || d.days  || '—',
+        ld:        d.lostDate      || d.ld    || '—',
+        role:      d.userRole      || d.role  || 'member',
+        closed:    d.status === 'closed' || d.closed === true,
+        hlth:      d.healthStatus  || d.hlth  || 'لا يوجد',
+        veh:       d.vehicle       || d.veh   || '—',
+        age:       d.age           || '—',
+        ldr:       d.teamLeader    || d.ldr   || '—',
+        desc:      d.description   || d.desc  || '',
+        mbr:       Array.isArray(d.members) ? d.members : (d.mbr || []),
+        foundAt:   d.foundAt    || '',
+        startDate: d.startDate  || '',
+        foundDate: d.foundDate  || '',
+        closeDate: d.closeDate  || '',
+        duration:  d.totalDuration || d.duration || ''
+      });
+    });
+    window.MY_OPS = ops;
+    if (typeof window.renderOps === 'function') window.renderOps();
+  }, function(err) {
+    console.error('onSnapshot reports error:', err);
+  });
+});
+</script>
+
+<script>
+function toAr(n){
+  return String(n).replace(/\d/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'[+d]; });
 }
 
-function showToast(msg){
-  var t = document.createElement('div');
-  t.className = 'p-toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(function(){
-    if(t.parentNode) t.parentNode.removeChild(t);
-  }, 3200);
-}
+window._isEditing = false;
+
+/* إغلاق modal الحذف عند الضغط خارجه */
+document.getElementById('delOverlay').addEventListener('click', function(e) {
+  if (e.target === this) window.closeDeleteModal();
+});
+
+/* startEdit / saveEdit / showToast معرَّفة في Firebase module أعلاه */
 
 /* drone popup */
 var unread = 0;
@@ -1643,61 +1973,8 @@ var TEAM = {
   'عا':{n:'عامر الغامدي',p:'0525006600',c:'#b8965e'}
 };
 
-var MY_OPS = [
-  {
-    id:'BLG-1124',
-    ar:'BLG-١١٢٤',
-    nm:'خالد السهلي',
-    loc:'صحراء الربع الخالي — الرياض',
-    days:'منذ ١٣ يوماً',
-    ld:'١٦ فبراير ٢٠٢٦',
-    role:'leader',
-    closed:false,
-    hlth:'لا يوجد',
-    veh:'لاندكروزر بيضاء',
-    age:'٤٢',
-    ldr:'يوسف الدوسري',
-    desc:'آخر اتصال كان الساعة ٣ عصراً. ذهب لاستكشاف الوادي الجنوبي بمفرده ولم يعد.',
-    mbr:[{i:'مح',c:'#7a5828'},{i:'فه',c:'#9a7440'},{i:'سا',c:'#b8965e'}]
-  },
-  {
-    id:'BLG-1110',
-    ar:'BLG-١١١٠',
-    nm:'آل سبيعي (٣ أفراد)',
-    loc:'منطقة الجوف الصحراوية',
-    days:'منذ ٥ أيام',
-    ld:'٢٤ فبراير ٢٠٢٦',
-    role:'member',
-    closed:true,
-    hlth:'لا يوجد',
-    veh:'لاند روفر أبيض',
-    age:'٨ - ٤٥',
-    ldr:'م. خالد القرشي',
-    desc:'عائلة من ٣ أشخاص، أصغرهم ٨ سنوات. خرجوا للتخييم ولم يعودوا.',
-    foundAt:'وادي الجوف الشمالي — على بعد ٢٢ كم',
-    startDate:'٢٤ فبراير ٢٠٢٦ - ٨:٣٠ ص',
-    foundDate:'٢٦ فبراير ٢٠٢٦ - ٤:١٥ م',
-    closeDate:'٢٦ فبراير ٢٠٢٦ - ٦:٠٠ م',
-    duration:'يومان و ٩ ساعات و ٣٠ دقيقة',
-    mbr:[{i:'خا',c:'#8c6840'},{i:'يو',c:'#b8965e'},{i:'عم',c:'#9a7440'},{i:'أن',c:'#b8782a'}]
-  },
-  {
-    id:'BLG-1100',
-    ar:'BLG-١١٠٠',
-    nm:'هند المطيري',
-    loc:'صحراء نجد الوسطى',
-    days:'منذ ١١ يوماً',
-    ld:'١٨ فبراير ٢٠٢٦',
-    role:'member',
-    closed:false,
-    hlth:'حمل ٧ أشهر',
-    veh:'لاندكروزر رمادية',
-    age:'٣٢',
-    ldr:'م. محمد الخالدي',
-    desc:'حالة طارئة — المرأة في شهرها السابع من الحمل. أولوية قصوى.',
-    mbr:[{i:'مح',c:'#9a7440'},{i:'عا',c:'#b8965e'},{i:'أن',c:'#b8782a'}]
-  }
-];
+// MY_OPS تُملأ من Firebase — راجع onAuthStateChanged في الموديول أعلاه
+window.MY_OPS = window.MY_OPS || [];
 
 var currentFilter = 'all';
 
@@ -1711,7 +1988,8 @@ function filterOps(type){
   renderOps(type);
 }
 
-function renderOps(filter){
+window.renderOps = function renderOps(filter){
+  var MY_OPS = window.MY_OPS || [];
   filter = filter || currentFilter || 'all';
 
   var leaders = MY_OPS.filter(function(o){ return o.role === 'leader'; }).length;
@@ -1736,6 +2014,16 @@ function renderOps(filter){
     if(filter === 'closed') return o.closed;
     return true;
   });
+
+  if(!filtered.length){
+    el.innerHTML =
+      '<div style="text-align:center;padding:48px 20px;color:var(--ink-muted);">'+
+        '<div style="font-size:40px;margin-bottom:14px;opacity:.35;">🏜️</div>'+
+        '<div style="font-size:14px;font-weight:700;color:var(--ink-mid);margin-bottom:6px;">لا توجد عمليات بعد</div>'+
+        '<div style="font-size:12px;">لم تشارك في أي عملية بحث وإنقاذ حتى الآن</div>'+
+      '</div>';
+    return;
+  }
 
   filtered.forEach(function(r){
     var opCls = r.closed ? 'op closed' : 'op open';
@@ -1792,7 +2080,7 @@ function renderOps(filter){
         '</div>';
   });
 
-  el.innerHTML = filtered.length ? h : '<div style="text-align:center;padding:40px;color:var(--t300);font-size:14px;">لا توجد عمليات في هذا التصنيف</div>';
+  el.innerHTML = h;
   document.getElementById('opCnt').textContent = toAr(filtered.length) + ' عمليات';
 
   setTimeout(function(){
@@ -1805,6 +2093,7 @@ function renderOps(filter){
 }
 
 function openTrack(id){
+  var MY_OPS = window.MY_OPS || [];
   var r = null;
   MY_OPS.forEach(function(o){ if(o.id === id) r = o; });
   if(!r) return;
@@ -1846,6 +2135,7 @@ function openTrack(id){
 }
 
 function openLog(id){
+  var MY_OPS = window.MY_OPS || [];
   var r = null;
   MY_OPS.forEach(function(o){ if(o.id === id) r = o; });
   if(!r || !r.closed) return;
