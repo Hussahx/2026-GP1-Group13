@@ -1880,10 +1880,12 @@
 
     /* ── Announce helper (screen readers) ──────────────── */
     function announce(msg) {
-      liveAnnounce.textContent = '';
-      requestAnimationFrame(() => { liveAnnounce.textContent = msg; });
-    }
+  const liveAnnounce = document.getElementById('liveAnnounce');
+  if (!liveAnnounce) return; // 👈 أهم سطر
 
+  liveAnnounce.textContent = '';
+  requestAnimationFrame(() => { liveAnnounce.textContent = msg; });
+}
     /* ─────────────────────────────────────────────────────
        showStep(n) – show panel n, update UI
        ───────────────────────────────────────────────────── */
@@ -2308,16 +2310,120 @@
     /* ─────────────────────────────────────────────────────
        handleSubmit() – success state
        ───────────────────────────────────────────────────── */
-    function handleSubmit() {
-      regForm.style.display  = 'none';
-      formNav.style.display  = 'none';
-      document.querySelector('.stepper').style.display       = 'none';
-      document.querySelector('.step-counter').style.display  = 'none';
 
-      successPanel.classList.add('visible');
-      announce('تم إرسال طلب التطوع بنجاح! سيتم التواصل معك قريبًا.');
-    }
 
+
+
+
+
+
+       async function handleSubmit() {
+  const originalBtnHtml = btnNext.innerHTML;
+  btnNext.disabled = true;
+  btnNext.innerHTML = 'جاري إرسال الطلب...';
+
+  
+console.log('A-start');
+
+
+  try {
+    const [{ db }, fsMod, storageMod] = await Promise.all([
+      import('/JS/firebase.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js')
+    ]);console.log('B-imports-loaded');
+
+    const { collection, addDoc, serverTimestamp } = fsMod;
+    const { getStorage, ref, uploadBytes, getDownloadURL } = storageMod;
+
+    const firstName  = document.getElementById('firstName')?.value.trim() || '';
+    const lastName   = document.getElementById('lastName')?.value.trim() || '';
+    const phone      = document.getElementById('phone')?.value.trim() || '';
+    const email      = document.getElementById('email')?.value.trim() || '';
+    const city       = document.getElementById('city')?.value.trim() || '';
+    const nationalId = document.getElementById('natId')?.value.trim() || '';
+    const dob        = document.getElementById('dob')?.value || '';
+    const fileInput  = document.getElementById('idFile');
+    const idFile     = fileInput?.files?.[0] || null;
+
+    const skills = Array.from(document.querySelectorAll('input[name="skills"]:checked'))
+      .map(el => el.value);
+
+    const availableDays = Array.from(document.querySelectorAll('input[name="days"]:checked'))
+      .map(el => el.value);
+
+    const availablePeriod = document.querySelector('input[name="period"]:checked')?.value || '';
+
+
+
+
+
+
+    console.log('C-form-data', {
+  firstName, lastName, phone, email, city, nationalId, dob, skills, availableDays, availablePeriod
+});
+
+
+
+
+
+
+    let nationalFileURL = '';
+    let nationalFileName = '';
+
+    nationalFileURL = '';
+nationalFileName = '';
+
+
+
+
+
+console.log('D-before-addDoc');
+
+
+
+    await addDoc(collection(db, 'Volunteer'), {
+      FirstName: firstName,
+      LastName: lastName,
+      Email: email,
+      Phone: phone,
+      City: city,
+      NationalID: nationalId,
+      DOB: dob,
+      NationalFile: nationalFileURL,
+      NationalFileName: nationalFileName,
+      ApprovalStatus: 'pending',
+      RejectionReason: '',
+      MissionsCount: 0,
+      JoinDate: serverTimestamp(),
+      Status: 'pending',
+      approvedAt: null,
+      Skills: skills,
+      AvailableDays: availableDays,
+      AvailablePeriods: availablePeriod
+    });
+
+
+
+    console.log('E-after-addDoc');
+
+    regForm.style.display = 'none';
+    formNav.style.display = 'none';
+    document.querySelector('.stepper').style.display = 'none';
+    document.querySelector('.step-counter').style.display = 'none';
+
+    successPanel.classList.add('visible');
+    announce('تم إرسال طلب التطوع بنجاح! سيتم التواصل معك قريبًا.');
+
+  } catch (error) {
+   console.error('SUBMIT_ERROR:', error);
+alert(error.message || 'حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.');
+  } finally {
+    btnNext.disabled = false;
+    btnNext.innerHTML = originalBtnHtml;
+  }
+}
+   
     /* ─────────────────────────────────────────────────────
        Keyboard: Enter on inputs advances step
        ───────────────────────────────────────────────────── */
