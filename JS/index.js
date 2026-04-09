@@ -1345,23 +1345,57 @@ setTimeout(() => {
       }
 
       try {
-        const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-        const { auth } = await import('/JS/firebase.js');
+        const { sendPasswordResetEmail }               = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        const { collection, query, where, getDocs }    = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const { auth, db }                             = await import('/JS/firebase.js');
 
-        // Point reset link to our custom reset-password page
-        const actionCodeSettings = {
-          url: window.location.origin + '/Pages/reset-password.html',
-          handleCodeInApp: false,
-        };
-        await sendPasswordResetEmail(auth, val, actionCodeSettings);
+        // ── Security check: verify email exists in our User collection ──
+        // We do this silently. Whether the email exists or not, the user
+        // always sees the same success message (prevents email enumeration).
+        let emailExistsInDB = false;
+        try {
+          const usersRef  = collection(db, 'User');
+          const q         = query(usersRef, where('email', '==', val));
+          const snapshot  = await getDocs(q);
+          emailExistsInDB = !snapshot.empty;
+        } catch (_dbErr) {
+          // If Firestore check fails for any reason (permissions, network),
+          // we silently fall through and still show success — never expose errors.
+          emailExistsInDB = false;
+        }
 
-        // Show success – user clicks link in email → lands on reset-password.html
+        // ── Only send the real email if the user exists in our database ──
+        if (emailExistsInDB) {
+          const actionCodeSettings = {
+            url: window.location.origin + '/Pages/reset-password.html',
+            handleCodeInApp: false,
+          };
+          try {
+            await sendPasswordResetEmail(auth, val, actionCodeSettings);
+          } catch (sendErr) {
+            // auth/too-many-requests is the only error worth surfacing
+            // (everything else we swallow silently for security)
+            if (sendErr.code === 'auth/too-many-requests') {
+              fgSetErr(fgEmail, fgEmailErr, 'تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.');
+              if (fgSendBtn) {
+                fgSendBtn.disabled = false;
+                fgSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الرمز';
+              }
+              return;
+            }
+            // For all other send errors — still show success (don't leak info)
+          }
+        }
+        // If emailExistsInDB is false we intentionally do nothing but still
+        // show the same success UI below — the user cannot tell the difference.
+
+        // ── Always show success regardless of whether email was found ──
         fgShowPanel('success');
         const successBox = document.querySelector('#fgPanelSuccess .success-text');
         if (successBox) {
           successBox.innerHTML = `
-            <strong>تم إرسال الرابط</strong>
-            <span>تحقق من بريدك الإلكتروني <strong>${val}</strong> واضغط على الرابط — ستعود إلى صفحتنا لإدخال كلمة المرور الجديدة.</span>
+            <strong>تحقق من بريدك الإلكتروني</strong>
+            <span>أرسلنا رابط إعادة تعيين كلمة المرور إلى <strong>${val}</strong> — افتح بريدك واضغط على الرابط لاختيار كلمة مرور جديدة.</span>
           `;
         }
         setTimeout(() => {
@@ -1371,13 +1405,13 @@ setTimeout(() => {
         }, 3500);
 
       } catch (err) {
-        const errMap = {
-          'auth/user-not-found':         'لا يوجد حساب مرتبط بهذا البريد الإلكتروني.',
-          'auth/invalid-email':          'صيغة البريد الإلكتروني غير صحيحة.',
-          'auth/too-many-requests':      'تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.',
-          'auth/network-request-failed': 'فشل الاتصال بالشبكة. تحقق من اتصالك.',
-        };
-        fgSetErr(fgEmail, fgEmailErr, errMap[err.code] || 'حدث خطأ أثناء الإرسال. حاول مجددًا.');
+        // Outer catch — only for truly unexpected errors (import failure, etc.)
+        // Still show a generic message, never expose internal details
+        if (err.code === 'auth/network-request-failed') {
+          fgSetErr(fgEmail, fgEmailErr, 'فشل الاتصال بالشبكة. تحقق من اتصالك.');
+        } else {
+          fgSetErr(fgEmail, fgEmailErr, 'حدث خطأ مؤقت. حاول مجددًا.');
+        }
         if (fgSendBtn) {
           fgSendBtn.disabled = false;
           fgSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الرمز';
