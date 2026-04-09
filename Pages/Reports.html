@@ -134,6 +134,9 @@
         <h1>راصد</h1>
         <p>عين الصحراء - ⟡ لوحة البلاغات الميدانية</p>
       </div>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
+      <i class="fas fa-bars"></i>
+    </button>
       <nav class="header-nav" aria-label="تنقل سريع">
         <div class="user-chip" title="حسابي" onclick="window.location.href='Profile1.html'" style="cursor:pointer;">
           <span class="avatar" id="userInitial">ي</span>
@@ -141,6 +144,56 @@
         </div>
       </nav>
     </header>
+    
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+  <aside class="app-sidebar" id="appSidebar" aria-label="القائمة الجانبية" aria-hidden="true">
+    <div class="sidebar-close-row">
+      <button class="sidebar-close" id="sidebarClose" aria-label="إغلاق القائمة">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">القائمة الرئيسية</span>
+      
+      <a href="index.html" class="sidebar-link">
+      <i class="fas fa-house"></i>
+      <span>الصفحة الرئيسية</span>
+      </a>
+
+      <a href="Control-panel.html" class="sidebar-link active">
+        <i class="fas fa-gauge"></i>
+        <span>لوحة التحكم</span>
+      </a>
+
+      <a href="Reports.html" class="sidebar-link">
+        <i class="fas fa-bullhorn"></i>
+        <span>البلاغات</span>
+      </a>
+
+      <a href="History.html" class="sidebar-link">
+        <i class="fas fa-clock-rotate-left"></i>
+        <span>السجل</span>
+      </a>
+
+      <div class="sidebar-divider"></div>
+
+      <span class="sidebar-section-label">الحساب</span>
+
+      <a href="profile1.html" class="sidebar-link">
+        <i class="fas fa-user"></i>
+        <span>الملف الشخصي</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
+        <i class="fas fa-right-from-bracket"></i>
+        <span>تسجيل الخروج</span>
+      </button>
+    </div>
+  </aside>
 
     <main class="page-body">
       <div class="page-heading">
@@ -183,7 +236,25 @@
         <div class="grid" id="gOrg"></div>
       </div>
     </div>
-
+       <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+    <div class="logout-dialog">
+      <div class="logout-dialog-icon">
+        <i class="fas fa-right-from-bracket"></i>
+      </div>
+      <h3 class="logout-dialog-title" id="logoutTitle">تسجيل الخروج</h3>
+      <p class="logout-dialog-msg">هل أنت متأكد من تسجيل الخروج؟</p>
+      <div class="logout-dialog-actions">
+        <button class="logout-cancel-btn" id="logoutCancel">
+          <i class="fas fa-xmark"></i>
+          إلغاء
+        </button>
+        <button class="logout-confirm-btn" id="logoutConfirm">
+          <i class="fas fa-right-from-bracket"></i>
+          تسجيل الخروج
+        </button>
+      </div>
+    </div>
+  </div>
     <footer>
       <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>

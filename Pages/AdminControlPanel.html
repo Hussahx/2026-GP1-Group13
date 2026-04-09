@@ -348,19 +348,14 @@
        <span>طلبات التسجيل</span>
        </a>
 
-      <a href="#" class="sidebar-link">
+      <a href="History.html" class="sidebar-link">
         <i class="fas fa-clock-rotate-left"></i>
         <span>السجل</span>
       </a>
 
       <div class="sidebar-divider"></div>
 
-      <span class="sidebar-section-label">الحساب</span>
-
-      <a href="#" class="sidebar-link">
-        <i class="fas fa-user"></i>
-        <span>الملف الشخصي</span>
-      </a>
+     
     </nav>
 
     <div class="sidebar-footer">
@@ -458,6 +453,25 @@
     <div id="toastBox" class="toast-box">
       <span class="toast-dot" aria-hidden="true"></span>
       <span id="toastText"></span>
+    </div>
+  </div>
+  <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+    <div class="logout-dialog">
+      <div class="logout-dialog-icon">
+        <i class="fas fa-right-from-bracket"></i>
+      </div>
+      <h3 class="logout-dialog-title" id="logoutTitle">تسجيل الخروج</h3>
+      <p class="logout-dialog-msg">هل أنت متأكد من تسجيل الخروج؟</p>
+      <div class="logout-dialog-actions">
+        <button class="logout-cancel-btn" id="logoutCancel">
+          <i class="fas fa-xmark"></i>
+          إلغاء
+        </button>
+        <button class="logout-confirm-btn" id="logoutConfirm">
+          <i class="fas fa-right-from-bracket"></i>
+          تسجيل الخروج
+        </button>
+      </div>
     </div>
   </div>
 
