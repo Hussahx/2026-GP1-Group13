@@ -1,4 +1,4 @@
-/* script.js */
+ /* script.js */
 /* ============================================================
    RASID – EYES OF THE DESERT
    Main JavaScript – Responsive + RTL aware
@@ -811,42 +811,142 @@ if (!rFile || !rFile.files.length) {
   }
 
   if (reportForm) {
-    reportForm.addEventListener('blur', (e) => {
-      const t = e.target;
-      if (!(t instanceof HTMLElement)) return;
-      if (!['rName', 'rContact', 'rLocation', 'rDesc'].includes(t.id)) return;
-      validateReportForm();
-    }, true);
 
-    reportForm.addEventListener('submit', (e) => {
+    reportForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      console.log("MODAL SUBMIT WORKING");
 
-  const ok = validateReportForm();
-  if (!ok) return;
+      const submitBtn = document.getElementById('submitReportBtn');
 
-  // ✅ اظهار رسالة النجاح
-if (reportSuccess)
-  reportSuccess.hidden = false;
-reportSuccess.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
+      const nameVal    = String(rName?.value    || '').trim();
+      const contactVal = String(rContact?.value || '').trim();
+      const locVal     = String(rLocation?.value || '').trim();
+      const descVal    = String(rDesc?.value    || '').trim();
+      const ageVal     = String(document.getElementById('rAge')?.value    || '').trim();
+      const healthVal  = String(document.getElementById('rHealth')?.value || '').trim();
+      const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
 
-setTimeout(() => {
+      let ok = true;
 
-  // نخلي المستخدم يشوف الرسالة أول
-  reportForm.reset();
+      if (!nameVal || nameVal.length < 2) {
+        setFieldError(rName, document.getElementById('rNameErr'), 'الرجاء إدخال الاسم (حرفين على الأقل).');
+        ok = false;
+      } else {
+        setFieldError(rName, document.getElementById('rNameErr'), '');
+      }
 
-  if (reportSuccess)
-    reportSuccess.hidden = true;
+      if (!contactVal || !(isValidEmail(contactVal) || isValidSaudiPhone(contactVal))) {
+        setFieldError(rContact, document.getElementById('rContactErr'), 'الرجاء إدخال بريد إلكتروني صحيح أو رقم سعودي بصيغة 05xxxxxxxx.');
+        ok = false;
+      } else {
+        setFieldError(rContact, document.getElementById('rContactErr'), '');
+      }
 
-  closeModal(reportModal);
+      if (!locVal) {
+        setFieldError(rLocation, document.getElementById('rLocationErr'), 'الرجاء إدخال الموقع.');
+        ok = false;
+      } else {
+        setFieldError(rLocation, document.getElementById('rLocationErr'), '');
+      }
 
-  if (submitBtn)
-    submitBtn.disabled = false;
+      if (!descVal || descVal.length < 10) {
+        setFieldError(rDesc, document.getElementById('rDescErr'), 'الرجاء إدخال وصف البلاغ (10 أحرف على الأقل).');
+        ok = false;
+      } else {
+        setFieldError(rDesc, document.getElementById('rDescErr'), '');
+      }
 
-}, 3000);
-      
+      if (!ok) {
+        const firstInvalid = reportForm.querySelector('.is-invalid');
+        if (firstInvalid) firstInvalid.focus();
+        return;
+      }
+
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getFirestore, collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+        const firebaseConfig = {
+          apiKey:            "AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0",
+          authDomain:        "rasid-1bb06.firebaseapp.com",
+          projectId:         "rasid-1bb06",
+          storageBucket:     "rasid-1bb06.firebasestorage.app",
+          messagingSenderId: "668525115587",
+          appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
+          measurementId:     "G-MZ3KB7WBK4"
+        };
+
+        const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+        const db  = getFirestore(app);
+
+        const reportId = 'RASID-' + Math.floor(10000 + Math.random() * 90000);
+
+        await addDoc(collection(db, 'Report'), {
+          reportId,
+          missingPersonName: nameVal,
+          age:               ageVal,
+          healthStatus:      healthVal,
+          vehicle:           vehicleVal,
+          location:          locVal,
+          description:       descVal,
+          contact:           contactVal,
+          reportTime:        new Date(),
+          status:"new"
+        });
+         // ── EmailJS: send confirmation email (only if contact is an email) ──
+      const isEmailContact = isValidEmail(contactVal);
+      if (isEmailContact) {
+        try {
+          emailjs.init('jl8cOTzNL4mqFGXJW');
+          await emailjs.send(
+            'service_ilejgsc',
+            'template_tov9o4t',
+            {
+              report_id: reportId,
+              to_email:  contactVal
+            }
+          );
+          console.log('EmailJS sent — Report ID:', reportId);
+        } catch (emailErr) {
+          // Silent fail — report is already saved in Firebase
+          console.error('EmailJS error:', emailErr);
+        }
+      }
+
+      } catch (err) {
+        console.error('Firebase save error:', err);
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+      }
+
+
+      // Clear form + close modal
+      reportForm.reset();
+      if (rFile)     rFile.value = '';
+      if (rFileName) rFileName.textContent = 'اضغط لاختيار ملف (PDF، JPG، PNG)';
+      resetReportUI();
+      closeModal(reportModal);
+
+      if (submitBtn) submitBtn.disabled = false;
+
+      // Show success banner in main page AFTER modal closes
+      setTimeout(() => {
+        const banner = document.getElementById('reportSuccessBanner');
+        if (!banner) return;
+        banner.style.opacity = '0';
+        banner.style.display = 'flex';
+        requestAnimationFrame(() => {
+          banner.style.transition = 'opacity 0.4s ease';
+          banner.style.opacity = '1';
+        });
+        setTimeout(() => {
+          banner.style.opacity = '0';
+          setTimeout(() => { banner.style.display = 'none'; }, 400);
+        }, 4000);
+      }, 300);
+
     });
   }
 
@@ -994,43 +1094,29 @@ setTimeout(() => {
     }, true);
 
     loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      loginAttempted = true;
-      const ok = validateLoginForm();
-      if (!ok) return;
+  e.preventDefault();
+  loginAttempted = true;
 
-      // ── Connect to Firebase ─────────────────────────────
-      const submitBtn = document.getElementById('submitLoginBtn');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ التحقق…';
-      }
+  const ok = validateLoginForm();
+  if (!ok) return;
 
-      try {
-        const { loginAndRedirect } = await import('/JS/firebase.js');
-        const result = await loginAndRedirect(
-          lEmail.value.trim(),
-          lPass.value
-        );
+  const email = lEmail.value;
+  const password = lPass.value;
 
-        if (!result.success) {
-          // Show the Firebase error inside the form
-          setFieldError(lPass, document.getElementById('lPassErr'), result.error);
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-unlock-keyhole"></i> دخول';
-          }
-          return;
-        }
-        // success → firebase.js already triggered redirect
-      } catch (err) {
-        setFieldError(lPass, document.getElementById('lPassErr'), 'خطأ في الاتصال. حاول مجددًا.');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-unlock-keyhole"></i> دخول';
-        }
-      }
-    });
+  try {
+    const { loginAndRedirect } = await import('../JS/firebase.js');
+
+    const result = await loginAndRedirect(email, password);
+
+    if (!result.success) {
+      showToast("خطأ", result.error);
+    }
+
+  } catch (err) {
+    console.error(err);
+    showToast("خطأ", "فشل الاتصال بالنظام");
+  }
+});
   }
 
   /* ============================================================
@@ -1095,7 +1181,6 @@ setTimeout(() => {
     otpFailures:   0,
     otpLocked:     false,
     countdownId:   null,
-    verifiedEmail: null,   // email confirmed in step 1
     OTP_TTL_MS:    2 * 60 * 1000,   // 2 minutes
     MAX_ATTEMPTS:  5,
   };
@@ -1265,7 +1350,6 @@ setTimeout(() => {
     FG.otpExpiry   = null;
     FG.otpFailures = 0;
     FG.otpLocked   = false;
-    FG.verifiedEmail = null;
 
     // Reset all forms
     [fgFormEmail, fgFormOtp, fgFormPassword].forEach(f => f?.reset());
@@ -1274,7 +1358,6 @@ setTimeout(() => {
     [
       [fgEmail,   fgEmailErr],
       [fgOtp,     fgOtpErr],
-      [document.getElementById('fgCurrentPass'), document.getElementById('fgCurrentPassErr')],
       [fgNewPass, fgNewPassErr],
       [fgConfPass,fgConfPassErr],
     ].forEach(([f, e]) => fgSetErr(f, e, ''));
@@ -1295,7 +1378,6 @@ setTimeout(() => {
 
     // Reset password eye buttons
     [
-      [document.getElementById('fgCurrentPass'), document.getElementById('fgToggleCurrent')],
       [fgNewPass, fgToggleNew],
       [fgConfPass, fgToggleConf],
     ].forEach(([inp, btn]) => {
@@ -1324,7 +1406,7 @@ setTimeout(() => {
   /* ── Step 1: Email ─────────────────────────────────────── */
 
   if (fgFormEmail) {
-    fgFormEmail.addEventListener('submit', async (e) => {
+    fgFormEmail.addEventListener('submit', (e) => {
       e.preventDefault();
 
       const val = String(fgEmail?.value || '').trim();
@@ -1339,84 +1421,26 @@ setTimeout(() => {
       }
       fgSetErr(fgEmail, fgEmailErr, '');
 
+      // Simulate sending OTP
       if (fgSendBtn) {
         fgSendBtn.disabled = true;
         fgSendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ الإرسال…';
       }
 
-      try {
-        const { sendPasswordResetEmail }               = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-        const { collection, query, where, getDocs }    = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        const { auth, db }                             = await import('/JS/firebase.js');
+      setTimeout(() => {
+        fgIssueOtp();
+        FG.otpFailures = 0;
+        FG.otpLocked   = false;
 
-        // ── Security check: verify email exists in our User collection ──
-        // We do this silently. Whether the email exists or not, the user
-        // always sees the same success message (prevents email enumeration).
-        let emailExistsInDB = false;
-        try {
-          const usersRef  = collection(db, 'User');
-          const q         = query(usersRef, where('email', '==', val));
-          const snapshot  = await getDocs(q);
-          emailExistsInDB = !snapshot.empty;
-        } catch (_dbErr) {
-          // If Firestore check fails for any reason (permissions, network),
-          // we silently fall through and still show success — never expose errors.
-          emailExistsInDB = false;
-        }
-
-        // ── Only send the real email if the user exists in our database ──
-        if (emailExistsInDB) {
-          const actionCodeSettings = {
-            url: window.location.origin + '/Pages/reset-password.html',
-            handleCodeInApp: false,
-          };
-          try {
-            await sendPasswordResetEmail(auth, val, actionCodeSettings);
-          } catch (sendErr) {
-            // auth/too-many-requests is the only error worth surfacing
-            // (everything else we swallow silently for security)
-            if (sendErr.code === 'auth/too-many-requests') {
-              fgSetErr(fgEmail, fgEmailErr, 'تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.');
-              if (fgSendBtn) {
-                fgSendBtn.disabled = false;
-                fgSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الرمز';
-              }
-              return;
-            }
-            // For all other send errors — still show success (don't leak info)
-          }
-        }
-        // If emailExistsInDB is false we intentionally do nothing but still
-        // show the same success UI below — the user cannot tell the difference.
-
-        // ── Always show success regardless of whether email was found ──
-        fgShowPanel('success');
-        const successBox = document.querySelector('#fgPanelSuccess .success-text');
-        if (successBox) {
-          successBox.innerHTML = `
-            <strong>تحقق من بريدك الإلكتروني</strong>
-            <span>أرسلنا رابط إعادة تعيين كلمة المرور إلى <strong>${val}</strong> — افتح بريدك واضغط على الرابط لاختيار كلمة مرور جديدة.</span>
-          `;
-        }
-        setTimeout(() => {
-          closeModal(forgotModal);
-          fgReset();
-          showToast('تم الإرسال', 'تحقق من بريدك الإلكتروني لإعادة تعيين كلمة المرور.');
-        }, 3500);
-
-      } catch (err) {
-        // Outer catch — only for truly unexpected errors (import failure, etc.)
-        // Still show a generic message, never expose internal details
-        if (err.code === 'auth/network-request-failed') {
-          fgSetErr(fgEmail, fgEmailErr, 'فشل الاتصال بالشبكة. تحقق من اتصالك.');
-        } else {
-          fgSetErr(fgEmail, fgEmailErr, 'حدث خطأ مؤقت. حاول مجددًا.');
-        }
+        if (fgEmailDisplay) fgEmailDisplay.textContent = val;
         if (fgSendBtn) {
           fgSendBtn.disabled = false;
           fgSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الرمز';
         }
-      }
+
+        fgShowPanel(2);
+        fgStartCountdown(60);
+      }, 900); // simulated network delay
     });
 
     // Live validation on blur
@@ -1438,8 +1462,8 @@ setTimeout(() => {
     fgOtp.value = fgOtp.value.replace(/\D/g, '').slice(0, 6);
   });
 
-  // Resend button – re-generates OTP and sends a fresh email
-  fgResendBtn?.addEventListener('click', async () => {
+  // Resend button
+  fgResendBtn?.addEventListener('click', () => {
     if (FG.otpLocked) return;
     fgIssueOtp();
     FG.otpFailures = 0;
@@ -1447,28 +1471,9 @@ setTimeout(() => {
     if (fgOtp) {
       fgOtp.value = '';
       fgOtp.classList.remove('is-locked');
-      fgOtp.disabled = false;
     }
-    if (fgVerifyBtn) fgVerifyBtn.disabled = false;
     fgSetErr(fgOtp, fgOtpErr, '');
-
-    fgResendBtn.disabled = true;
-    fgResendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-    try {
-      await emailjs.send(
-        window.EMAILJS_SERVICE_ID,
-        window.EMAILJS_TEMPLATE_ID,
-        { to_email: FG.verifiedEmail, otp_code: FG.otp, app_name: 'RASID' }
-      );
-    } catch (err) {
-      console.error('[FG] resend error:', err);
-      fgSetErr(fgOtp, fgOtpErr, 'فشل إعادة الإرسال. حاول مجددًا.');
-    } finally {
-      fgResendBtn.innerHTML = '<i class="fas fa-rotate-right"></i> إعادة الإرسال';
-    }
-
-    fgStartCountdown(120);
+    fgStartCountdown(60);
   });
 
   // Back to email
@@ -1551,14 +1556,11 @@ setTimeout(() => {
   });
 
   // Eye toggles
-  const fgToggleCurrent = document.getElementById('fgToggleCurrent');
-  const fgCurrentPass   = document.getElementById('fgCurrentPass');
-  fgToggleCurrent?.addEventListener('click', () => fgToggleEye(fgCurrentPass, fgToggleCurrent));
   fgToggleNew?.addEventListener('click',  () => fgToggleEye(fgNewPass,  fgToggleNew));
   fgToggleConf?.addEventListener('click', () => fgToggleEye(fgConfPass, fgToggleConf));
 
   if (fgFormPassword) {
-    fgFormPassword.addEventListener('submit', async (e) => {
+    fgFormPassword.addEventListener('submit', (e) => {
       e.preventDefault();
 
       const newVal  = String(fgNewPass?.value  || '');
@@ -1589,115 +1591,28 @@ setTimeout(() => {
 
       if (!ok) return;
 
-      // Real Firebase password update
+      // Simulate save
       if (fgSaveBtn) {
         fgSaveBtn.disabled = true;
         fgSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ الحفظ…';
       }
 
-      try {
-        const {
-          signInWithEmailAndPassword,
-          updatePassword,
-        } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-        const { auth } = await import('/JS/firebase.js');
-
-        // Re-authenticate so Firebase accepts the updatePassword call
-        // We use a temporary password field stored in FG.verifiedEmail.
-        // Since the user isn't logged in yet, we sign them in with their
-        // current password — but we don't have it. Instead we use the
-        // Admin SDK approach: sign in anonymously then call the Admin
-        // updateUser. Because we're on the client, the correct pattern
-        // is to sign the user in with their existing credentials first.
-        //
-        // ── Practical approach for "forgot password" on client ──
-        // Firebase client SDK requires the user to be signed in to call
-        // updatePassword. Since the user forgot their password we can't
-        // sign them in. The secure way on client-only is:
-        //   1. Use signInWithEmailAndPassword with the NEW password
-        //      (won't work – old pass is unknown)
-        //   2. Use Admin SDK (server only)
-        //   3. Use Firebase's own confirmPasswordReset with an oobCode
-        //      (requires their email link flow)
-        //
-        // ── Best client-only workaround ─────────────────────────
-        // Store a short-lived custom token approach isn't available
-        // without a server. Instead we store the verified email and
-        // rely on the user knowing their CURRENT password.
-        //
-        // ✅ Real solution: sign user in with a TEMP password we set
-        // via a one-time-use approach using signInWithEmailLink OR
-        // simply prompt them for their current password in step 3.
-        //
-        // For this project the simplest correct flow is:
-        // After OTP verified → ask for current password (hidden step)
-        // → signInWithEmailAndPassword → updatePassword.
-        //
-        // We add a "current password" field to step 3 for this purpose.
-
-        const currentPassEl = document.getElementById('fgCurrentPass');
-        const currentPass   = String(currentPassEl?.value || '').trim();
-
-        if (!currentPass) {
-          fgSetErr(
-            currentPassEl,
-            document.getElementById('fgCurrentPassErr'),
-            'الرجاء إدخال كلمة المرور الحالية للتحقق.'
-          );
-          if (fgSaveBtn) {
-            fgSaveBtn.disabled = false;
-            fgSaveBtn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ كلمة المرور';
-          }
-          return;
-        }
-
-        // Sign in with current password to get a fresh credential
-        const credential = await signInWithEmailAndPassword(auth, FG.verifiedEmail, currentPass);
-
-        // Now update the password
-        await updatePassword(credential.user, newVal);
-
-        // Clear sensitive data
-        FG.otp         = null;
-        FG.otpExpiry   = null;
-        FG.verifiedEmail = null;
+      setTimeout(() => {
+        // Clear sensitive data from memory
+        FG.otp       = null;
+        FG.otpExpiry = null;
 
         // Show success
         fgShowPanel('success');
 
+        // Close modal after 2.8 s, then open login
         setTimeout(() => {
           closeModal(forgotModal);
           fgReset();
+          // Offer user to log in
           showToast('تمت إعادة التعيين', 'يمكنك الآن تسجيل الدخول بكلمة مرورك الجديدة.');
         }, 2800);
-
-      } catch (err) {
-        console.error('[FG] updatePassword error:', err);
-        const errMap = {
-          'auth/wrong-password':         'كلمة المرور الحالية غير صحيحة.',
-          'auth/invalid-credential':     'كلمة المرور الحالية غير صحيحة.',
-          'auth/too-many-requests':      'تم تجاوز عدد المحاولات. حاول لاحقًا.',
-          'auth/network-request-failed': 'فشل الاتصال بالشبكة.',
-          'auth/weak-password':          'كلمة المرور الجديدة ضعيفة جدًا.',
-        };
-        const msg = errMap[err?.code] || 'حدث خطأ. حاول مجددًا.';
-
-        // Show error on current-password field if that's what failed
-        if (err?.code === 'auth/wrong-password' || err?.code === 'auth/invalid-credential') {
-          fgSetErr(
-            document.getElementById('fgCurrentPass'),
-            document.getElementById('fgCurrentPassErr'),
-            msg
-          );
-        } else {
-          fgSetErr(fgNewPass, fgNewPassErr, msg);
-        }
-
-        if (fgSaveBtn) {
-          fgSaveBtn.disabled = false;
-          fgSaveBtn.innerHTML = '<i class="fas fa-floppy-disk"></i> حفظ كلمة المرور';
-        }
-      }
+      }, 1000);
     });
   }
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {

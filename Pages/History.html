@@ -28,9 +28,11 @@
     </button>
     <nav class="header-nav" aria-label="تنقل سريع">
       <div class="user-chip" title="حسابي">
-        <span class="avatar" id="userInitial">ي</span>
-        <span class="name" id="userName">يوسف</span>
-        <span class="notif" id="notifCount">3</span>
+                <div class="user-chip" title="حسابي" onclick="window.location.href='Profile1.html'" style="cursor:pointer;">
+
+        <span class="avatar" id="userInitial"></span>
+        <span class="name" id="userName"></span>
+        
       </div>
     </nav>
   </header>
@@ -1001,6 +1003,31 @@
   renderCases();
 
   </script>
+
+
+<script type="module">
+  import { auth, db } from '/JS/firebase.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+
+    const snap = await getDoc(doc(db, "User", user.uid));
+    if (!snap.exists()) return;
+
+    const { FirstName, LastName } = snap.data();
+    const fullName = `${FirstName} ${LastName}`;
+    const initial  = FirstName ? FirstName.charAt(0) : '?';
+
+    // تحديث الهيدر
+    const nameEl    = document.getElementById('userName');
+    const initialEl = document.getElementById('userInitial');
+
+    if (nameEl)    nameEl.textContent    = fullName;
+    if (initialEl) initialEl.textContent = initial;
+  });
+</script>
 
 </body>
 </html>
