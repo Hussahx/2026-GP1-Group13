@@ -80,28 +80,45 @@ export async function loginAndRedirect(email, password) {
     return { success: false, error: msg };
   }
 }
-
 // ── Auth state helper (used on protected pages) ──────────────
 export async function requireAuth(requiredRole) {
   return new Promise((resolve) => {
-    onAuthStateChanged(auth, async (user) => {
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      unsubscribe(); // 🔥 يمنع التكرار
+
+      // ❌ إذا ما فيه مستخدم
       if (!user) {
         window.location.href = "/Pages/index.html";
         return;
       }
+
+  
       if (requiredRole) {
-        const snap = await getDoc(doc(db, "User", user.uid));
-        const role = snap.exists() ? snap.data().role : null;
-        if (role !== requiredRole) {
+        try {
+          const snap = await getDoc(doc(db, "User", user.uid));
+          const role = snap.exists() ? snap.data().role : null;
+
+         
+          if (role !== requiredRole) {
+            window.location.href = "/Pages/index.html";
+            return;
+          }
+
+        } catch (error) {
+       
+          console.error("Auth Error:", error);
           window.location.href = "/Pages/index.html";
           return;
         }
       }
+
+     
       resolve(user);
     });
+
   });
 }
-
 // ── Sign-out helper ──────────────────────────────────────────
 export async function logout() {
   await signOut(auth);
