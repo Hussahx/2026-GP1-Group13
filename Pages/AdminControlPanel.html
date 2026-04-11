@@ -637,20 +637,15 @@
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
 
-    const snap = await getDoc(doc(db, "User", user.uid));
-    if (!snap.exists()) return;
+    const username = user.email ? user.email.split('@')[0] : 'admin';
+    const initial  = username.charAt(0).toUpperCase();
 
-    const { FirstName, LastName } = snap.data();
-    const fullName = `${FirstName} ${LastName}`;
-    const initial  = FirstName ? FirstName.charAt(0) : '?';
-
-    // تحديث الهيدر
     const nameEl    = document.getElementById('userName');
     const initialEl = document.getElementById('userInitial');
 
-    if (nameEl)    nameEl.textContent    = fullName;
+    if (nameEl)    nameEl.textContent    = username;
     if (initialEl) initialEl.textContent = initial;
-  });
+});
 </script>
 </body>
 </html>
