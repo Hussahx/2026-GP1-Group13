@@ -722,13 +722,22 @@
           if (e.target === logoutOvr) closeLogout();
         });
 
-        logoutConf.addEventListener('click', function () {
-          logoutConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الخروج…';
-          logoutConf.disabled = true;
-          setTimeout(function () {
-            window.location.href = 'index.html';
-          }, 900);
-        });
+       logoutConf.addEventListener('click', function () {
+
+  // سبينر + تعطيل الزر
+  logoutConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الخروج…';
+  logoutConf.disabled = true;
+
+  // حذف السيشن (الأفضل تحدد المفتاح بدل clear)
+  sessionStorage.clear();
+  localStorage.removeItem("user"); // 👈 أفضل من clear()
+
+  // تحويل
+  setTimeout(function () {
+    window.location.href = 'index.html';
+  }, 900);
+
+});
       }
 
       document.addEventListener('keydown', function (e) {
