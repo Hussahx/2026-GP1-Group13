@@ -7,6 +7,7 @@
   <title>راصد — بلاغات البحث والإنقاذ</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="/CSS/Rasid.css" />
 
   <style>
@@ -137,6 +138,8 @@
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
       <i class="fas fa-bars"></i>
     </button>
+    
+    </button>
       <nav class="header-nav" aria-label="تنقل سريع">
         <div class="user-chip" title="حسابي" onclick="window.location.href='Profile1.html'" style="cursor:pointer;">
           <span class="avatar" id="userInitial">ي</span>
@@ -162,7 +165,7 @@
       <span>الصفحة الرئيسية</span>
       </a>
 
-      <a href="Control-panel.html" class="sidebar-link active">
+      <a href="#" class="sidebar-link active">
         <i class="fas fa-gauge"></i>
         <span>لوحة التحكم</span>
       </a>
@@ -194,7 +197,6 @@
       </button>
     </div>
   </aside>
-
     <main class="page-body">
       <div class="page-heading">
         <div class="page-heading-eyebrow" aria-hidden="true"><span></span>__ لوحة البلاغات الميداني __<span></span></div>
@@ -278,6 +280,118 @@
        ─ HTML and CSS untouched
   ═══════════════════════════════════════════════════════════════ -->
   <script type="module">
+    (function () {
+      var IS_HOMEPAGE = (function () {
+        var p = window.location.pathname;
+        return p === '/' || p.endsWith('index.html') || p.endsWith('index.htm') || p === '';
+      })();
+
+      var toggle     = document.getElementById('sidebarToggle');
+      var sidebar    = document.getElementById('appSidebar');
+      var overlay    = document.getElementById('sidebarOverlay');
+      var closeBtn   = document.getElementById('sidebarClose');
+      var pageHeader = document.getElementById('pageHeader');
+      var logoutBtn  = document.getElementById('sidebarLogoutBtn');
+      var logoutOvr  = document.getElementById('logoutOverlay');
+      var logoutCanc = document.getElementById('logoutCancel');
+      var logoutConf = document.getElementById('logoutConfirm');
+
+      function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden', 'false');
+        sidebar.setAttribute('aria-hidden', 'false');
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.setAttribute('aria-label', 'إغلاق القائمة');
+        document.body.style.overflow = 'hidden';
+        if (!IS_HOMEPAGE && pageHeader) {
+          pageHeader.classList.add('header-hidden');
+        }
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+        overlay.setAttribute('aria-hidden', 'true');
+        sidebar.setAttribute('aria-hidden', 'true');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'فتح القائمة');
+        document.body.style.overflow = '';
+        if (pageHeader) {
+          pageHeader.classList.remove('header-hidden');
+        }
+      }
+
+      function openLogout() {
+        logoutOvr.classList.add('on');
+        document.body.style.overflow = 'hidden';
+        logoutConf.focus();
+      }
+
+      function closeLogout() {
+        logoutOvr.classList.remove('on');
+        document.body.style.overflow = '';
+      }
+
+      if (toggle && sidebar && overlay && closeBtn) {
+        toggle.addEventListener('click', function () {
+          sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+        });
+
+        closeBtn.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+
+        sidebar.querySelectorAll('.sidebar-link').forEach(function (link) {
+          link.addEventListener('click', function () {
+            sidebar.querySelectorAll('.sidebar-link').forEach(function (l) {
+              l.classList.remove('active');
+            });
+            link.classList.add('active');
+            if (window.innerWidth < 768) closeSidebar();
+          });
+        });
+      }
+
+      if (logoutBtn && logoutOvr && logoutCanc && logoutConf) {
+        logoutBtn.addEventListener('click', openLogout);
+        logoutCanc.addEventListener('click', closeLogout);
+
+        logoutOvr.addEventListener('click', function (e) {
+          if (e.target === logoutOvr) closeLogout();
+        });
+
+        logoutConf.addEventListener('click', function () {
+          logoutConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الخروج…';
+          logoutConf.disabled = true;
+          setTimeout(function () {
+            window.location.href = 'index.html';
+          }, 900);
+        });
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          if (logoutOvr && logoutOvr.classList.contains('on')) {
+            closeLogout();
+            return;
+          }
+          if (sidebar && sidebar.classList.contains('open')) {
+            closeSidebar();
+            if (toggle) toggle.focus();
+          }
+        }
+      });
+
+      var resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+          if (window.innerWidth >= 1024 && sidebar && sidebar.classList.contains('open')) {
+            closeSidebar();
+          }
+        }, 150);
+      });
+    })();
     import { initializeApp, getApps }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getAuth, onAuthStateChanged }
