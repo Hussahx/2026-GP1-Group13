@@ -252,23 +252,30 @@ body {
   stroke-linecap: round;
 }
 
-.profile-page .save-btn {
-  display: none;
-  background: linear-gradient(135deg,#2d9e52,#1a7038);
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  padding: 6px 16px;
-  font-family: "Tajawal",sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  align-items: center;
-  gap: 4px;
+.profile-page .pencil-btn.state-cancel {
+  background: rgba(120,80,40,0.08);
+  border-color: rgba(166,124,82,0.3);
+  color: var(--ink-muted);
 }
 
-.profile-page .save-btn.show {
-  display: flex;
+.profile-page .pencil-btn.state-save {
+  background: linear-gradient(135deg,#2d9e52,#1a7038);
+  border-color: #1a7038;
+  color: #fff;
+}
+
+.profile-page .email-input {
+  width: 220px;
+  max-width: 70vw;
+  text-align: center;
+  direction: ltr;
+  font-size: 13px;
+}
+
+.profile-page .city-input {
+  width: 120px;
+  text-align: center;
+  font-size: 13px;
 }
 
 .profile-page .hero-bio {
@@ -1455,21 +1462,20 @@ body {
         <div class="online-dot"></div>
       </div>
 
-      <div class="hero-role">&#x22C6; متطوع &mdash; منصة راصد &#x22C6;</div>
+      <div class="hero-role" id="bioRole">&#x22C6; متطوع &mdash; منصة راصد &#x22C6;</div>
 
       <div class="name-row" id="editWrap">
         <div class="hero-name display-only" id="bioNameDisplay">...</div>
-        <input type="text" id="bioNameInput" class="edit-input name-input" value="" maxlength="40">
+        <input type="text" id="bioNameInput" class="edit-input name-input" value="" maxlength="50" placeholder="الاسم الكامل" style="display:none;">
 
-        <button class="pencil-btn" id="editBtn" onclick="startEdit()">
-          <svg viewBox="0 0 24 24">
+        <!-- زر واحد يتغير حسب الحالة -->
+        <button class="pencil-btn" id="editBtn" onclick="handleEditBtn()">
+          <svg viewBox="0 0 24 24" id="editBtnIcon">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
-          تعديل
+          <span id="editBtnLabel">تعديل</span>
         </button>
-
-        <button class="save-btn" id="saveBtn" onclick="saveEdit()">&#x2713; حفظ</button>
 
         <button class="delete-account-btn" id="deleteAccountBtn" onclick="confirmDeleteAccount()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0;">
@@ -1483,17 +1489,18 @@ body {
         <div class="bio-row">
           <span class="bio-ico">📞</span>
           <span class="bio-val display-only" id="bioPhoneDisplay" dir="ltr">—</span>
-          <input type="text" id="bioPhoneInput" class="edit-input phone-input" value="" maxlength="10" inputmode="numeric" dir="ltr">
+          <input type="text" id="bioPhoneInput" class="edit-input phone-input" value="" maxlength="10" inputmode="numeric" dir="ltr" placeholder="05XXXXXXXX">
         </div>
 
         <div class="bio-row">
           <span class="bio-ico">✉️</span>
-          <span class="bio-val" id="bioEmail" dir="ltr" style="opacity:.75;">—</span>
+          <span class="bio-val display-only" id="bioEmailDisplay" dir="ltr" style="opacity:.75;">—</span>
         </div>
 
         <div class="bio-row">
           <span class="bio-ico">📍</span>
-          <span class="bio-val" id="bioCity">—</span>
+          <span class="bio-val display-only" id="bioCityDisplay">—</span>
+          <input type="text" id="bioCityInput" class="edit-input city-input" value="" maxlength="50" placeholder="المدينة">
         </div>
 
         <div class="bio-row">
@@ -1502,7 +1509,9 @@ body {
         </div>
       </div>
 
+      <!-- Field-level error messages -->
       <div class="phone-error" id="phoneError">رقم الجوال يجب أن يبدأ بـ 05 ويكون 10 أرقام</div>
+      <div class="phone-error" id="nameError">الاسم لا يمكن أن يكون فارغاً</div>
 
       <div class="stats-row">
         <div class="stat so" onclick="filterOps('all')"><span class="stat-num" id="stTotal">٠</span><span class="stat-lbl">اجمالي العمليات</span></div>
@@ -1567,6 +1576,19 @@ body {
   </div>
 
 </main>
+
+<!-- MODAL: تأكيد الحفظ -->
+<div class="del-overlay" id="saveConfirmOverlay">
+  <div class="del-card">
+    <div class="del-icon">💾</div>
+    <div class="del-title">تأكيد حفظ التغييرات</div>
+    <div class="del-sub">هل أنت متأكد من حفظ التغييرات؟<br><strong>سيتم تحديث بياناتك في الحساب.</strong></div>
+    <div class="del-actions">
+      <button class="del-confirm-btn" id="saveConfirmBtn" onclick="executeSaveEdit()">نعم، احفظ</button>
+      <button class="del-cancel-btn" onclick="document.getElementById('saveConfirmOverlay').classList.remove('on')">لا، إلغاء</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL: TRACK -->
 <div class="p-overlay" id="modalTrack">
@@ -1659,6 +1681,7 @@ body {
 
 <!-- Firebase SDK -->
 <script type="module">
+  
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc }
@@ -1683,6 +1706,7 @@ const auth = getAuth(app);
 let currentUser  = null;
 let unsubProfile = null;
 let unsubReports = null;
+window._isEditing = false;
 
 /* ── تحويل تاريخ الانضمام ── */
 function formatJoinDate(ts) {
@@ -1701,20 +1725,30 @@ function formatJoinDate(ts) {
 function bindProfileToDOM(data, user) {
   const fullName = ((data.FirstName || '') + ' ' + (data.LastName || '')).trim();
 
-  var nameDisplay = document.getElementById('bioNameDisplay');
-  var nameInput   = document.getElementById('bioNameInput');
-  var phoneDisplay = document.getElementById('bioPhoneDisplay');
-  var phoneInput   = document.getElementById('bioPhoneInput');
-  var emailEl      = document.getElementById('bioEmail');
-  var cityEl       = document.getElementById('bioCity');
-  var joinEl       = document.getElementById('bioJoin');
+  var nameDisplay    = document.getElementById('bioNameDisplay');
+  var nameInput      = document.getElementById('bioNameInput');
+  var phoneDisplay   = document.getElementById('bioPhoneDisplay');
+  var phoneInput     = document.getElementById('bioPhoneInput');
+  var emailDisplay   = document.getElementById('bioEmailDisplay');
+  var cityDisplay    = document.getElementById('bioCityDisplay');
+  var cityInput      = document.getElementById('bioCityInput');
+  var joinEl         = document.getElementById('bioJoin');
+  var roleEl         = document.getElementById('bioRole');
 
-  if (nameDisplay) nameDisplay.textContent = fullName || '—';
-  if (nameInput)   nameInput.value         = fullName || '';
+  if (nameDisplay)  nameDisplay.textContent  = fullName || '—';
+  if (nameInput)    nameInput.value          = fullName || '';
   if (phoneDisplay) phoneDisplay.textContent = data.Phone || '—';
   if (phoneInput)   phoneInput.value         = data.Phone || '';
-  if (emailEl)      emailEl.textContent      = user.email  || '—';
-  if (cityEl)       cityEl.textContent       = data.City   || '—';
+  if (emailDisplay) emailDisplay.textContent = user.email || '—';
+  if (cityDisplay)  cityDisplay.textContent  = data.City  || '—';
+  if (cityInput)    cityInput.value          = data.City  || '';
+
+  if (roleEl) {
+    var roleLabel = data.Role === 'leader' ? 'قائد فريق' : (data.Role || 'متطوع');
+    var team      = data.Team ? ' — ' + data.Team : ' — منصة راصد';
+    roleEl.textContent = '⋆ ' + roleLabel + team + ' ⋆';
+  }
+
   if (joinEl) {
     const joinStr = formatJoinDate(data.JoinDate);
     joinEl.textContent = joinStr || '—';
@@ -1774,72 +1808,222 @@ window.executeDeleteAccount = async function() {
   }
 };
 
+/* ── helpers for button state ── */
+function _setEditBtnState(state) {
+  // state: 'edit' | 'cancel' | 'save'
+  var btn   = document.getElementById('editBtn');
+  var label = document.getElementById('editBtnLabel');
+  var icon  = document.getElementById('editBtnIcon');
+
+  btn.classList.remove('state-cancel','state-save');
+
+  if (state === 'edit') {
+    label.textContent = 'تعديل';
+    icon.style.display = '';
+    btn.title = '';
+  } else if (state === 'cancel') {
+    label.textContent = 'إلغاء التعديل';
+    icon.style.display = 'none';
+    btn.classList.add('state-cancel');
+  } else if (state === 'save') {
+    label.textContent = 'حفظ';
+    icon.style.display = 'none';
+    btn.classList.add('state-save');
+  }
+}
+
+/* ── track original values to detect changes ── */
+window._origPhone = '';
+window._origCity  = '';
+window._origName  = '';
+
+function _hasChanges() {
+  var phone = (document.getElementById('bioPhoneInput').value || '').trim();
+  var city  = (document.getElementById('bioCityInput').value  || '').trim();
+  var name  = (document.getElementById('bioNameInput').value  || '').trim();
+  return phone !== window._origPhone || city !== window._origCity || name !== window._origName;
+}
+
+/* ── handleEditBtn — single button handler ── */
+window.handleEditBtn = function() {
+  var label = document.getElementById('editBtnLabel').textContent;
+  if (!window._isEditing) {
+    window.startEdit();
+  } else if (_hasChanges()) {
+    // Has changes → trigger save confirmation
+    window.triggerSaveConfirm();
+  } else {
+    // No changes → cancel
+    window.cancelEdit();
+  }
+};
+
 /* ── startEdit ── */
 window.startEdit = function() {
   if (!currentUser) { window.showToast('⚠️ يجب تسجيل الدخول أولاً', 'error'); return; }
   if (window._isEditing) return;
   window._isEditing = true;
 
-  var wrap = document.getElementById('editWrap');
-  wrap.classList.add('edit-mode');
+  // Save original values for change detection
+  window._origName  = (document.getElementById('bioNameDisplay').textContent === '—') ? '' : document.getElementById('bioNameDisplay').textContent.trim();
+  window._origPhone = (document.getElementById('bioPhoneDisplay').textContent === '—') ? '' : document.getElementById('bioPhoneDisplay').textContent.trim();
+  window._origCity  = (document.getElementById('bioCityDisplay').textContent  === '—') ? '' : document.getElementById('bioCityDisplay').textContent.trim();
 
+  // Set input values
+  document.getElementById('bioNameInput').value  = window._origName;
+  document.getElementById('bioPhoneInput').value = window._origPhone;
+  document.getElementById('bioCityInput').value  = window._origCity;
+
+  // Show inputs, hide displays
+  document.getElementById('bioNameDisplay').classList.add('display-only');
   document.getElementById('bioPhoneDisplay').classList.add('display-only');
+  document.getElementById('bioCityDisplay').classList.add('display-only');
+
   document.getElementById('bioNameInput').style.display  = 'inline-block';
   document.getElementById('bioPhoneInput').style.display = 'inline-block';
-  document.getElementById('editBtn').style.display = 'none';
-  document.getElementById('saveBtn').classList.add('show');
-  document.getElementById('bioNameInput').focus();
+  document.getElementById('bioCityInput').style.display  = 'inline-block';
+
+  // Email stays visible but read-only
+  document.getElementById('bioEmailDisplay').classList.remove('display-only');
+
+  _setEditBtnState('cancel');
+
+  // Watch for changes to switch button to "حفظ"
+  ['bioNameInput','bioPhoneInput','bioCityInput'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', _onFieldInput);
+  });
+
+  // Clear any stale errors
   document.getElementById('phoneError').classList.remove('show');
+  document.getElementById('nameError').classList.remove('show');
+
+  document.getElementById('bioNameInput').focus();
 };
 
-/* ── saveEdit — يحفظ في Firebase ── */
-window.saveEdit = async function() {
+function _onFieldInput() {
+  if (!window._isEditing) return;
+  _setEditBtnState(_hasChanges() ? 'save' : 'cancel');
+}
+
+/* ── helper: exit edit mode ── */
+function _exitEditMode() {
+  window._isEditing = false;
+
+  // Remove input listeners
+  ['bioNameInput','bioPhoneInput','bioCityInput'].forEach(function(id) {
+    document.getElementById(id).removeEventListener('input', _onFieldInput);
+  });
+
+  document.getElementById('bioNameDisplay').classList.remove('display-only');
+  document.getElementById('bioPhoneDisplay').classList.remove('display-only');
+  document.getElementById('bioCityDisplay').classList.remove('display-only');
+
+  document.getElementById('bioNameInput').style.display  = 'none';
+  document.getElementById('bioPhoneInput').style.display = 'none';
+  document.getElementById('bioCityInput').style.display  = 'none';
+
+  document.getElementById('phoneError').classList.remove('show');
+  document.getElementById('nameError').classList.remove('show');
+
+  _setEditBtnState('edit');
+}
+
+/* ── cancelEdit — discard all changes ── */
+window.cancelEdit = function() {
+  if (!window._isEditing) return;
+
+  document.getElementById('bioNameInput').value  = window._origName;
+  document.getElementById('bioPhoneInput').value = window._origPhone;
+  document.getElementById('bioCityInput').value  = window._origCity;
+
+  _exitEditMode();
+};
+
+/* ── triggerSaveConfirm — shows the confirmation dialog ── */
+window.triggerSaveConfirm = function() {
+  if (!window._isEditing || !_hasChanges()) return;
+
+  var phoneInput = document.getElementById('bioPhoneInput');
+  var phoneError = document.getElementById('phoneError');
+  var nameInput  = document.getElementById('bioNameInput');
+  var nameError  = document.getElementById('nameError');
+  var newPhone   = phoneInput.value.trim();
+  var newName    = nameInput.value.trim();
+  var hasError   = false;
+
+  if (!newName) {
+    nameError.classList.add('show');
+    nameInput.focus();
+    hasError = true;
+  } else {
+    nameError.classList.remove('show');
+  }
+
+  if (!newPhone || !/^05\d{8}$/.test(newPhone)) {
+    phoneError.classList.add('show');
+    if (!hasError) phoneInput.focus();
+    hasError = true;
+  } else {
+    phoneError.classList.remove('show');
+  }
+
+  if (hasError) return;
+
+  document.getElementById('saveConfirmOverlay').classList.add('on');
+};
+
+/* ── executeSaveEdit — called after user confirms ── */
+window.executeSaveEdit = async function() {
   if (!window._isEditing) return;
 
   var nameInput  = document.getElementById('bioNameInput');
   var phoneInput = document.getElementById('bioPhoneInput');
-  var phoneError = document.getElementById('phoneError');
+  var cityInput  = document.getElementById('bioCityInput');
+  var newName    = nameInput.value.trim();
+  var newPhone   = phoneInput.value.trim();
+  var newCity    = cityInput.value.trim();
 
-  var newName  = nameInput.value.trim();
-  var newPhone = phoneInput.value.trim();
-
-  if (!/^05\d{8}$/.test(newPhone)) {
-    phoneError.classList.add('show');
-    phoneInput.focus();
-    return;
-  }
-  phoneError.classList.remove('show');
-
-  if (!newName) newName = document.getElementById('bioNameDisplay').textContent || '—';
   if (!currentUser) { window.showToast('⚠️ يجب تسجيل الدخول أولاً', 'error'); return; }
 
-  // أغلق وضع التعديل فوراً (UI سريع)
-  window._isEditing = false;
-  document.getElementById('bioNameDisplay').textContent  = newName;
-  document.getElementById('bioPhoneDisplay').textContent = newPhone;
-  document.getElementById('bioNameInput').style.display  = 'none';
-  document.getElementById('bioPhoneInput').style.display = 'none';
-  document.getElementById('bioPhoneDisplay').classList.remove('display-only');
-  document.getElementById('editWrap').classList.remove('edit-mode');
-  document.getElementById('saveBtn').classList.remove('show');
-  document.getElementById('editBtn').style.display = '';
+  var confirmOverlay = document.getElementById('saveConfirmOverlay');
+  var confirmBtn     = document.getElementById('saveConfirmBtn');
 
-  const parts     = newName.split(/\s+/);
-  const firstName = parts[0] || '';
-  const lastName  = parts.slice(1).join(' ') || '';
+  confirmBtn.disabled    = true;
+  confirmBtn.textContent = 'جاري الحفظ...';
+
+  // Split name into first/last
+  var nameParts = newName.split(' ');
+  var firstName = nameParts[0] || '';
+  var lastName  = nameParts.slice(1).join(' ') || '';
 
   try {
     await updateDoc(doc(db, 'User', currentUser.uid), {
       FirstName: firstName,
       LastName:  lastName,
-      Phone:     newPhone
+      Phone:     newPhone,
+      City:      newCity
     });
+
+    // Update UI displays
+    document.getElementById('bioNameDisplay').textContent  = newName;
+    document.getElementById('bioPhoneDisplay').textContent = newPhone;
+    document.getElementById('bioCityDisplay').textContent  = newCity || '—';
+
+    confirmOverlay.classList.remove('on');
+    _exitEditMode();
     window.showToast('✓ تم حفظ البيانات بنجاح', 'success');
+
   } catch (e) {
     console.error('updateDoc error:', e);
-    window.showToast('✗ حدث خطأ أثناء الحفظ', 'error');
+    window.showToast('✗ حدث خطأ أثناء الحفظ — حاول مرة أخرى', 'error');
+  } finally {
+    confirmBtn.disabled    = false;
+    confirmBtn.textContent = 'نعم، احفظ';
   }
 };
+
+/* ── saveEdit (kept for compatibility) ── */
+window.saveEdit = window.triggerSaveConfirm;
 
 /* ── Auth state ── */
 onAuthStateChanged(auth, function(user) {
@@ -1908,11 +2092,16 @@ function toAr(n){
   return String(n).replace(/\d/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'[+d]; });
 }
 
-window._isEditing = false;
+/* startEdit / saveEdit / cancelEdit / showToast معرَّفة في Firebase module أعلاه */
 
 /* إغلاق modal الحذف عند الضغط خارجه */
 document.getElementById('delOverlay').addEventListener('click', function(e) {
   if (e.target === this) window.closeDeleteModal();
+});
+
+/* إغلاق modal تأكيد الحفظ عند الضغط خارجه */
+document.getElementById('saveConfirmOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('on');
 });
 
 /* startEdit / saveEdit / showToast معرَّفة في Firebase module أعلاه */
