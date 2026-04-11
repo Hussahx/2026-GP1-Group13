@@ -1,4 +1,4 @@
- /* script.js */
+/* script.js */
 /* ============================================================
    RASID – EYES OF THE DESERT
    Main JavaScript – Responsive + RTL aware
@@ -632,12 +632,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const toastEl = document.getElementById('toast');
   let toastTimer = null;
 
-  const showToast = (title, msg) => {
+  const showToast = (title, msg, type = 'success') => {
     if (!toastEl) return;
     clearTimeout(toastTimer);
 
+    const icon = type === 'error' ? 'fa-circle-xmark' : 'fa-circle-check';
+    toastEl.style.background  = type === 'error' ? '#7a2020' : '';
+    toastEl.style.borderColor = type === 'error' ? '#c0392b' : '';
+
     toastEl.innerHTML = `
-      <div class="t-ico"><i class="fas fa-circle-check"></i></div>
+      <div class="t-ico"><i class="fas ${icon}"></i></div>
       <div class="t-txt">
         <strong>${title}</strong>
         <span>${msg}</span>
@@ -648,7 +652,9 @@ document.addEventListener('DOMContentLoaded', () => {
     toastTimer = setTimeout(() => {
       toastEl.hidden = true;
       toastEl.innerHTML = '';
-    }, 2600);
+      toastEl.style.background  = '';
+      toastEl.style.borderColor = '';
+    }, 3500);
   };
 
   /* ============================================================
@@ -1109,12 +1115,14 @@ if (!rFile || !rFile.files.length) {
     const result = await loginAndRedirect(email, password);
 
     if (!result.success) {
-      showToast("خطأ", result.error);
+      // عرض الخطأ تحت حقل كلمة المرور مباشرةً
+      setFieldError(lPass, document.getElementById('lPassErr'), result.error);
+      showToast("خطأ في تسجيل الدخول", result.error, "error");
     }
 
   } catch (err) {
     console.error(err);
-    showToast("خطأ", "فشل الاتصال بالنظام");
+    showToast("خطأ", "فشل الاتصال بالنظام", "error");
   }
 });
   }
