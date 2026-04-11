@@ -590,27 +590,10 @@
           <form id="reportForm" class="report-form" novalidate>
             <div class="form-grid">
               <div class="form-group">
-                <label for="rName">اسم المفقود</label>
+                <label for="rName">الاسم</label>
                 <input type="text" id="rName" name="rName" placeholder="مثال: محمد عبدالله" required minlength="2" />
                 <small class="field-error" id="rNameErr" aria-live="polite"></small>
               </div>
-              <div class="form-group">
-      <label for="rAge">العمر</label>
-      <input type="number" id="rAge" name="rAge" placeholder="مثال: 35" min="1" max="120" required/>
-      <small class="field-error" id="rAgeErr" aria-live="polite"></small>
-    </div>
-
-     <div class="form-group">
-      <label for="rHealth">الحالة الصحية</label>
-      <input type="text" id="rHealth" name="rHealth" placeholder="مثال: مريض بالسكري، يحتاج دواء" required/>
-      <small class="field-error" id="rHealthErr" aria-live="polite"></small>
-    </div>
-
-    <div class="form-group">
-      <label for="rVehicle">المركبة</label>
-      <input type="text" id="rVehicle" name="rVehicle" placeholder="مثال: تويوتا لاندكروزر، أبيض" required />
-      <small class="field-error" id="rVehicleErr" aria-live="polite"></small>
-    </div>
 
               <div class="form-group">
                 <label for="rContact">رقم الهاتف أو البريد الإلكتروني</label>
@@ -707,7 +690,7 @@
       </div>
 
       <div class="modal-body">
-        <p class="modal-sub">أدخل بيانات الدخول للوصول إلى لوحة التحكم.</p>
+        <p class="modal-sub">أدخل بيانات حسابك لتسجيل الدخول</p>
 
        <!-- index.html (ONLY the relevant updated parts shown; replace in your file) -->
 
@@ -1005,17 +988,11 @@
   </footer>
 
   <!-- Scripts -->
-   <!-- EmailJS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.16/typed.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script src="../JS/index.js"></script>  <!-- Report success banner — shown in main page after modal closes -->
-  <div id="reportSuccessBanner" style="display:none;position:fixed;bottom:36px;left:50%;transform:translateX(-50%);align-items:center;gap:10px;background:linear-gradient(135deg,#2d6a4f,#40916c);color:#fff;font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:700;padding:14px 32px;border-radius:50px;box-shadow:0 8px 32px rgba(45,106,79,0.35);z-index:99999;direction:rtl;white-space:nowrap;">
-    <i class="fas fa-circle-check" style="font-size:1.1rem;"></i>
-    تم إرسال البلاغ بنجاح
-  </div>
-
+  <script src="../JS/index.js"></script>
 </body>
 </html>
+
