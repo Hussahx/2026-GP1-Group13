@@ -1414,7 +1414,7 @@ if (!rFile || !rFile.files.length) {
   /* ── Step 1: Email ─────────────────────────────────────── */
 
   if (fgFormEmail) {
-    fgFormEmail.addEventListener('submit', (e) => {
+    fgFormEmail.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const val = String(fgEmail?.value || '').trim();
@@ -1429,26 +1429,46 @@ if (!rFile || !rFile.files.length) {
       }
       fgSetErr(fgEmail, fgEmailErr, '');
 
-      // Simulate sending OTP
       if (fgSendBtn) {
         fgSendBtn.disabled = true;
         fgSendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ الإرسال…';
       }
 
-      setTimeout(() => {
-        fgIssueOtp();
-        FG.otpFailures = 0;
-        FG.otpLocked   = false;
+      try {
+        const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        const { auth }                   = await import('../JS/firebase.js');
 
-        if (fgEmailDisplay) fgEmailDisplay.textContent = val;
-        if (fgSendBtn) {
-          fgSendBtn.disabled = false;
-          fgSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الرمز';
+        await sendPasswordResetEmail(auth, val);
+
+        //  Email sent — go straight to success, no OTP needed
+        fgShowPanel('success');
+        const successBox = document.querySelector('#fgPanelSuccess .success-text');
+        if (successBox) {
+          successBox.innerHTML = `
+            <strong>تحقق من بريدك الإلكتروني</strong>
+            <span>أرسلنا رابط إعادة تعيين كلمة المرور إلى <strong>${val}</strong> — افتح بريدك واضغط على الرابط لاختيار كلمة مرور جديدة.</span>
+          `;
         }
 
-        fgShowPanel(2);
-        fgStartCountdown(60);
-      }, 900); // simulated network delay
+        setTimeout(() => {
+          closeModal(forgotModal);
+          fgReset();
+          showToast('تم الإرسال', 'تحقق من بريدك الإلكتروني لإعادة تعيين كلمة المرور.');
+        }, 3500);
+
+      } catch (err) {
+        if (fgSendBtn) {
+          fgSendBtn.disabled = false;
+          fgSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الرابط';
+        }
+        const errMap = {
+          'auth/user-not-found':         'لا يوجد حساب مرتبط بهذا البريد الإلكتروني.',
+          'auth/invalid-email':          'صيغة البريد الإلكتروني غير صحيحة.',
+          'auth/too-many-requests':      'تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.',
+          'auth/network-request-failed': 'فشل الاتصال بالشبكة. تحقق من اتصالك.',
+        };
+        fgSetErr(fgEmail, fgEmailErr, errMap[err.code] || 'حدث خطأ أثناء الإرسال. حاول مجددًا.');
+      }
     });
 
     // Live validation on blur
