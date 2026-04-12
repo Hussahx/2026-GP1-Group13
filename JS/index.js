@@ -1435,12 +1435,42 @@ if (!rFile || !rFile.files.length) {
       }
 
       try {
-        const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-        const { auth }                   = await import('../JS/firebase.js');
+        const { sendPasswordResetEmail }            = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        const { collection, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const { auth, db }                          = await import('../JS/firebase.js');
 
-        await sendPasswordResetEmail(auth, val);
+        // ── Security: silently check if email exists in our User collection ──
+        // We NEVER tell the user whether the email was found or not (prevents enumeration).
+        let emailExistsInDB = false;
+        try {
+          const q        = query(collection(db, 'User'), where('email', '==', val));
+          const snapshot = await getDocs(q);
+          emailExistsInDB = !snapshot.empty;
+        } catch (_dbErr) {
+          // If Firestore check fails for any reason, silently fall through.
+          // We will NOT send an email but will still show the success UI.
+        }
 
-        //  Email sent — go straight to success, no OTP needed
+        // ── Only call Firebase if the email is in our system ──
+        if (emailExistsInDB) {
+          try {
+            await sendPasswordResetEmail(auth, val);
+          } catch (sendErr) {
+            // Only surface rate-limit errors — everything else stays silent
+            if (sendErr.code === 'auth/too-many-requests') {
+              if (fgSendBtn) {
+                fgSendBtn.disabled = false;
+                fgSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الرابط';
+              }
+              fgSetErr(fgEmail, fgEmailErr, 'تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.');
+              return;
+            }
+            // All other Firebase errors → fall through to show success anyway
+          }
+        }
+
+        // ── Always show the same success message regardless of whether email was found ──
+        // This prevents attackers from knowing which emails are registered.
         fgShowPanel('success');
         const successBox = document.querySelector('#fgPanelSuccess .success-text');
         if (successBox) {
@@ -1461,24 +1491,12 @@ if (!rFile || !rFile.files.length) {
           fgSendBtn.disabled = false;
           fgSendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الرابط';
         }
-        const errMap = {
-          'auth/user-not-found':         'لا يوجد حساب مرتبط بهذا البريد الإلكتروني.',
-          'auth/invalid-email':          'صيغة البريد الإلكتروني غير صحيحة.',
-          'auth/too-many-requests':      'تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.',
-          'auth/network-request-failed': 'فشل الاتصال بالشبكة. تحقق من اتصالك.',
-        };
-        fgSetErr(fgEmail, fgEmailErr, errMap[err.code] || 'حدث خطأ أثناء الإرسال. حاول مجددًا.');
-      }
-    });
-
-    // Live validation on blur
-    fgEmail?.addEventListener('blur', () => {
-      const val = String(fgEmail.value || '').trim();
-      if (!val) return; // don't nag on empty blur
-      if (!isValidEmail(val)) {
-        fgSetErr(fgEmail, fgEmailErr, 'الرجاء إدخال بريد إلكتروني صحيح.');
-      } else {
-        fgSetErr(fgEmail, fgEmailErr, '');
+        // Only surface network errors — never leak whether an email exists
+        if (err.code === 'auth/network-request-failed') {
+          fgSetErr(fgEmail, fgEmailErr, 'فشل الاتصال بالشبكة. تحقق من اتصالك.');
+        } else {
+          fgSetErr(fgEmail, fgEmailErr, 'حدث خطأ مؤقت. حاول مجددًا.');
+        }
       }
     });
   }
