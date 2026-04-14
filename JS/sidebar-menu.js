@@ -25,7 +25,7 @@ const ROLE_MENUS = {
 
   admin: [
     {
-      label : 'طلبات التسجيل',
+      label : 'طلبات تسجيل المتطوعين',
       href  : 'AdminControlPanel.html',
       icon  : 'fas fa-users',
       key   : 'AdminControlPanel',
@@ -45,7 +45,7 @@ const ROLE_MENUS = {
       icon  : 'fas fa-gauge-high',
       key   : 'Dashboard',
     },
-    { type: 'divider' },
+  
     {
       label : 'البلاغات',
       href  : 'Reports.html',
