@@ -319,7 +319,7 @@
     </button>
 
     <nav class="header-nav" aria-label="تنقل سريع">
-      <div class="user-chip" title="حسابي">
+    
                 <div class="user-chip" title="حسابي" onclick="window.location.href='Profile1.html'" style="cursor:pointer;">
 
         <span class="avatar" id="userInitial"></span>
@@ -632,16 +632,37 @@
   import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) return;
+  if (!user) return;
 
-    const username = user.email ? user.email.split('@')[0] : 'admin';
-    const initial  = username.charAt(0).toUpperCase();
+  const nameEl = document.getElementById('userName');
+  const initialEl = document.getElementById('userInitial');
 
-    const nameEl    = document.getElementById('userName');
-    const initialEl = document.getElementById('userInitial');
+  try {
+    const snap = await getDoc(doc(db, "User", user.uid));
 
-    if (nameEl)    nameEl.textContent    = username;
+    let fullName = '';
+    let initial = '?';
+
+    if (snap.exists()) {
+      const data = snap.data();
+      const firstName = data.FirstName || '';
+      const lastName  = data.LastName || '';
+
+      fullName = `${firstName} ${lastName}`.trim();
+    }
+
+    if (!fullName) {
+      fullName = user.email ? user.email.split('@')[0] : 'admin';
+    }
+
+    initial = fullName.charAt(0).toUpperCase();
+
+    if (nameEl) nameEl.textContent = fullName;
     if (initialEl) initialEl.textContent = initial;
+
+  } catch (e) {
+    console.error(e);
+  }
 });
 </script>
 </body>

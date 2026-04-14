@@ -1450,7 +1450,7 @@ body {
       <i class="fas fa-bars"></i>
     </button>
     <nav class="header-nav" aria-label="تنقل سريع">
-      <div class="user-chip" title="حسابي">
+      
                 <div class="user-chip" title="حسابي" onclick="window.location.href='Profile1.html'" style="cursor:pointer;">
 
         <span class="avatar" id="userInitial"></span>
@@ -2217,6 +2217,19 @@ window.executeSaveEdit = async function() {
     document.getElementById('bioNameDisplay').textContent  = newName;
     document.getElementById('bioPhoneDisplay').textContent = newPhone;
     document.getElementById('bioCityDisplay').textContent  = newCity || '—';
+
+
+    // Update header immediately
+var headerNameEl = document.getElementById('userName');
+var headerInitialEl = document.getElementById('userInitial');
+
+if (headerNameEl) {
+  headerNameEl.textContent = newName || '—';
+}
+
+if (headerInitialEl) {
+  headerInitialEl.textContent = firstName ? firstName.charAt(0) : '?';
+}
 
     confirmOverlay.classList.remove('on');
     _exitEditMode();
