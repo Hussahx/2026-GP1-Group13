@@ -837,6 +837,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 16px;
+  min-height: 240px;
 }
 
 .profile-page .op {
@@ -1445,8 +1446,78 @@ body {
     <h1>راصد</h1>
     <p>عين الصحراء — الملف الشخصي</p>
   </div>
-</header>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+    <nav class="header-nav" aria-label="تنقل سريع">
+      <div class="user-chip" title="حسابي">
+                <div class="user-chip" title="حسابي" onclick="window.location.href='Profile1.html'" style="cursor:pointer;">
 
+        <span class="avatar" id="userInitial"></span>
+        <span class="name" id="userName"></span>
+        
+      </div>
+    </nav>
+</header>
+<div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+  <aside class="app-sidebar" id="appSidebar" aria-label="القائمة الجانبية" aria-hidden="true">
+    <div class="sidebar-close-row">
+      <button class="sidebar-close" id="sidebarClose" aria-label="إغلاق القائمة">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">القائمة الرئيسية</span>
+
+      <a href="index.html" class="sidebar-link">
+      <i class="fas fa-house"></i>
+      <span>الصفحة الرئيسية</span>
+      </a>
+
+      <a href="AdminControlPanel.html" class="sidebar-link active">
+      <i class="fas fa-users"></i>
+       <span>طلبات التسجيل</span>
+       </a>
+
+      <a href="History.html" class="sidebar-link">
+        <i class="fas fa-clock-rotate-left"></i>
+        <span>السجل</span>
+      </a>
+
+      <div class="sidebar-divider"></div>
+
+     
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
+        <i class="fas fa-right-from-bracket"></i>
+        <span>تسجيل الخروج</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+    <div class="logout-dialog">
+      <div class="logout-dialog-icon">
+        <i class="fas fa-right-from-bracket"></i>
+      </div>
+      <h3 class="logout-dialog-title" id="logoutTitle">تسجيل الخروج</h3>
+      <p class="logout-dialog-msg">هل أنت متأكد من تسجيل الخروج؟</p>
+      <div class="logout-dialog-actions">
+        <button class="logout-cancel-btn" id="logoutCancel">
+          <i class="fas fa-xmark"></i>
+          إلغاء
+        </button>
+        <button class="logout-confirm-btn" id="logoutConfirm">
+          <i class="fas fa-right-from-bracket"></i>
+          تسجيل الخروج
+        </button>
+      </div>
+    </div>
+  </div>
 <main class="page-body profile-page" style="padding-top:72px;">
 
   <!-- HERO -->
@@ -1649,7 +1720,25 @@ body {
     </div>
   </div>
 </div>
-
+<div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+    <div class="logout-dialog">
+      <div class="logout-dialog-icon">
+        <i class="fas fa-right-from-bracket"></i>
+      </div>
+      <h3 class="logout-dialog-title" id="logoutTitle">تسجيل الخروج</h3>
+      <p class="logout-dialog-msg">هل أنت متأكد من تسجيل الخروج؟</p>
+      <div class="logout-dialog-actions">
+        <button class="logout-cancel-btn" id="logoutCancel">
+          <i class="fas fa-xmark"></i>
+          إلغاء
+        </button>
+        <button class="logout-confirm-btn" id="logoutConfirm">
+          <i class="fas fa-right-from-bracket"></i>
+          تسجيل الخروج
+        </button>
+      </div>
+    </div>
+  </div>
 <footer>
   <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
@@ -1681,7 +1770,129 @@ body {
 
 <!-- Firebase SDK -->
 <script type="module">
-  
+ 
+  (function () {
+      var IS_HOMEPAGE = (function () {
+        var p = window.location.pathname;
+        return p === '/' || p.endsWith('index.html') || p.endsWith('index.htm') || p === '';
+      })();
+
+      var toggle     = document.getElementById('sidebarToggle');
+      var sidebar    = document.getElementById('appSidebar');
+      var overlay    = document.getElementById('sidebarOverlay');
+      var closeBtn   = document.getElementById('sidebarClose');
+      var pageHeader = document.getElementById('pageHeader');
+      var logoutBtn  = document.getElementById('sidebarLogoutBtn');
+      var logoutOvr  = document.getElementById('logoutOverlay');
+      var logoutCanc = document.getElementById('logoutCancel');
+      var logoutConf = document.getElementById('logoutConfirm');
+
+      function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden', 'false');
+        sidebar.setAttribute('aria-hidden', 'false');
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.setAttribute('aria-label', 'إغلاق القائمة');
+        document.body.style.overflow = 'hidden';
+        if (!IS_HOMEPAGE && pageHeader) {
+          pageHeader.classList.add('header-hidden');
+        }
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+        overlay.setAttribute('aria-hidden', 'true');
+        sidebar.setAttribute('aria-hidden', 'true');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'فتح القائمة');
+        document.body.style.overflow = '';
+        if (pageHeader) {
+          pageHeader.classList.remove('header-hidden');
+        }
+      }
+
+      function openLogout() {
+        logoutOvr.classList.add('on');
+        document.body.style.overflow = 'hidden';
+        logoutConf.focus();
+      }
+
+      function closeLogout() {
+        logoutOvr.classList.remove('on');
+        document.body.style.overflow = '';
+      }
+
+      if (toggle && sidebar && overlay && closeBtn) {
+        toggle.addEventListener('click', function () {
+          sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+        });
+
+        closeBtn.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+
+        sidebar.querySelectorAll('.sidebar-link').forEach(function (link) {
+          link.addEventListener('click', function () {
+            sidebar.querySelectorAll('.sidebar-link').forEach(function (l) {
+              l.classList.remove('active');
+            });
+            link.classList.add('active');
+            if (window.innerWidth < 768) closeSidebar();
+          });
+        });
+      }
+
+      if (logoutBtn && logoutOvr && logoutCanc && logoutConf) {
+        logoutBtn.addEventListener('click', openLogout);
+        logoutCanc.addEventListener('click', closeLogout);
+
+        logoutOvr.addEventListener('click', function (e) {
+          if (e.target === logoutOvr) closeLogout();
+        });
+
+       logoutConf.addEventListener('click', function () {
+
+  // سبينر + تعطيل الزر
+  logoutConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الخروج…';
+  logoutConf.disabled = true;
+
+  // حذف السيشن (الأفضل تحدد المفتاح بدل clear)
+  sessionStorage.clear();
+  localStorage.removeItem("user"); // 👈 أفضل من clear()
+
+  // تحويل
+  setTimeout(function () {
+    window.location.href = 'index.html';
+  }, 900);
+
+});
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          if (logoutOvr && logoutOvr.classList.contains('on')) {
+            closeLogout();
+            return;
+          }
+          if (sidebar && sidebar.classList.contains('open')) {
+            closeSidebar();
+            if (toggle) toggle.focus();
+          }
+        }
+      });
+
+      var resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+          if (window.innerWidth >= 1024 && sidebar && sidebar.classList.contains('open')) {
+            closeSidebar();
+          }
+        }, 150);
+      });
+    })();
+
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc }
@@ -1754,6 +1965,7 @@ function bindProfileToDOM(data, user) {
     joinEl.textContent = joinStr || '—';
   }
 }
+
 
 /* ── showToast مع نوع (success/error) ── */
 window.showToast = function(msg, type) {
@@ -2206,15 +2418,14 @@ window.renderOps = function renderOps(filter){
     return true;
   });
 
-  if(!filtered.length){
-    el.innerHTML =
-      '<div style="text-align:center;padding:48px 20px;color:var(--ink-muted);">'+
-        '<div style="font-size:40px;margin-bottom:14px;opacity:.35;">🏜️</div>'+
-        '<div style="font-size:14px;font-weight:700;color:var(--ink-mid);margin-bottom:6px;">لا توجد عمليات بعد</div>'+
-        '<div style="font-size:12px;">لم تشارك في أي عملية بحث وإنقاذ حتى الآن</div>'+
-      '</div>';
-    return;
-  }
+if(!filtered.length){
+  el.innerHTML =
+    '<div style="grid-column:1/-1;width:100%;text-align:center;padding:64px 20px;color:var(--ink-muted);">'+
+      '<div style="font-size:14px;font-weight:700;color:var(--ink-mid);margin-bottom:6px;">لا توجد عمليات بعد</div>'+
+      '<div style="font-size:12px;color:var(--ink-muted);">لم تشارك في أي عملية بحث وإنقاذ حتى الآن</div>'+
+    '</div>';
+  return;
+}
 
   filtered.forEach(function(r){
     var opCls = r.closed ? 'op closed' : 'op open';
@@ -2528,6 +2739,32 @@ window.addEventListener('scroll', function(){
 
   lastScrollY = currentY;
 });
+
 </script>
+<script type="module">
+  import { auth, db } from '/JS/firebase.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+
+    const snap = await getDoc(doc(db, "User", user.uid));
+    if (!snap.exists()) return;
+
+    const { FirstName, LastName } = snap.data();
+    const fullName = `${FirstName} ${LastName}`;
+    const initial  = FirstName ? FirstName.charAt(0) : '?';
+
+    // تحديث الهيدر
+    const nameEl    = document.getElementById('userName');
+    const initialEl = document.getElementById('userInitial');
+
+    if (nameEl)    nameEl.textContent    = fullName;
+    if (initialEl) initialEl.textContent = initial;
+  });
+</script>
+
+
 </body>
 </html>
