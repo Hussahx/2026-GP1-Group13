@@ -724,6 +724,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const descVal = String(rDesc?.value || '').trim();
+    const ageVal     = String(document.getElementById('rAge')?.value    || '').trim();
+const healthVal  = String(document.getElementById('rHealth')?.value || '').trim();
+const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
     if (!descVal || descVal.length < 10) {
       ok = false;
       setFieldError(rDesc, document.getElementById('rDescErr'), 'الرجاء إدخال وصف البلاغ (10 أحرف على الأقل).');
@@ -870,62 +873,66 @@ if (!rFile || !rFile.files.length) {
 
       if (submitBtn) submitBtn.disabled = true;
 
-      try {
-        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-        const { getFirestore, collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      if (submitBtn) submitBtn.disabled = true;
 
-        const firebaseConfig = {
-          apiKey:            "AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0",
-          authDomain:        "rasid-1bb06.firebaseapp.com",
-          projectId:         "rasid-1bb06",
-          storageBucket:     "rasid-1bb06.firebasestorage.app",
-          messagingSenderId: "668525115587",
-          appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
-          measurementId:     "G-MZ3KB7WBK4"
-        };
+try {
+  const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+  const { getFirestore, collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
 
-        const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-        const db  = getFirestore(app);
+  const firebaseConfig = {
+    apiKey:            "AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0",
+    authDomain:        "rasid-1bb06.firebaseapp.com",
+    projectId:         "rasid-1bb06",
+    storageBucket:     "rasid-1bb06.firebasestorage.app",
+    messagingSenderId: "668525115587",
+    appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
+    measurementId:     "G-MZ3KB7WBK4"
+  };
 
-        const reportId = 'RASID-' + Math.floor(10000 + Math.random() * 90000);
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
 
-        await addDoc(collection(db, 'Report'), {
-          reportId,
-          missingPersonName: nameVal,
-          age:               ageVal,
-          healthStatus:      healthVal,
-          vehicle:           vehicleVal,
-          location:          locVal,
-          description:       descVal,
-          contact:           contactVal,
-          reportTime:        new Date(),
-          status:"new"
-        });
-         // ── EmailJS: send confirmation email (only if contact is an email) ──
-      const isEmailContact = isValidEmail(contactVal);
-      if (isEmailContact) {
-        try {
-          emailjs.init('jl8cOTzNL4mqFGXJW');
-          await emailjs.send(
-            'service_ilejgsc',
-            'template_tov9o4t',
-            {
-              report_id: reportId,
-              to_email:  contactVal
-            }
-          );
-          console.log('EmailJS sent — Report ID:', reportId);
-        } catch (emailErr) {
-          // Silent fail — report is already saved in Firebase
-          console.error('EmailJS error:', emailErr);
+  // ── reportId generation ──────────────────────────────────
+  const reportId = 'RASID-' + Math.floor(10000 + Math.random() * 90000);
+
+  // ── addDoc to Firestore ──────────────────────────────────
+  await addDoc(collection(db, 'Report'), {
+    reportId,
+    missingPersonName: nameVal,
+    age:               ageVal,
+    healthStatus:      healthVal,
+    vehicle:           vehicleVal,
+    location:          locVal,
+    description:       descVal,
+    contact:           contactVal,
+    reportTime:        new Date(),
+    status:            'new'
+  });
+
+  // ── EmailJS (only if contact is email) ───────────────────
+  const isEmailContact = isValidEmail(contactVal);
+  if (isEmailContact) {
+    try {
+      emailjs.init('jl8cOTzNL4mqFGXJW');
+      await emailjs.send(
+        'service_ilejgsc',
+        'template_tov9o4t',
+        {
+          report_id: reportId,
+          to_email:  contactVal
         }
-      }
+      );
+      console.log('EmailJS sent — Report ID:', reportId);
+    } catch (emailErr) {
+      console.error('EmailJS error:', emailErr);
+    }
+  }
 
-      } catch (err) {
-        console.error('Firebase save error:', err);
-        if (submitBtn) submitBtn.disabled = false;
-        return;
-      }
+} catch (err) {
+  console.error('Firebase save error:', err);
+  if (submitBtn) submitBtn.disabled = false;
+  return;
+}
 
 
       // Clear form + close modal
