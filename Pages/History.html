@@ -46,25 +46,7 @@
       </button>
     </div>
 
-    <nav class="sidebar-nav">
-      <span class="sidebar-section-label">القائمة الرئيسية</span>
-
-      
-
-      <a href="AdminControlPanel.html" class="sidebar-link active">
-      <i class="fas fa-users"></i>
-       <span>طلبات التسجيل</span>
-       </a>
-
-      <a href="History.html" class="sidebar-link">
-        <i class="fas fa-clock-rotate-left"></i>
-        <span>السجل</span>
-      </a>
-
-      <div class="sidebar-divider"></div>
-
-     
-    </nav>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
 
     <div class="sidebar-footer">
       <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
@@ -1015,6 +997,7 @@
   import { auth, db } from '/JS/firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { renderMenu } from '/JS/sidebar-menu.js';
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
@@ -1022,16 +1005,18 @@
     const snap = await getDoc(doc(db, "User", user.uid));
     if (!snap.exists()) return;
 
-    const { FirstName, LastName } = snap.data();
+    const { FirstName, LastName, role } = snap.data();
     const fullName = `${FirstName} ${LastName}`;
     const initial  = FirstName ? FirstName.charAt(0) : '?';
 
-    // تحديث الهيدر
     const nameEl    = document.getElementById('userName');
     const initialEl = document.getElementById('userInitial');
 
     if (nameEl)    nameEl.textContent    = fullName;
     if (initialEl) initialEl.textContent = initial;
+
+    // رندر المنيو بناءً على الدور
+    renderMenu(role ?? 'volunteer');
   });
 </script>
 
