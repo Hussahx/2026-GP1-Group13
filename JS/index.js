@@ -703,25 +703,35 @@ document.addEventListener('DOMContentLoaded', () => {
       setFieldError(rName, document.getElementById('rNameErr'), '');
     }
 
-    const contactVal = String(rContact?.value || '').trim();
-    if (!contactVal || !(isValidEmail(contactVal) || isValidSaudiPhone(contactVal))) {
-      ok = false;
-      setFieldError(
-        rContact,
-        document.getElementById('rContactErr'),
-        'الرجاء إدخال بريد إلكتروني صحيح أو رقم سعودي بصيغة 05xxxxxxxx.'
-      );
-    } else {
-      setFieldError(rContact, document.getElementById('rContactErr'), '');
-    }
-
+const contactVal = String(rContact?.value || '').trim();
+if (!contactVal || !isValidEmail(contactVal)) {
+  ok = false;
+  setFieldError(
+    rContact,
+    document.getElementById('rContactErr'),
+    'الرجاء إدخال بريد إلكتروني صحيح (مثال: name@email.com).'
+  );
+} else {
+  setFieldError(rContact, document.getElementById('rContactErr'), '');
+}
     const locVal = String(rLocation?.value || '').trim();
-    if (!locVal) {
-      ok = false;
-      setFieldError(rLocation, document.getElementById('rLocationErr'), 'الرجاء إدخال الموقع.');
-    } else {
-      setFieldError(rLocation, document.getElementById('rLocationErr'), '');
-    }
+    if (!locVal || locVal.length < 10) {
+  setFieldError(rLocation, document.getElementById('rLocationErr'), 'الرجاء إدخال الموقع بشكل واضح (10 أحرف على الأقل).');
+  ok = false;
+} else {
+  setFieldError(rLocation, document.getElementById('rLocationErr'), '');
+}
+
+if (!healthVal || healthVal.length < 4) {
+  setFieldError(
+    document.getElementById('rHealth'),
+    document.getElementById('rHealthErr'),
+    'الرجاء وصف الحالة الصحية (4 أحرف على الأقل).'
+  );
+  ok = false;
+} else {
+  setFieldError(document.getElementById('rHealth'), document.getElementById('rHealthErr'), '');
+}
 
     const descVal = String(rDesc?.value || '').trim();
     const ageVal     = String(document.getElementById('rAge')?.value    || '').trim();
@@ -820,13 +830,12 @@ if (!rFile || !rFile.files.length) {
   }
 
   if (reportForm) {
-
     reportForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      console.log("MODAL SUBMIT WORKING");
 
       const submitBtn = document.getElementById('submitReportBtn');
 
+      // ── قراءة قيم الحقول ─────────────────────────────────
       const nameVal    = String(rName?.value    || '').trim();
       const contactVal = String(rContact?.value || '').trim();
       const locVal     = String(rLocation?.value || '').trim();
@@ -837,114 +846,134 @@ if (!rFile || !rFile.files.length) {
 
       let ok = true;
 
+      // ── التحقق من الاسم ───────────────────────────────────
       if (!nameVal || nameVal.length < 2) {
-        setFieldError(rName, document.getElementById('rNameErr'), 'الرجاء إدخال الاسم (حرفين على الأقل).');
-        ok = false;
-      } else {
-        setFieldError(rName, document.getElementById('rNameErr'), '');
-      }
+        setFieldError(rName, document.getElementById('rNameErr'),
+          'الرجاء إدخال اسم المفقود (حرفين على الأقل).'); ok = false;
+      } else { setFieldError(rName, document.getElementById('rNameErr'), ''); }
 
-      if (!contactVal || !(isValidEmail(contactVal) || isValidSaudiPhone(contactVal))) {
-        setFieldError(rContact, document.getElementById('rContactErr'), 'الرجاء إدخال بريد إلكتروني صحيح أو رقم سعودي بصيغة 05xxxxxxxx.');
-        ok = false;
-      } else {
-        setFieldError(rContact, document.getElementById('rContactErr'), '');
-      }
+      // ── التحقق من البريد الإلكتروني فقط ─────────────────
+      if (!contactVal || !isValidEmail(contactVal)) {
+        setFieldError(rContact, document.getElementById('rContactErr'),
+          'الرجاء إدخال بريد إلكتروني صحيح (مثال: name@email.com).'); ok = false;
+      } else { setFieldError(rContact, document.getElementById('rContactErr'), ''); }
 
-      if (!locVal) {
-        setFieldError(rLocation, document.getElementById('rLocationErr'), 'الرجاء إدخال الموقع.');
-        ok = false;
-      } else {
-        setFieldError(rLocation, document.getElementById('rLocationErr'), '');
-      }
+      // ── التحقق من العمر ───────────────────────────────────
+      const ageNum = parseInt(ageVal, 10);
+      if (!ageVal || isNaN(ageNum) || ageNum < 1 || ageNum > 120) {
+        setFieldError(
+          document.getElementById('rAge'),
+          document.getElementById('rAgeErr'),
+          'الرجاء إدخال عمر صحيح (من 1 إلى 120).'
+        ); ok = false;
+      } else { setFieldError(document.getElementById('rAge'), document.getElementById('rAgeErr'), ''); }
 
+      // ── التحقق من الموقع ──────────────────────────────────
+      if (!locVal || locVal.length < 10) {
+        setFieldError(rLocation, document.getElementById('rLocationErr'),
+          'الرجاء إدخال الموقع بشكل واضح (10 أحرف على الأقل).'); ok = false;
+      } else { setFieldError(rLocation, document.getElementById('rLocationErr'), ''); }
+
+      // ── التحقق من الحالة الصحية ───────────────────────────
+      if (!healthVal || healthVal.length < 4) {
+        setFieldError(
+          document.getElementById('rHealth'),
+          document.getElementById('rHealthErr'),
+          'الرجاء وصف الحالة الصحية (4 أحرف على الأقل).'
+        ); ok = false;
+      } else { setFieldError(document.getElementById('rHealth'), document.getElementById('rHealthErr'), ''); }
+
+      // ── التحقق من الوصف ───────────────────────────────────
       if (!descVal || descVal.length < 10) {
-        setFieldError(rDesc, document.getElementById('rDescErr'), 'الرجاء إدخال وصف البلاغ (10 أحرف على الأقل).');
+        setFieldError(rDesc, document.getElementById('rDescErr'),
+          'الرجاء إدخال وصف البلاغ (10 أحرف على الأقل).'); ok = false;
+      } else { setFieldError(rDesc, document.getElementById('rDescErr'), ''); }
+
+      // ── التحقق من الملف ───────────────────────────────────
+      if (!rFile || !rFile.files.length) {
         ok = false;
+        if (rFileErr) rFileErr.textContent = 'الرجاء إرفاق صورة أو ملف المحضر.';
       } else {
-        setFieldError(rDesc, document.getElementById('rDescErr'), '');
+        const f = rFile.files[0];
+        if (f.size > 5 * 1024 * 1024) {
+          ok = false;
+          if (rFileErr) rFileErr.textContent = 'حجم الملف يتجاوز الحد المسموح (5MB).';
+        } else {
+          if (rFileErr) rFileErr.textContent = '';
+        }
       }
 
+      // ── إذا كان هناك خطأ، focus أول حقل فيه مشكلة ────────
       if (!ok) {
-        const firstInvalid = reportForm.querySelector('.is-invalid');
+        const firstInvalid = reportForm.querySelector('.is-invalid') ||
+                             reportForm.querySelector('[aria-invalid="true"]');
         if (firstInvalid) firstInvalid.focus();
         return;
       }
 
+      // ── تعطيل الزر لمنع الإرسال المتكرر ─────────────────
       if (submitBtn) submitBtn.disabled = true;
 
-      if (submitBtn) submitBtn.disabled = true;
+      try {
+        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getFirestore, collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
 
-try {
-  const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-  const { getFirestore, collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const firebaseConfig = {
+          apiKey:            "AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0",
+          authDomain:        "rasid-1bb06.firebaseapp.com",
+          projectId:         "rasid-1bb06",
+          storageBucket:     "rasid-1bb06.firebasestorage.app",
+          messagingSenderId: "668525115587",
+          appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
+          measurementId:     "G-MZ3KB7WBK4"
+        };
 
-  const firebaseConfig = {
-    apiKey:            "AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0",
-    authDomain:        "rasid-1bb06.firebaseapp.com",
-    projectId:         "rasid-1bb06",
-    storageBucket:     "rasid-1bb06.firebasestorage.app",
-    messagingSenderId: "668525115587",
-    appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
-    measurementId:     "G-MZ3KB7WBK4"
-  };
+        const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+        const db  = getFirestore(app);
+        const reportId = 'RASID-' + Math.floor(10000 + Math.random() * 90000);
 
-  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
+        await addDoc(collection(db, 'Report'), {
+          reportId,
+          missingPersonName: nameVal,
+          age:               ageVal,
+          healthStatus:      healthVal,
+          vehicle:           vehicleVal,
+          location:          locVal,
+          description:       descVal,
+          contact:           contactVal,
+          reportTime:        new Date(),
+          status:            'new'
+        });
 
-  // ── reportId generation ──────────────────────────────────
-  const reportId = 'RASID-' + Math.floor(10000 + Math.random() * 90000);
-
-  // ── addDoc to Firestore ──────────────────────────────────
-  await addDoc(collection(db, 'Report'), {
-    reportId,
-    missingPersonName: nameVal,
-    age:               ageVal,
-    healthStatus:      healthVal,
-    vehicle:           vehicleVal,
-    location:          locVal,
-    description:       descVal,
-    contact:           contactVal,
-    reportTime:        new Date(),
-    status:            'new'
-  });
-
-  // ── EmailJS (only if contact is email) ───────────────────
-  const isEmailContact = isValidEmail(contactVal);
-  if (isEmailContact) {
-    try {
-      emailjs.init('jl8cOTzNL4mqFGXJW');
-      await emailjs.send(
-        'service_ilejgsc',
-        'template_tov9o4t',
-        {
-          report_id: reportId,
-          to_email:  contactVal
+        // ── إرسال EmailJS بعد نجاح Firebase ─────────────────
+        if (isValidEmail(contactVal)) {
+          try {
+            emailjs.init('jl8cOTzNL4mqFGXJW');
+            await emailjs.send('service_ilejgsc', 'template_tov9o4t', {
+              report_id: reportId,
+              to_email:  contactVal
+            });
+            console.log('EmailJS sent — Report ID:', reportId);
+          } catch (emailErr) {
+            console.error('EmailJS error:', emailErr);
+          }
         }
-      );
-      console.log('EmailJS sent — Report ID:', reportId);
-    } catch (emailErr) {
-      console.error('EmailJS error:', emailErr);
-    }
-  }
 
-} catch (err) {
-  console.error('Firebase save error:', err);
-  if (submitBtn) submitBtn.disabled = false;
-  return;
-}
+      } catch (err) {
+        console.error('Firebase save error:', err);
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+      }
 
-
-      // Clear form + close modal
+      // ── تنظيف الفورم + إغلاق المودال ─────────────────────
       reportForm.reset();
       if (rFile)     rFile.value = '';
       if (rFileName) rFileName.textContent = 'اضغط لاختيار ملف (PDF، JPG، PNG)';
       resetReportUI();
       closeModal(reportModal);
-
       if (submitBtn) submitBtn.disabled = false;
 
-      // Show success banner in main page AFTER modal closes
+      // ── بانر النجاح ───────────────────────────────────────
       setTimeout(() => {
         const banner = document.getElementById('reportSuccessBanner');
         if (!banner) return;
@@ -957,7 +986,7 @@ try {
         setTimeout(() => {
           banner.style.opacity = '0';
           setTimeout(() => { banner.style.display = 'none'; }, 400);
-        }, 4000);
+        }, 5000);
       }, 300);
 
     });
