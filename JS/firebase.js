@@ -46,7 +46,7 @@ export async function loginAndRedirect(email, password) {
 
     if (!userSnap.exists()) {
       await signOut(auth);
-      return { success: false, error: "لم يتم العثور على بيانات المستخدم. تواصل مع الإدارة." };
+      return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
     }
 
     const { role, accountStatus } = userSnap.data();
@@ -62,7 +62,7 @@ export async function loginAndRedirect(email, password) {
           window.location.href = "../Pages/Control-panel.html";
         } else {
           await signOut(auth);
-          return { success: false, error: "حسابك غير مفعّل. تواصل مع الإدارة." };
+          return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
         }
 
         window.location.href = "/Pages/Control-panel.html";
@@ -70,7 +70,7 @@ export async function loginAndRedirect(email, password) {
         break;
       default:
         await signOut(auth);
-        return { success: false, error: "صلاحياتك غير كافية للوصول إلى النظام." };
+        return { success: false, error: " لبريد الإلكتروني أو كلمة المرور غير صحيحة." };
     }
 
     return { success: true };
@@ -130,11 +130,11 @@ function firebaseErrorToArabic(code) {
   const map = {
     "auth/invalid-email":          "البريد الإلكتروني غير صالح.",
     "auth/user-not-found":         "لا يوجد حساب بهذا البريد الإلكتروني.",
-    "auth/wrong-password":         "كلمة المرور غير صحيحة.",
+    "auth/wrong-password":         "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "auth/invalid-credential":     "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "auth/too-many-requests":      "تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.",
     "auth/network-request-failed": "خطأ في الاتصال بالشبكة. تحقق من اتصالك بالإنترنت.",
-    "auth/user-disabled":          "هذا الحساب موقوف. تواصل مع الإدارة.",
+    "auth/user-disabled":          "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   };
   return map[code] || "حدث خطأ غير متوقع. حاول مجددًا.";
 }
