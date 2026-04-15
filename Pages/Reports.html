@@ -76,13 +76,58 @@
     .dtag{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--red);font-weight:600;background:#fef2f2;padding:2px 7px;border-radius:5px;border:1px solid #ffd4d0;}
     .cact{display:flex;gap:7px;padding:9px 16px 14px;}
     body.reports-page .btn{flex:1;padding:10px 4px;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;text-align:center;border:1.5px solid;min-height:44px;touch-action:manipulation;background:transparent;}
+    /* زر أساسي (بني) */
+body.reports-page .bto,
+body.reports-page .bjn {
+  background: #9a7440;
+  border-color: #9a7440;
+  color: #fff;
+}
+
+/* زر ثانوي (أوف وايت) */
+body.reports-page .bvw,
+body.reports-page .bph,
+body.reports-page .bov {
+  background: #f5efe6;
+  border-color: #e0d5c3;
+  color: #7a5828;
+}
+
+/* تأثير hover */
+body.reports-page .bto:hover,
+body.reports-page .bjn:hover {
+  background: #7a5828;
+}
+
+body.reports-page .bvw:hover,
+body.reports-page .bph:hover,
+body.reports-page .bov:hover {
+  background: #ece3d3;
+}
     body.reports-page .btn:active{opacity:.78;}
-    body.reports-page .bto{background:linear-gradient(135deg,#e07830,#c05820);border-color:transparent;color:#fff;}
-    body.reports-page .bjn{background:linear-gradient(135deg,#2d9e52,#1a7038);border-color:transparent;color:#fff;}
-    body.reports-page .bvw{background:transparent;border-color:var(--bdr);color:var(--t700);}
-    body.reports-page .bph{background:transparent;border-color:#a8d8b0;color:var(--grn);font-size:11.5px;}
-    body.reports-page .bov{background:transparent;border-color:#b8c8f0;color:#2840a0;}
-    .urg{position:absolute;top:10px;left:10px;padding:2px 7px;border-radius:5px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+    body.reports-page .bto,
+body.reports-page .bjn{
+  background:#9a7440;
+  border-color:#9a7440;
+  color:#fff;
+}
+
+body.reports-page .bvw,
+body.reports-page .bph,
+body.reports-page .bov{
+  background:#f5efe6;
+  border-color:#e0d5c3;
+  color:#7a5828;
+}
+
+body.reports-page .bph{
+  font-size:11.5px;
+}
+body.reports-page .bov{
+  background:#f5efe6;
+  border-color:#e0d5c3;
+  color:#7a5828;
+}    .urg{position:absolute;top:10px;left:10px;padding:2px 7px;border-radius:5px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
     .uh{background:#fff0ee;color:#c0392b;border:1px solid #ffb8b0;}.um{background:#fff8ee;color:#c07020;border:1px solid #ffd898;}
     .mhandle{width:36px;height:4px;background:var(--s300);border-radius:2px;margin:10px auto 0;}
     .mhead{padding:14px 18px 13px;border-bottom:1px solid var(--s100);display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
@@ -402,16 +447,17 @@
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getAuth, onAuthStateChanged }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import {
-      getFirestore,
-      collection,
-      onSnapshot,
-      doc,
-      updateDoc,
-      arrayUnion,
-      orderBy,
-      query
-    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+   import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  doc,
+  updateDoc,
+  arrayUnion,
+  orderBy,
+  query,
+  getDoc
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     // ── Firebase init (re-use existing app if already initialised) ──
     const firebaseConfig = {
@@ -519,18 +565,23 @@
         MR.length = 0;
 
         snap.forEach((docSnap) => {
-          const r = docToReport(docSnap.data(), docSnap.id, currentUid);
+  const r = docToReport(docSnap.data(), docSnap.id, currentUid);
 
-          if (r.status === 'active') {
-            AR.push(r);
-          } else if (r.status === 'org' || r.userInTeam) {
-            // Goes to MR if user is in team OR status is 'org'
-            MR.push(r);
-          } else {
-            NR.push(r);
-          }
-        });
+  // الجديدة فقط
+  if (r.status !== 'active' && r.status !== 'org' && !r.userInTeam) {
+    NR.push(r);
+  }
 
+  // الجاري العمل عليها
+  if (r.status === 'active') {
+    AR.push(r);
+  }
+
+  // المنظم لها / المنضم لها
+  if (r.status === 'org' || r.userInTeam) {
+    MR.push(r);
+  }
+});
         render(); // re-render UI whenever Firestore changes
       }, (err) => {
         console.error('onSnapshot error:', err);
@@ -555,18 +606,36 @@
 
     // ── Firestore action: takeover ────────────────────────────────────
     // Called from classic script via window._fbTakeOver(docId, uid)
-    window._fbTakeOver = async function(docId, uid) {
-      if (!docId || !uid) return;
-      try {
-        await updateDoc(doc(db, 'Report', docId), {
-          status:       'active',
-          createdBy:    uid,
-          teamMembers:  arrayUnion(uid)
-        });
-      } catch (err) {
-        console.error('_fbTakeOver error:', err);
-      }
-    };
+  window._fbTakeOver = async function(docId, uid) {
+  if (!docId || !uid) return;
+
+  try {
+    const userSnap = await getDoc(doc(db, 'User', uid));
+
+    let leaderName = '';
+    let leaderPhone = '';
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      const firstName = userData.FirstName || '';
+      const lastName = userData.LastName || '';
+
+      leaderName = `${firstName} ${lastName}`.trim();
+      leaderPhone = userData.Phone || '';
+    }
+
+    await updateDoc(doc(db, 'Report', docId), {
+      status: 'active',
+      createdBy: uid,
+      teamMembers: arrayUnion(uid),
+      leader: leaderName,
+      leaderPhone: leaderPhone
+    });
+
+  } catch (err) {
+    console.error('_fbTakeOver error:', err);
+  }
+};
 
     // ── Firestore action: join ────────────────────────────────────────
     // Called from classic script via window._fbJoin(docId, uid)
@@ -769,18 +838,40 @@
     }
 
     function render(){
-      var sN=TAB==='all'||TAB==='new';
-      var sA=TAB==='all'||TAB==='active';
-      var sO=TAB==='all'||TAB==='org';
-      document.getElementById('sNew').style.display=sN?'':'none';
-      document.getElementById('sAct').style.display=sA?'':'none';
-      document.getElementById('sOrg').style.display=sO?'':'none';
-      var gNew=document.getElementById('gNew');
-      gNew.className=(TAB==='all')?'scroll-row':'grid';
-      if(sN) gNew.innerHTML = buildCards(applyFilter(applySort(NR)),'new');
-      if(sA) document.getElementById('gAct').innerHTML = buildCards(applyFilter(applySort(AR)),'active');
-      if(sO) document.getElementById('gOrg').innerHTML = buildCards(applyFilter(applySort(MR)),'org');
-    }
+  var sN = TAB==='all' || TAB==='new';
+  var sA = TAB==='all' || TAB==='active';
+  var sO = TAB==='all' || TAB==='org';
+
+  document.getElementById('sNew').style.display = sN ? '' : 'none';
+  document.getElementById('sAct').style.display = sA ? '' : 'none';
+  document.getElementById('sOrg').style.display = sO ? '' : 'none';
+
+  var sortedNR = applySort(NR);
+  var sortedAR = applySort(AR);
+  var sortedMR = applySort(MR);
+
+  var filteredNR = applyFilter(sortedNR);
+  var filteredAR = applyFilter(sortedAR);
+  var filteredMR = applyFilter(sortedMR);
+
+  // تحديث العدادات العلوية
+  document.getElementById('tcn').textContent = toAr(NR.length);
+  document.getElementById('tck').textContent = toAr(AR.length);
+  document.getElementById('tco').textContent = toAr(MR.length);
+  document.getElementById('tca').textContent = toAr(NR.length + AR.length + MR.length);
+
+  // تحديث عدادات الأقسام
+  document.getElementById('cntN').textContent = toAr(filteredNR.length) + ' بلاغ';
+  document.getElementById('cntA').textContent = toAr(filteredAR.length) + ' بلاغ';
+  document.getElementById('cntO').textContent = toAr(filteredMR.length) + ' بلاغ';
+
+  var gNew = document.getElementById('gNew');
+  gNew.className = (TAB==='all') ? 'scroll-row' : 'grid';
+
+  if(sN) gNew.innerHTML = buildCards(filteredNR, 'new');
+  if(sA) document.getElementById('gAct').innerHTML = buildCards(filteredAR, 'active');
+  if(sO) document.getElementById('gOrg').innerHTML = buildCards(filteredMR, 'org');
+}
 
     // ── doTakeOver — now calls Firebase; UI update comes via onSnapshot ──
     function doTakeOver(id){
