@@ -207,14 +207,19 @@ body.reports-page .bov{
       
      
 
-      <a href="#" class="sidebar-link active">
+      <a href="#" class="sidebar-link">
         <i class="fas fa-gauge"></i>
         <span>لوحة التحكم</span>
       </a>
 
-      <a href="Reports.html" class="sidebar-link">
+      <a href="Reports.html" class="sidebar-link active">
         <i class="fas fa-bullhorn"></i>
         <span>البلاغات</span>
+      </a>
+
+      <a href="MyReports.html" class="sidebar-link">
+        <i class="fas fa-bookmark"></i>
+        <span>بلاغاتي</span>
       </a>
 
       <a href="History.html" class="sidebar-link">
@@ -253,7 +258,6 @@ body.reports-page .bov{
           <button class="tab on" data-tab="all"><span class="tc tca" id="tca">15</span>الكل</button>
           <button class="tab" data-tab="new"><span class="tc tcn" id="tcn">6</span>جديدة</button>
           <button class="tab" data-tab="active"><span class="tc tck" id="tck">9</span>جارٍ العمل</button>
-          <button class="tab" data-tab="org"><span class="tc tco" id="tco">0</span>منظّم لها</button>
         </div>
         <div class="frow">
           <input class="sinput" id="srch" type="search" placeholder="🔍 ابحث باسم أو رقم أو منطقة...">
@@ -275,10 +279,7 @@ body.reports-page .bov{
         <div class="sec-head"><div class="sec-dot" style="background:var(--adot);animation:pulse 1.4s infinite;"></div><h2>جارٍ العمل عليها</h2><div class="sec-line"></div><div class="sec-cnt" id="cntA"></div></div>
         <div class="grid" id="gAct"></div>
       </div>
-      <div class="sec" id="sOrg">
-        <div class="sec-head"><div class="sec-dot" style="background:var(--odot);"></div><h2>المنظّم لها</h2><div class="sec-line"></div><div class="sec-cnt" id="cntO"></div></div>
-        <div class="grid" id="gOrg"></div>
-      </div>
+
     </div>
        <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
     <div class="logout-dialog">
@@ -321,6 +322,19 @@ body.reports-page .bov{
        ─ Exposes window._fbTakeOver / window._fbJoin to classic script
        ─ HTML and CSS untouched
   ═══════════════════════════════════════════════════════════════ -->
+  <!-- ══ dialog تأكيد الإغلاق ══ -->
+  <div id="closeConfirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,10,0,.6);z-index:99997;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:20px;width:90%;max-width:380px;padding:28px 24px;font-family:'Tajawal',sans-serif;text-align:center;">
+      <div style="font-size:36px;margin-bottom:10px;">🔒</div>
+      <div style="font-size:16px;font-weight:800;color:#2a1e0e;margin-bottom:8px;">إغلاق البلاغ</div>
+      <div style="font-size:13px;color:#8c6840;line-height:1.7;margin-bottom:20px;">هل أنت متأكد؟ سيتم إغلاق البلاغ وتحويله إلى السجل ولن يظهر للمتطوعين.</div>
+      <div style="display:flex;gap:10px;">
+        <button id="closeConfirmYes" type="button" style="flex:2;padding:13px;border-radius:12px;background:#c0392b;border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">نعم، أغلق البلاغ</button>
+        <button id="closeConfirmNo" type="button" style="flex:1;padding:13px;border-radius:12px;background:#f5ece0;border:1.5px solid #e0d5c3;color:#7a5828;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ لوحة تعديل الحالة ══ -->
   <div id="statusPanel" style="display:none;position:fixed;inset:0;background:rgba(20,10,0,.55);z-index:99995;align-items:flex-end;justify-content:center;">
     <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px 20px 32px;font-family:'Tajawal',sans-serif;">
@@ -868,37 +882,30 @@ body.reports-page .bov{
     function render(){
   var sN = TAB==='all' || TAB==='new';
   var sA = TAB==='all' || TAB==='active';
-  var sO = TAB==='all' || TAB==='org';
 
   document.getElementById('sNew').style.display = sN ? '' : 'none';
   document.getElementById('sAct').style.display = sA ? '' : 'none';
-  document.getElementById('sOrg').style.display = sO ? '' : 'none';
 
   var sortedNR = applySort(NR);
   var sortedAR = applySort(AR);
-  var sortedMR = applySort(MR);
 
   var filteredNR = applyFilter(sortedNR);
   var filteredAR = applyFilter(sortedAR);
-  var filteredMR = applyFilter(sortedMR);
 
   // تحديث العدادات العلوية
   document.getElementById('tcn').textContent = toAr(NR.length);
   document.getElementById('tck').textContent = toAr(AR.length);
-  document.getElementById('tco').textContent = toAr(MR.length);
-  document.getElementById('tca').textContent = toAr(NR.length + AR.length + MR.length);
+  document.getElementById('tca').textContent = toAr(NR.length + AR.length);
 
   // تحديث عدادات الأقسام
   document.getElementById('cntN').textContent = toAr(filteredNR.length) + ' بلاغ';
   document.getElementById('cntA').textContent = toAr(filteredAR.length) + ' بلاغ';
-  document.getElementById('cntO').textContent = toAr(filteredMR.length) + ' بلاغ';
 
   var gNew = document.getElementById('gNew');
   gNew.className = (TAB==='all') ? 'scroll-row' : 'grid';
 
   if(sN) gNew.innerHTML = buildCards(filteredNR, 'new');
   if(sA) document.getElementById('gAct').innerHTML = buildCards(filteredAR, 'active');
-  if(sO) document.getElementById('gOrg').innerHTML = buildCards(filteredMR, 'org');
 }
 
     // ── doTakeOver — now calls Firebase; UI update comes via onSnapshot ──
@@ -1053,10 +1060,35 @@ body.reports-page .bov{
 
       document.getElementById('statusPanelSave').onclick=function(){
         var newStatus=sel?sel.value:'accepted';
+
+        if(newStatus === 'rescued'){
+          panel.style.display='none';
+          document.body.style.overflow='';
+          var confirmOvr=document.getElementById('closeConfirmOverlay');
+          confirmOvr.style.display='flex';
+
+          document.getElementById('closeConfirmNo').onclick=function(){
+            confirmOvr.style.display='none';
+          };
+          document.getElementById('closeConfirmYes').onclick=function(){
+            confirmOvr.style.display='none';
+            if(window._fbUpdateStatus && r._docId){
+              window._fbUpdateStatus(r._docId, 'rescued');
+            }
+            r.status='rescued';
+            // أزل من MR ومن NR/AR
+            var idx=-1;
+            for(var _i=0;_i<MR.length;_i++) if(MR[_i].id===r.id){idx=_i;break;}
+            if(idx>=0) MR.splice(idx,1);
+            notify('تم إغلاق البلاغ وتحويله للسجل','s');
+            render();
+          };
+          return;
+        }
+
         if(window._fbUpdateStatus && r._docId){
           window._fbUpdateStatus(r._docId, newStatus);
         }
-        // نحدّث r.status محلياً فوراً بدون انتظار onSnapshot
         r.status = newStatus;
         notify('تم تحديث حالة البلاغ إلى: '+(STATUS_LABELS[newStatus]||newStatus),'s');
         panel.style.display='none';

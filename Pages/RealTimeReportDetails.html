@@ -466,6 +466,25 @@
           </div>
         </div>
 
+        <div class="grid2" style="margin-top:.6rem;">
+          <div class="field">
+            <div class="k">الحالة الصحية</div>
+            <div class="v" id="missingHealth">—</div>
+          </div>
+          <div class="field">
+            <div class="k">المركبة</div>
+            <div class="v" id="missingVehicle">—</div>
+          </div>
+          <div class="field">
+            <div class="k">جهة التواصل</div>
+            <div class="v" id="reportContact">—</div>
+          </div>
+          <div class="field">
+            <div class="k">قائد الفريق</div>
+            <div class="v" id="reportLeader">—</div>
+          </div>
+        </div>
+
         <div style="height:.8rem"></div>
 
         <div class="field">
@@ -769,6 +788,19 @@
     })();
   </script>
 
+
+  <!-- ══ confirm close dialog ══ -->
+  <div id="closeConfirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,10,0,.6);z-index:99997;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:20px;width:90%;max-width:380px;padding:28px 24px;font-family:'Tajawal',sans-serif;text-align:center;">
+      <div style="font-size:36px;margin-bottom:10px;">🔒</div>
+      <div style="font-size:16px;font-weight:800;color:#2a1e0e;margin-bottom:8px;">إغلاق البلاغ</div>
+      <div style="font-size:13px;color:#8c6840;line-height:1.7;margin-bottom:20px;">هل أنت متأكد؟ سيتم إغلاق البلاغ وتحويله إلى السجل ولن يظهر للمتطوعين.</div>
+      <div style="display:flex;gap:10px;">
+        <button id="closeConfirmYes" type="button" style="flex:2;padding:13px;border-radius:12px;background:#c0392b;border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">نعم، أغلق البلاغ</button>
+        <button id="closeConfirmNo" type="button" style="flex:1;padding:13px;border-radius:12px;background:#f5ece0;border:1.5px solid #e0d5c3;color:#7a5828;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">إلغاء</button>
+      </div>
+    </div>
+  </div>
 
 <script type="module">
   import { auth, db } from '/JS/firebase.js';

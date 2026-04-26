@@ -1482,6 +1482,11 @@ body {
         <span>البلاغات</span>
       </a>
 
+      <a href="MyReports.html" class="sidebar-link">
+        <i class="fas fa-bookmark"></i>
+        <span>بلاغاتي</span>
+      </a>
+
       <a href="History.html" class="sidebar-link">
         <i class="fas fa-clock-rotate-left"></i>
         <span>السجل</span>
@@ -1612,7 +1617,7 @@ body {
   <div class="p-main">
     <div class="sec-head">
       <div class="sec-dot" style="background:#4060c8;"></div>
-      <span class="sec-ttl">العمليات اللي شاركت فيها</span>
+      <span class="sec-ttl">العمليات المنضم لها</span>
       <div class="sec-line"></div>
       <span class="sec-cnt" id="opCnt"></span>
 
@@ -1901,7 +1906,7 @@ body {
 
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc }
+import { getFirestore, doc, collection, query, where, orderBy, onSnapshot, updateDoc }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -2281,33 +2286,45 @@ onAuthStateChanged(auth, function(user) {
 
   /* الاشتراك الحي في بلاغات المستخدم */
   const reportsQuery = query(
-    collection(db, 'Reports'),
-    where('userId', '==', user.uid)
+    collection(db, 'Report'),
+    where('teamMembers', 'array-contains', user.uid)
   );
   unsubReports = onSnapshot(reportsQuery, function(snapshot) {
     var ops = [];
+    var _months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     snapshot.forEach(function(docSnap) {
       var d = docSnap.data();
+      var isLeader = d.createdBy === user.uid;
+      var daysText = '—';
+      var reportTimeStr = '—';
+      if (d.reportTime && d.reportTime.toDate) {
+        var _dt = d.reportTime.toDate();
+        var diff = Math.floor((Date.now() - _dt.getTime()) / 86400000);
+        daysText = diff === 0 ? 'منذ اليوم' : 'منذ ' + diff + ' يوم';
+        reportTimeStr = _dt.getDate() + ' ' + _months[_dt.getMonth()] + ' ' + _dt.getFullYear();
+      }
       ops.push({
         id:        docSnap.id,
-        ar:        d.reportId      || docSnap.id,
-        nm:        d.missingName   || d.nm    || '—',
-        loc:       d.location      || d.loc   || '—',
-        days:      d.duration      || d.days  || '—',
-        ld:        d.lostDate      || d.ld    || '—',
-        role:      d.userRole      || d.role  || 'member',
-        closed:    d.status === 'closed' || d.closed === true,
-        hlth:      d.healthStatus  || d.hlth  || 'لا يوجد',
-        veh:       d.vehicle       || d.veh   || '—',
-        age:       d.age           || '—',
-        ldr:       d.teamLeader    || d.ldr   || '—',
-        desc:      d.description   || d.desc  || '',
-        mbr:       Array.isArray(d.members) ? d.members : (d.mbr || []),
-        foundAt:   d.foundAt    || '',
-        startDate: d.startDate  || '',
-        foundDate: d.foundDate  || '',
-        closeDate: d.closeDate  || '',
-        duration:  d.totalDuration || d.duration || ''
+        ar:        d.reportId          || docSnap.id,
+        nm:        d.missingPersonName || '—',
+        loc:       d.location          || '—',
+        days:      daysText,
+        ld:        reportTimeStr,
+        role:      isLeader ? 'leader' : 'member',
+        closed:    d.status === 'rescued' || d.status === 'found',
+        hlth:      d.healthStatus      || 'لا يوجد',
+        veh:       d.vehicle           || '—',
+        age:       d.age               || '—',
+        ldr:       d.leader            || '—',
+        lph:       d.leaderPhone       || '—',
+        status:    d.status            || 'accepted',
+        desc:      d.description       || '',
+        mbr:       [],
+        foundAt:   '',
+        startDate: reportTimeStr,
+        foundDate: '',
+        closeDate: d.lastUpdate || '',
+        duration:  daysText
       });
     });
     window.MY_OPS = ops;
@@ -2449,7 +2466,7 @@ if(!filtered.length){
   filtered.forEach(function(r){
     var opCls = r.closed ? 'op closed' : 'op open';
     var bCls  = r.role === 'leader' ? 'bl' : 'bm';
-    var bLbl  = r.closed ? '✅ منجزة' : (r.role === 'leader' ? 'يوسف القائد' : 'عضو في الفريق');
+    var bLbl  = r.closed ? '✅ منجزة' : (r.role === 'leader' ? 'قائد' : 'عضو');
     var pfCls = r.closed ? 'pf pf-green' : 'pf pf-blue';
     var pfClr = r.closed ? '#1e8040' : '#4060c8';
     var avs = '';
@@ -2464,7 +2481,7 @@ if(!filtered.length){
 
     var actBtn = r.closed
       ? '<button class="op-act act-green" onclick="openLog(\''+r.id+'\')">📋 عرض السجل</button>'
-      : '<button class="op-act act-blue" onclick="openTrack(\''+r.id+'\')">تتبع العملية</button>';
+      : '<button class="op-act act-blue" onclick="openTrack(\''+r.id+'\')">تفاصيل العملية</button>';
 
     h += '<div class="'+opCls+'">'+
           '<div class="op-head">'+
@@ -2550,7 +2567,7 @@ function openTrack(id){
 
   document.getElementById('mtTeam').innerHTML = th;
   document.getElementById('mtFoot').innerHTML =
-    '<button class="op-act act-blue" style="width:100%;padding:13px;border-radius:12px;font-size:14px;" onclick="window.location.href=\'RealTimeReportDetails.html?id='+r.id+'\'">📍 متابعة العملية الميدانية</button>';
+    '<button class="op-act act-blue" style="width:100%;padding:13px;border-radius:12px;font-size:14px;" onclick="window.location.href=\'RealTimeReportDetails.html?docId='+r.id+'\'">📍 تفاصيل العملية الميدانية</button>';
 
   document.getElementById('modalTrack').classList.add('on');
 }

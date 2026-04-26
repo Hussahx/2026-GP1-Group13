@@ -369,7 +369,7 @@
   /* ════════════════════════════════════════════
      DATA
   ════════════════════════════════════════════ */
-  const CASES = [
+  window.CASES = [
     {
       id: 'RSD-2025-00089', title: 'بلاغ مفقود — بادية حائل الشمالية',
       closedDate: '٦ مارس ٢٠٢٥', closedTimestamp: new Date('2025-03-06'),
@@ -549,6 +549,8 @@
       ]
     },
   ];
+  var CASES = window.CASES; // alias للكود القديم
+
 
   /* ════════════════════════════════════════════
      SA REGIONS (alphabetical)
@@ -1017,6 +1019,106 @@
 
     // رندر المنيو بناءً على الدور
     renderMenu(role ?? 'volunteer');
+  });
+</script>
+
+
+<script type="module">
+  // ── جلب البلاغات المغلقة من Firestore وإضافتها للسجل ──────────────
+  import { initializeApp, getApps }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, query, where, onSnapshot }
+    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+    authDomain:        'rasid-1bb06.firebaseapp.com',
+    projectId:         'rasid-1bb06',
+    storageBucket:     'rasid-1bb06.firebasestorage.app',
+    messagingSenderId: '668525115587',
+    appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+  };
+  const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const STATUS_LBL = {
+    'rescued': 'تم الإنقاذ',
+    'found':   'تم العثور عليه',
+  };
+
+  onAuthStateChanged(auth, user => {
+    if (!user) return;
+
+    // استمع للبلاغات التي حالتها rescued أو found وفيها teamMembers يضم uid
+    const q = query(
+      collection(db, 'Report'),
+      where('teamMembers', 'array-contains', user.uid)
+    );
+
+    onSnapshot(q, snap => {
+      // احذف البيانات السابقة من Firebase (prefix: FB-)
+      window.CASES = window.CASES.filter(c => !c._fromFirebase);
+
+      const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                      'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        // فقط المغلقة
+        if (d.status !== 'rescued' && d.status !== 'found') return;
+
+        let closedDate = d.lastUpdate || '—';
+        let closedTimestamp = new Date();
+        if (d.reportTime && d.reportTime.toDate) {
+          const dt = d.reportTime.toDate();
+          closedTimestamp = dt;
+          closedDate = dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+        }
+
+        const isLeader = d.createdBy === user.uid;
+
+        window.CASES.unshift({
+          _fromFirebase: true,
+          id:            d.reportId || docSnap.id,
+          title:         'بلاغ مفقود — ' + (d.location || 'غير محدد'),
+          closedDate:    d.lastUpdate || closedDate,
+          closedTimestamp,
+          outcome:       d.status === 'rescued' ? 'found' : 'found',
+          outcomeLbl:    STATUS_LBL[d.status] || 'تم الإغلاق',
+          region:        d.location || '—',
+          location:      d.location || '—',
+          reportDate:    closedDate,
+          volunteers:    Array.isArray(d.teamMembers) ? String(d.teamMembers.length) + ' متطوعاً' : '—',
+          duration:      d.lastUpdate || '—',
+          durationHours: 0,
+          missing:       d.missingPersonName || '—',
+          notes:         d.description || 'لا توجد ملاحظات.',
+          role:          isLeader ? 'leader' : 'member',
+          log: []
+        });
+      });
+
+      // أعد رسم السجل
+      if (typeof window.renderCases === 'function') window.renderCases();
+      if (typeof buildRegionSelect === 'function') {
+        // تحديث الـ filter
+        const sel = document.getElementById('regionSelect');
+        if (sel) {
+          const current = sel.value;
+          sel.innerHTML = '<option value="all">كل المناطق</option>';
+          const regions = [...new Set(window.CASES.map(c => c.region))].filter(Boolean);
+          regions.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r; opt.textContent = r;
+            sel.appendChild(opt);
+          });
+          sel.value = current;
+        }
+      }
+    });
   });
 </script>
 

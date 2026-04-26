@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#c8a06a" />
+  <title>راصد — بلاغاتي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/CSS/Rasid.css" />
+
+  <style>
+    :root{
+      --bg:#f9f6f1; --white:#fff;
+      --s100:#f5ece0; --s200:#e8d9c4; --s300:#d4bc98;
+      --s400:#b8965e; --s500:#9a7440; --s600:#7a5828;
+      --t900:#2a1e0e; --t700:#5a3e20; --t500:#8c6840; --t300:#b89870;
+      --bdr:rgba(180,140,80,0.15); --acc:#b8782a;
+      --ndot:#e07830; --adot:#2d9e52; --odot:#4060c8;
+      --red:#c0392b; --grn:#1e8040;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--t900);min-height:100vh;overflow-x:hidden;}
+    .reports-scope,.page-body,.page-header{transform:none !important;}
+
+    /* Notifications */
+    .nwrap{position:fixed !important;top:14px !important;left:50% !important;transform:translateX(-50%) !important;z-index:99999 !important;display:flex !important;flex-direction:column !important;gap:7px !important;pointer-events:none !important;align-items:center !important;width:88% !important;max-width:380px !important;}
+    .notif{background:var(--white) !important;border-radius:12px !important;padding:11px 15px !important;box-shadow:0 6px 24px rgba(0,0,0,.13) !important;font-size:13px !important;color:var(--t900) !important;font-weight:500 !important;width:100% !important;border-right:4px solid !important;animation:nin .3s ease,nout .3s ease 3.5s forwards !important;}
+    .ns{border-color:#2d9e52 !important;}.ni{border-color:#4060c8 !important;}.nw{border-color:#e07830 !important;}
+    @keyframes nin{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes nout{from{opacity:1;}to{opacity:0;}}
+
+    /* Cards */
+    .main{max-width:1120px;margin:0 auto;padding:24px 20px 48px;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;}
+    .card{background:var(--white);border-radius:16px;border:1.5px solid var(--bdr);overflow:hidden;position:relative;transition:transform .2s,box-shadow .2s;}
+    .card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(100,60,20,.1);}
+    .card::before{content:'';position:absolute;top:0;right:0;width:4px;height:100%;border-radius:0 16px 16px 0;}
+    .cl::before{background:linear-gradient(180deg,#9a7440,#c8a060);}
+    .cm::before{background:linear-gradient(180deg,#4060c8,#80a0e8);}
+    .ctop{padding:15px 16px 12px;border-bottom:1px solid var(--s100);}
+    .cmeta{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;flex-wrap:wrap;gap:4px;}
+    .badge{display:inline-flex !important;align-items:center !important;padding:3px 10px !important;border-radius:11px !important;font-size:11px !important;font-weight:700 !important;line-height:1.4 !important;white-space:nowrap !important;}
+    .bl{background:#fef9f0 !important;color:#7a5020 !important;border:1px solid #e8c878 !important;}
+    .bm{background:#f4f6ff !important;color:#2840a0 !important;border:1px solid #b8c8f0 !important;}
+    .cid{font-size:13.5px;font-weight:800;color:var(--t900);margin-bottom:4px;}
+    .cloc{font-size:12px;color:var(--t500);}
+    .cbody{padding:12px 16px;}
+    .igrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 11px;margin-bottom:12px;}
+    .il{font-size:9.5px;color:var(--t300);letter-spacing:.7px;text-transform:uppercase;font-weight:600;margin-bottom:1px;}
+    .iv{font-size:12.5px;color:var(--t700);font-weight:500;}
+    .info-item{display:flex;flex-direction:column;gap:2px;}
+    .prow{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--s100);flex-wrap:wrap;gap:5px;}
+    .dtag{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--red);font-weight:600;background:#fef2f2;padding:2px 7px;border-radius:5px;border:1px solid #ffd4d0;}
+    .cact{display:flex;gap:7px;padding:9px 16px 14px;}
+    .btn{flex:1;padding:10px 4px;border-radius:10px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;text-align:center;border:1.5px solid;min-height:44px;touch-action:manipulation;background:transparent;}
+    .bto{background:#9a7440;border-color:#9a7440;color:#fff;}
+    .bto:hover{background:#7a5828;}
+    .bov{background:#f5efe6;border-color:#e0d5c3;color:#7a5828;}
+    .bov:hover{background:#ece3d3;}
+    .btn:active{opacity:.78;}
+    .urg{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:9px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+    .uh{background:#fff0ee;color:#c0392b;border:1px solid #ffb8b0;}
+    .um{background:#fff8ee;color:#c07020;border:1px solid #ffd898;}
+
+    /* Status badge on card */
+    .status-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+    .sp-accepted{background:#fef9f0;color:#9a6020;border:1px solid #e8c870;}
+    .sp-active{background:#f0faf4;color:#1a6830;border:1px solid #a0d8b0;}
+    .sp-found{background:#eef4ff;color:#2840a0;border:1px solid #a0b8f0;}
+    .sp-rescued{background:#f4f0ff;color:#5020a0;border:1px solid #b0a0e0;}
+    .sp-new{background:#fff8ee;color:#c07020;border:1px solid #f0d090;}
+
+    /* Empty state */
+    .empty{text-align:center;padding:48px 20px;color:var(--t300);}
+    .empty .ei{font-size:48px;margin-bottom:12px;}
+    .empty p{font-size:14px;line-height:1.7;}
+
+    /* Section header */
+    .page-heading{text-align:center;padding:28px 20px 8px;}
+    .page-heading-eyebrow{font-size:11px;letter-spacing:3px;color:var(--t300);font-weight:600;margin-bottom:6px;}
+    .page-heading h2{font-family:'Scheherazade New',serif;font-size:1.8rem;font-weight:700;color:var(--t900);}
+    .page-heading p{font-size:13px;color:var(--t500);margin-top:4px;}
+
+    /* Filter bar */
+    .sticky{position:sticky;top:0;z-index:100;background:rgba(249,246,241,.97);border-bottom:1px solid var(--bdr);}
+    .s-inner{max-width:1120px;margin:0 auto;padding:0 20px;}
+    .frow{display:flex;gap:8px;padding:9px 0 7px;align-items:center;}
+    .sinput{flex:1;min-width:0;padding:9px 14px;background:var(--white);border:1.5px solid var(--bdr);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:13px;color:var(--t900);outline:none;direction:rtl;}
+    .sinput:focus{border-color:var(--s300);}
+    .sinput::placeholder{color:var(--t300);}
+    .sselect{flex-shrink:0;padding:9px 11px;background:var(--white);border:1.5px solid var(--bdr);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:12px;color:var(--t700);outline:none;cursor:pointer;}
+    .cnt-bar{font-size:12px;color:var(--t300);font-weight:600;padding:6px 0 2px;text-align:center;}
+
+    /* Status panel overlay */
+    #statusPanel{display:none;position:fixed;inset:0;background:rgba(20,10,0,.55);z-index:99995;align-items:flex-end;justify-content:center;}
+
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,158,82,.5);}70%{box-shadow:0 0 0 6px rgba(45,158,82,0);}100%{box-shadow:0 0 0 0 rgba(45,158,82,0);}}
+    @media(max-width:767px){.s-inner{padding:0 14px;}.main{padding:16px 14px 36px;}.grid{grid-template-columns:1fr;gap:11px;}}
+    @media(max-width:380px){.s-inner{padding:0 11px;}.main{padding:14px 12px 30px;}}
+  </style>
+</head>
+
+<body class="reports-page">
+
+  <div class="nwrap" id="nwrap"></div>
+
+  <!-- Status Panel Overlay (leader only) -->
+  <div id="statusPanel" style="display:none;position:fixed;inset:0;background:rgba(20,10,0,.55);z-index:99995;align-items:flex-end;justify-content:center;">
+    <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px 20px 32px;font-family:'Tajawal',sans-serif;">
+      <div style="width:36px;height:4px;background:var(--s300);border-radius:2px;margin:0 auto 16px;"></div>
+      <div id="statusPanelLabel" style="font-size:15px;font-weight:800;color:var(--t900);margin-bottom:14px;text-align:right;"></div>
+      <select id="statusPanelSelect" style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--bdr);font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;color:var(--t900);background:var(--s100);outline:none;margin-bottom:14px;direction:rtl;"></select>
+      <div style="display:flex;gap:10px;">
+        <button id="statusPanelSave" type="button" style="flex:2;padding:13px;border-radius:12px;background:#9a7440;border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">حفظ الحالة</button>
+        <button id="statusPanelCancel" type="button" style="flex:1;padding:13px;border-radius:12px;background:var(--s100);border:1.5px solid var(--bdr);color:var(--t700);font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="reports-scope">
+    <header class="page-header">
+      <div class="header-logo-mark" aria-hidden="true">
+        <img src="/assest/New-logo.JPG.jpeg" alt="شعار راصد" />
+      </div>
+      <div class="header-brand">
+        <h1>راصد</h1>
+        <p>عين الصحراء — بلاغاتي</p>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
+        <i class="fas fa-bars"></i>
+      </button>
+      <nav class="header-nav" aria-label="تنقل سريع">
+        <div class="user-chip" title="حسابي" onclick="window.location.href='profile1.html'" style="cursor:pointer;">
+          <span class="avatar" id="userInitial"></span>
+          <span class="name" id="userName"></span>
+        </div>
+      </nav>
+    </header>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <aside class="app-sidebar" id="appSidebar" aria-label="القائمة الجانبية" aria-hidden="true">
+      <div class="sidebar-close-row">
+        <button class="sidebar-close" id="sidebarClose" aria-label="إغلاق القائمة">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+      <nav class="sidebar-nav">
+        <span class="sidebar-section-label">القائمة الرئيسية</span>
+        <a href="#" class="sidebar-link">
+          <i class="fas fa-gauge"></i>
+          <span>لوحة التحكم</span>
+        </a>
+        <a href="Reports.html" class="sidebar-link">
+          <i class="fas fa-bullhorn"></i>
+          <span>البلاغات</span>
+        </a>
+        <a href="MyReports.html" class="sidebar-link active">
+          <i class="fas fa-bookmark"></i>
+          <span>بلاغاتي</span>
+        </a>
+        <a href="History.html" class="sidebar-link">
+          <i class="fas fa-clock-rotate-left"></i>
+          <span>السجل</span>
+        </a>
+        <div class="sidebar-divider"></div>
+        <span class="sidebar-section-label">الحساب</span>
+        <a href="profile1.html" class="sidebar-link">
+          <i class="fas fa-user"></i>
+          <span>الملف الشخصي</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
+          <i class="fas fa-right-from-bracket"></i>
+          <span>تسجيل الخروج</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="page-body">
+      <div class="page-heading">
+        <div class="page-heading-eyebrow" aria-hidden="true"><span></span>__ بلاغاتي الميدانية __<span></span></div>
+        <h2>بلاغاتي</h2>
+        <p>جميع البلاغات التي انضممت إليها أو أشرفت عليها كقائد</p>
+      </div>
+    </main>
+
+    <div class="sticky">
+      <div class="s-inner">
+        <div class="frow">
+          <input class="sinput" id="srch" type="search" placeholder="🔍 ابحث باسم أو رقم أو منطقة...">
+          <select class="sselect" id="srt">
+            <option value="newest">الأحدث</option>
+            <option value="urgent">الأعلى أولوية</option>
+            <option value="oldest">الأقدم</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="cnt-bar" id="cntBar">جارٍ التحميل...</div>
+      <div class="grid" id="myGrid"></div>
+    </div>
+
+    <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+      <div class="logout-dialog">
+        <div class="logout-dialog-icon"><i class="fas fa-right-from-bracket"></i></div>
+        <h3 class="logout-dialog-title" id="logoutTitle">تسجيل الخروج</h3>
+        <p class="logout-dialog-msg">هل أنت متأكد من تسجيل الخروج؟</p>
+        <div class="logout-dialog-actions">
+          <button class="logout-cancel-btn" id="logoutCancel"><i class="fas fa-xmark"></i> إلغاء</button>
+          <button class="logout-confirm-btn" id="logoutConfirm"><i class="fas fa-right-from-bracket"></i> تسجيل الخروج</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+      </svg>
+      <div class="footer-inner">
+        <div class="f-brand"><div class="f-logo">راصد<span>RASID</span></div><p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p></div>
+        <div class="f-col"><h4>روابط سريعة</h4><ul><li><a href="index.html">الصفحة الرئيسية</a></li><li><a href="Reports.html">البلاغات</a></li></ul></div>
+        <div class="f-col"><h4>أرقام الطوارئ</h4><div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div><div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div></div>
+      </div>
+      <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+      <div class="footer-dune"></div>
+    </footer>
+  </div>
+
+  <!-- ═══════════════ CONFIRM CLOSE DIALOG ═══════════════ -->
+  <div id="closeConfirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(20,10,0,.6);z-index:99997;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:20px;width:90%;max-width:380px;padding:28px 24px;font-family:'Tajawal',sans-serif;text-align:center;">
+      <div style="font-size:36px;margin-bottom:10px;">🔒</div>
+      <div style="font-size:16px;font-weight:800;color:#2a1e0e;margin-bottom:8px;">إغلاق البلاغ</div>
+      <div style="font-size:13px;color:#8c6840;line-height:1.7;margin-bottom:20px;">هل أنت متأكد؟ سيتم إغلاق البلاغ وتحويله إلى السجل ولن يظهر للمتطوعين.</div>
+      <div style="display:flex;gap:10px;">
+        <button id="closeConfirmYes" type="button" style="flex:2;padding:13px;border-radius:12px;background:#c0392b;border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">نعم، أغلق البلاغ</button>
+        <button id="closeConfirmNo" type="button" style="flex:1;padding:13px;border-radius:12px;background:#f5ece0;border:1.5px solid #e0d5c3;color:#7a5828;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SIDEBAR & LOGOUT LOGIC ═══════════════ -->
+  <script>
+    (function(){
+      var toggle   = document.getElementById('sidebarToggle');
+      var sidebar  = document.getElementById('appSidebar');
+      var overlay  = document.getElementById('sidebarOverlay');
+      var closeBtn = document.getElementById('sidebarClose');
+      var logoutBtn  = document.getElementById('sidebarLogoutBtn');
+      var logoutOvr  = document.getElementById('logoutOverlay');
+      var logoutCanc = document.getElementById('logoutCancel');
+      var logoutConf = document.getElementById('logoutConfirm');
+
+      function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('visible'); document.body.style.overflow='hidden'; }
+      function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('visible'); document.body.style.overflow=''; }
+      function openLogout(){ logoutOvr.classList.add('on'); document.body.style.overflow='hidden'; }
+      function closeLogout(){ logoutOvr.classList.remove('on'); document.body.style.overflow=''; }
+
+      if(toggle) toggle.addEventListener('click', function(){ sidebar.classList.contains('open')?closeSidebar():openSidebar(); });
+      if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+      if(overlay) overlay.addEventListener('click', closeSidebar);
+      if(logoutBtn) logoutBtn.addEventListener('click', openLogout);
+      if(logoutCanc) logoutCanc.addEventListener('click', closeLogout);
+      if(logoutOvr) logoutOvr.addEventListener('click', function(e){ if(e.target===logoutOvr) closeLogout(); });
+      if(logoutConf) logoutConf.addEventListener('click', function(){
+        logoutConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الخروج…';
+        logoutConf.disabled = true;
+        sessionStorage.clear();
+        localStorage.removeItem('user');
+        setTimeout(function(){ window.location.href='index.html'; }, 900);
+      });
+
+      document.addEventListener('keydown', function(e){
+        if(e.key==='Escape'){ if(logoutOvr&&logoutOvr.classList.contains('on')){ closeLogout(); return; } closeSidebar(); }
+      });
+    })();
+  </script>
+
+  <!-- ═══════════════ FIREBASE + MAIN LOGIC ═══════════════ -->
+  <script type="module">
+    import { initializeApp, getApps }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import {
+      getFirestore, collection, onSnapshot,
+      doc, updateDoc, orderBy, query, getDoc
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+      authDomain:        'rasid-1bb06.firebaseapp.com',
+      projectId:         'rasid-1bb06',
+      storageBucket:     'rasid-1bb06.firebasestorage.app',
+      messagingSenderId: '668525115587',
+      appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+    };
+    const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    // ── Helpers ───────────────────────────────────────────────────────
+    function toAr(n){ return String(n).replace(/\d/g, d=>'٠١٢٣٤٥٦٧٨٩'[+d]); }
+    function a2w(s){ return String(s).replace(/[٠١٢٣٤٥٦٧٨٩]/g,d=>d.charCodeAt(0)-0x0660); }
+
+    const STATUS_LABELS = {
+      'new':      'جديد',
+      'accepted': 'مقبول',
+      'org':      'مقبول',
+      'active':   'جارٍ البحث',
+      'found':    'تم العثور',
+      'rescued':  'تم الإنقاذ'
+    };
+    const STATUS_CLS = {
+      'new':      'sp-new',
+      'accepted': 'sp-accepted',
+      'org':      'sp-accepted',
+      'active':   'sp-active',
+      'found':    'sp-found',
+      'rescued':  'sp-rescued'
+    };
+
+    const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    function formatArDate(d){ return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`; }
+
+    function urgency(age, hlth){
+      const n = parseInt(a2w(String(age)))||0;
+      const bad = hlth && hlth!=='لا يوجد' && hlth!=='جيدة' && hlth!=='—';
+      if(n<=12||n>=60||bad) return {cls:'uh',lbl:'طارئ جداً'};
+      return {cls:'um',lbl:'متوسط'};
+    }
+
+    function notify(msg,type){
+      const w=document.getElementById('nwrap'), d=document.createElement('div');
+      d.className='notif n'+(type||'i'); d.textContent=msg;
+      w.appendChild(d);
+      setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); },4200);
+    }
+
+    // ── State ─────────────────────────────────────────────────────────
+    let MY_REPORTS = [];
+    let SRCH = '';
+    let SORT = 'newest';
+    let currentUid = null;
+
+    // ── Firestore: update status ──────────────────────────────────────
+    async function fbUpdateStatus(docId, newStatus){
+      try {
+        const now = new Date().toLocaleString('ar-SA',{dateStyle:'medium',timeStyle:'short'});
+        await updateDoc(doc(db,'Report',docId),{ status: newStatus, lastUpdate: now });
+      } catch(e){ console.error('updateStatus error',e); }
+    }
+
+    // ── Status Panel ─────────────────────────────────────────────────
+    function openStatusPanel(r){
+      if(r.role !== 'leader'){ notify('فقط قائد البلاغ يمكنه تعديل الحالة','w'); return; }
+      const panel = document.getElementById('statusPanel');
+      const sel   = document.getElementById('statusPanelSelect');
+      const lbl   = document.getElementById('statusPanelLabel');
+
+      lbl.textContent = 'تعديل حالة البلاغ: ' + r.id;
+      sel.innerHTML = '';
+      ['accepted','active','found','rescued'].forEach(opt=>{
+        const op = document.createElement('option');
+        op.value = opt;
+        op.textContent = STATUS_LABELS[opt];
+        if(opt === (r.status||'accepted')) op.selected = true;
+        sel.appendChild(op);
+      });
+
+      document.getElementById('statusPanelSave').onclick = async function(){
+        const newStatus = sel.value;
+
+        // إذا اختار "تم الإنقاذ" — أظهر dialog التأكيد أولاً
+        if(newStatus === 'rescued'){
+          panel.style.display = 'none';
+          document.body.style.overflow = '';
+
+          const confirmOvr = document.getElementById('closeConfirmOverlay');
+          confirmOvr.style.display = 'flex';
+
+          document.getElementById('closeConfirmNo').onclick = function(){
+            confirmOvr.style.display = 'none';
+          };
+
+          document.getElementById('closeConfirmYes').onclick = async function(){
+            confirmOvr.style.display = 'none';
+            await fbUpdateStatus(r._docId, 'rescued');
+            notify('تم إغلاق البلاغ وتحويله للسجل', 's');
+            // أزل البلاغ من MY_REPORTS محلياً فوراً
+            const idx = MY_REPORTS.indexOf(r);
+            if(idx >= 0) MY_REPORTS.splice(idx, 1);
+            render();
+          };
+          return;
+        }
+
+        await fbUpdateStatus(r._docId, newStatus);
+        r.status = newStatus; // local update
+        notify('تم تحديث الحالة إلى: ' + STATUS_LABELS[newStatus], 's');
+        panel.style.display = 'none';
+        document.body.style.overflow = '';
+        render(); // أعد الرسم لتحديث الـ status pill
+      };
+      document.getElementById('statusPanelCancel').onclick = function(){
+        panel.style.display = 'none';
+        document.body.style.overflow = '';
+      };
+
+      panel.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    // ── Build card HTML ───────────────────────────────────────────────
+    function buildCard(r){
+      const u = urgency(r.age, r.hlth);
+      const isLeader = r.role === 'leader';
+      const badge = isLeader
+        ? '<span class="badge bl">قائد</span>'
+        : '<span class="badge bm">عضو</span>';
+      const cardCls = isLeader ? 'cl' : 'cm';
+
+      const stCls = STATUS_CLS[r.status] || 'sp-accepted';
+      const stLbl = STATUS_LABELS[r.status] || '—';
+      const statusPill = `<span class="status-pill ${stCls}">● ${stLbl}</span>`;
+
+      const rows = `
+        <div class="info-item"><span class="il">اسم المفقود</span><span class="iv">${r.nm}</span></div>
+        <div class="info-item"><span class="il">دورك</span><span class="iv">${isLeader?'قائد الفريق':'عضو'}</span></div>
+        <div class="info-item"><span class="il">الحالة الصحية</span><span class="iv">${r.hlth}</span></div>
+        <div class="info-item"><span class="il">${isLeader?'رقمك':'القائد'}</span><span class="iv">${isLeader?(r.lph||'—'):r.ldr}</span></div>`;
+
+      const dtag = r.days
+        ? `<div class="dtag">⏱ ${r.days}</div>`
+        : '';
+
+      const btns = isLeader
+        ? `<button class="btn bov" style="flex:2;" data-act="details" data-docid="${r._docId}" type="button">تفاصيل العملية</button>`
+        : `<button class="btn bov" style="flex:2;" data-act="details" data-docid="${r._docId}" type="button">تفاصيل العملية</button>`;
+
+      return `<div class="card ${cardCls}">
+        <div class="ctop">
+          <div class="cmeta">
+            ${badge}
+            <span class="urg ${u.cls}" style="position:static;">${u.lbl}</span>
+            ${statusPill}
+          </div>
+          <div class="cid">${r.id}</div>
+          <div class="cloc">📍 ${r.loc}</div>
+        </div>
+        <div class="cbody">
+          <div class="igrid">${rows}</div>
+          <div class="prow">${dtag}</div>
+        </div>
+        <div class="cact">${btns}</div>
+      </div>`;
+    }
+
+    // ── Filter & Sort ─────────────────────────────────────────────────
+    function applyFilter(arr){
+      if(!SRCH.trim()) return arr;
+      const q = a2w(SRCH.trim().toLowerCase()).replace(/\s+/g,'');
+      return arr.filter(r=>{
+        return (r.nm||'').toLowerCase().includes(SRCH.trim().toLowerCase())
+          || (r.loc||'').toLowerCase().includes(SRCH.trim().toLowerCase())
+          || a2w((r.id||'').toLowerCase()).includes(q);
+      });
+    }
+
+    function applySort(arr){
+      const s = arr.slice();
+      if(SORT==='oldest') s.sort((a,b)=>a.dt-b.dt);
+      else s.sort((a,b)=>b.dt-a.dt);
+      return s;
+    }
+
+    // ── Render ────────────────────────────────────────────────────────
+    function render(){
+      const filtered = applyFilter(applySort(MY_REPORTS));
+      const cnt = document.getElementById('cntBar');
+      const grid = document.getElementById('myGrid');
+
+      if(cnt) cnt.textContent = toAr(filtered.length) + ' بلاغ';
+
+      if(!filtered.length){
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">
+          <div class="ei">📋</div>
+          <p>لم تنضَم لأي بلاغ بعد.<br>تولّ بلاغاً جديداً أو انضم لبلاغ جارٍ من صفحة البلاغات.</p>
+        </div>`;
+        return;
+      }
+      grid.innerHTML = filtered.map(buildCard).join('');
+    }
+
+    // ── Click handler ─────────────────────────────────────────────────
+    document.addEventListener('click', function(e){
+      const el = e.target.closest('[data-act]');
+      if(!el) return;
+      const act = el.getAttribute('data-act');
+
+      if(act === 'details'){
+        const docId = el.getAttribute('data-docid') || '';
+        window.location.href = 'RealTimeReportDetails.html' + (docId?'?docId='+docId:'');
+      }
+      else if(act === 'changestatus'){
+        const idx = parseInt(el.getAttribute('data-idx'));
+        const r = MY_REPORTS[idx];
+        if(r) openStatusPanel(r);
+      }
+    });
+
+    // ── Search & Sort inputs ──────────────────────────────────────────
+    document.getElementById('srch').addEventListener('input', function(){ SRCH=this.value; render(); });
+    document.getElementById('srt').addEventListener('change', function(){ SORT=this.value; render(); });
+
+    // ── Firestore listener ────────────────────────────────────────────
+    let unsub = null;
+
+    function startListening(uid){
+      if(unsub){ unsub(); unsub=null; }
+      if(!uid) return;
+
+      const q = query(collection(db,'Report'), orderBy('reportTime','desc'));
+
+      unsub = onSnapshot(q, snap=>{
+        MY_REPORTS = [];
+        snap.forEach(docSnap=>{
+          const data = docSnap.data();
+          const teamMembers = Array.isArray(data.teamMembers) ? data.teamMembers : [];
+          const isCreator = data.createdBy === uid;
+          const isMember  = teamMembers.includes(uid);
+          if(!isCreator && !isMember) return; // ليس في الفريق — تجاهل
+
+          const rid = data.reportId || docSnap.id;
+          let daysText = '—';
+          if(data.reportTime?.toDate){
+            const diff = Math.floor((Date.now()-data.reportTime.toDate().getTime())/86400000);
+            if(diff===0) daysText='منذ اليوم';
+            else if(diff===1) daysText='منذ يوم';
+            else if(diff<=10) daysText='منذ '+toAr(diff)+' أيام';
+            else daysText='منذ '+toAr(diff)+' يوماً';
+          }
+
+          // البلاغات المغلقة لا تظهر هنا — تروح للسجل
+          if(data.status === 'rescued' || data.status === 'found') return;
+
+          MY_REPORTS.push({
+            _docId:  docSnap.id,
+            id:      rid,
+            nm:      data.missingPersonName || '—',
+            loc:     data.location || '—',
+            age:     data.age || '—',
+            hlth:    data.healthStatus || 'لا يوجد',
+            status:  data.status || 'accepted',
+            role:    isCreator ? 'leader' : 'member',
+            ldr:     data.leader || '—',
+            lph:     data.leaderPhone || '—',
+            upd:     data.lastUpdate || '—',
+            days:    daysText,
+            dt:      data.reportTime?.toDate ? data.reportTime.toDate().getTime() : 0,
+            det: {
+              'العمر':          (data.age||'—') + (data.age&&data.age!=='—'?' سنة':''),
+              'الحالة الصحية': data.healthStatus||'لا يوجد',
+              'الموقع':         data.location||'—',
+            }
+          });
+        });
+        render();
+      }, err=>{ console.error('onSnapshot error',err); });
+    }
+
+    // ── Auth ──────────────────────────────────────────────────────────
+    onAuthStateChanged(auth, async user=>{
+      currentUid = user ? user.uid : null;
+
+      if(user){
+        const nameEl    = document.getElementById('userName');
+        const initialEl = document.getElementById('userInitial');
+        const snap = await getDoc(doc(db,'User',user.uid));
+        if(snap.exists()){
+          const {FirstName,LastName} = snap.data();
+          if(nameEl)    nameEl.textContent    = `${FirstName} ${LastName}`;
+          if(initialEl) initialEl.textContent = FirstName?FirstName.charAt(0):'?';
+        } else {
+          if(user.displayName && nameEl)    nameEl.textContent    = user.displayName;
+          if(user.displayName && initialEl) initialEl.textContent = user.displayName.charAt(0);
+        }
+      }
+
+      startListening(currentUid);
+    });
+  </script>
+
+</body>
+</html>

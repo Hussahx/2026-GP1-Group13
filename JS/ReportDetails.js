@@ -216,6 +216,19 @@
     const videoEl = $("#videoSource");
     if (videoEl) videoEl.textContent = r.videoSource;
 
+    // حقول إضافية
+    const healthEl = $("#missingHealth");
+    if (healthEl) healthEl.textContent = r.healthStatus || '—';
+
+    const vehicleEl = $("#missingVehicle");
+    if (vehicleEl) vehicleEl.textContent = r.vehicle || '—';
+
+    const contactEl = $("#reportContact");
+    if (contactEl) contactEl.textContent = r.contact || '—';
+
+    const leaderEl = $("#reportLeader");
+    if (leaderEl) leaderEl.textContent = r.leader || '—';
+
     const selectEl = $("#statusSelect");
     if (selectEl) selectEl.value = r.status;
 
@@ -472,6 +485,31 @@
         }
 
         const newStatus = sel.value;
+
+        // إذا اختار "تم الإنقاذ" — أظهر dialog التأكيد أولاً
+        if (newStatus === 'rescued') {
+          const confirmOvr = document.getElementById('closeConfirmOverlay');
+          if (confirmOvr) {
+            confirmOvr.style.display = 'flex';
+
+            document.getElementById('closeConfirmNo').onclick = function() {
+              confirmOvr.style.display = 'none';
+            };
+
+            document.getElementById('closeConfirmYes').onclick = async function() {
+              confirmOvr.style.display = 'none';
+              state.report.status = 'rescued';
+              saveState();
+              setHeader();
+              await saveStatusToFirestore('rescued');
+              showToast('تم إغلاق البلاغ وتحويله للسجل');
+              // انتقل للسجل بعد ثانية
+              setTimeout(() => { window.location.href = 'History.html'; }, 1200);
+            };
+          }
+          return;
+        }
+
         state.report.status = newStatus;
         saveState();
         setHeader();
@@ -558,6 +596,59 @@
   }
 
   // -------- Init ----------
+  // ── تحميل بيانات البلاغ من Firestore ──────────────────────────────
+  async function loadFromFirestore(docId) {
+    try {
+      const { initializeApp, getApps } = await import(
+        'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'
+      );
+      const { getFirestore, doc, getDoc } = await import(
+        'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'
+      );
+      const firebaseConfig = {
+        apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+        authDomain:        'rasid-1bb06.firebaseapp.com',
+        projectId:         'rasid-1bb06',
+        storageBucket:     'rasid-1bb06.firebasestorage.app',
+        messagingSenderId: '668525115587',
+        appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+      const db  = getFirestore(app);
+
+      const snap = await getDoc(doc(db, 'Report', docId));
+      if (!snap.exists()) return null;
+
+      const d = snap.data();
+      const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+      let reportTimeStr = '—';
+      if (d.reportTime && d.reportTime.toDate) {
+        const dt = d.reportTime.toDate();
+        reportTimeStr = dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+      }
+
+      return {
+        id:           d.reportId || docId,
+        missingName:  d.missingPersonName || '—',
+        missingAge:   d.age ? d.age + ' سنة' : '—',
+        missingArea:  d.location || '—',
+        reportTime:   reportTimeStr,
+        details:      d.description || 'لا توجد تفاصيل.',
+        status:       d.status || 'accepted',
+        videoSource:  'Drone-01',
+        leader:       d.leader || '—',
+        leaderPhone:  d.leaderPhone || '—',
+        lastUpdate:   d.lastUpdate || '—',
+        healthStatus: d.healthStatus || 'لا يوجد',
+        vehicle:      d.vehicle || '—',
+        contact:      d.contact || '—',
+      };
+    } catch (err) {
+      console.error('loadFromFirestore error:', err);
+      return null;
+    }
+  }
+
   function init() {
     // نضع docId من URL في window حتى يقرأه الـ module script للتحقق من الليدر
     const _params = new URLSearchParams(window.location.search);
@@ -565,6 +656,40 @@
 
     state = loadState();
     ensureImages();
+
+    // إذا في docId في URL — نحمّل البيانات الحقيقية من Firestore
+    if (window._currentReportDocId) {
+      loadFromFirestore(window._currentReportDocId).then(function(reportData) {
+        if (reportData) {
+          // نحدّث state.report بالبيانات الحقيقية
+          state.report.id          = reportData.id;
+          state.report.missingName = reportData.missingName;
+          state.report.missingAge  = reportData.missingAge;
+          state.report.missingArea = reportData.missingArea;
+          state.report.reportTime  = reportData.reportTime;
+          state.report.details      = reportData.details;
+          state.report.status       = reportData.status;
+          state.report.videoSource  = reportData.videoSource;
+          state.report.healthStatus = reportData.healthStatus;
+          state.report.vehicle      = reportData.vehicle;
+          state.report.contact      = reportData.contact;
+          state.report.leader       = reportData.leader;
+
+          // نخزن معلومات إضافية للاستخدام لاحقاً
+          window._reportLeader      = reportData.leader;
+          window._reportLeaderPhone = reportData.leaderPhone;
+          window._reportLastUpdate  = reportData.lastUpdate;
+
+          setReport();
+          setHeader();
+
+          // نحدّث عنوان الـ select بالحالة الصحيحة
+          const sel = $("#statusSelect");
+          if (sel) sel.value = reportData.status;
+        }
+      });
+    }
+
     setReport();
     draw();
     wireEvents();
