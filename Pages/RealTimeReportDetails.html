@@ -473,7 +473,8 @@
           <div class="v" id="reportDetails">—</div>
         </div>
 
-        <div class="statusRow">
+        <!-- يظهر فقط للقائد — يتحكم فيه ReportDetails.js -->
+        <div class="statusRow" id="statusRow" style="display:none;">
           <select id="statusSelect" class="select" aria-label="تغيير حالة البلاغ">
             <option value="accepted">مقبول</option>
             <option value="searching">جاري البحث</option>
@@ -490,6 +491,12 @@
             <i class="fa-solid fa-check" aria-hidden="true"></i>
             تم حفظ الحالة
           </span>
+        </div>
+
+        <!-- رسالة للأعضاء غير القائد -->
+        <div id="leaderOnlyMsg" style="display:none; margin-top:.9rem; padding:10px 14px; background:rgba(166,124,82,0.08); border:1.5px solid rgba(166,124,82,0.22); border-radius:12px; font-size:13px; color:var(--ink-muted, #8c6840); font-weight:600;">
+          <i class="fa-solid fa-lock" style="margin-left:6px;"></i>
+          تعديل حالة البلاغ متاح للقائد فقط
         </div>
       </article>
     </section>
@@ -771,19 +778,65 @@
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
 
-    const snap = await getDoc(doc(db, "User", user.uid));
-    if (!snap.exists()) return;
+    // ── تحديث اسم المستخدم في الهيدر ─────────────────────────────
+    const userSnap = await getDoc(doc(db, "User", user.uid));
+    if (userSnap.exists()) {
+      const { FirstName, LastName } = userSnap.data();
+      const fullName = `${FirstName} ${LastName}`;
+      const initial  = FirstName ? FirstName.charAt(0) : '?';
 
-    const { FirstName, LastName } = snap.data();
-    const fullName = `${FirstName} ${LastName}`;
-    const initial  = FirstName ? FirstName.charAt(0) : '?';
+      const nameEl    = document.getElementById('userName');
+      const initialEl = document.getElementById('userInitial');
+      if (nameEl)    nameEl.textContent    = fullName;
+      if (initialEl) initialEl.textContent = initial;
+    }
 
-    // تحديث الهيدر
-    const nameEl    = document.getElementById('userName');
-    const initialEl = document.getElementById('userInitial');
+    // ── التحقق: هل المستخدم هو قائد هذا البلاغ؟ ──────────────────
+    // نحصل على reportId من URL أو من window._currentReportDocId الذي يضبطه ReportDetails.js
+    const getDocId = () => {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('docId') || window._currentReportDocId || null;
+    };
 
-    if (nameEl)    nameEl.textContent    = fullName;
-    if (initialEl) initialEl.textContent = initial;
+    // ننتظر قليلاً حتى يجهّز ReportDetails.js الـ docId إن احتجنا له
+    const tryCheck = async (attempt) => {
+      const docId = getDocId();
+      if (!docId && attempt < 10) {
+        setTimeout(() => tryCheck(attempt + 1), 300);
+        return;
+      }
+
+      const statusRow     = document.getElementById('statusRow');
+      const leaderOnlyMsg = document.getElementById('leaderOnlyMsg');
+
+      if (!docId) {
+        // لا يوجد docId — أخفِ كلاهما بهدوء
+        return;
+      }
+
+      const reportSnap = await getDoc(doc(db, "Report", docId));
+      if (!reportSnap.exists()) return;
+
+      const reportData = reportSnap.data();
+      const isLeader   = reportData.createdBy === user.uid;
+
+      if (isLeader) {
+        // القائد: أظهر الـ dropdown وأخبر ReportDetails.js بالـ docId
+        if (statusRow)     statusRow.style.display     = '';
+        if (leaderOnlyMsg) leaderOnlyMsg.style.display = 'none';
+        // نمرر الـ docId والـ uid لـ ReportDetails.js عبر window
+        window._leaderDocId  = docId;
+        window._leaderUid    = user.uid;
+        window._isLeader     = true;
+      } else {
+        // عضو عادي: أظهر رسالة "للقائد فقط"
+        if (statusRow)     statusRow.style.display     = 'none';
+        if (leaderOnlyMsg) leaderOnlyMsg.style.display = '';
+        window._isLeader = false;
+      }
+    };
+
+    tryCheck(0);
   });
 </script>
 </body>

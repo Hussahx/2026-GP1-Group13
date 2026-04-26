@@ -426,16 +426,57 @@
   }
 
   // -------- Events ----------
+  // ── Firestore status update (leader only) ─────────────────────────
+  async function saveStatusToFirestore(newStatus) {
+    const docId = window._leaderDocId || null;
+    if (!docId) return;
+
+    try {
+      const { initializeApp, getApps } = await import(
+        'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'
+      );
+      const { getFirestore, doc, updateDoc } = await import(
+        'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'
+      );
+
+      const firebaseConfig = {
+        apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+        authDomain:        'rasid-1bb06.firebaseapp.com',
+        projectId:         'rasid-1bb06',
+        storageBucket:     'rasid-1bb06.firebasestorage.app',
+        messagingSenderId: '668525115587',
+        appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+      const db  = getFirestore(app);
+
+      await updateDoc(doc(db, 'Report', docId), {
+        status:     newStatus,
+        lastUpdate: new Date().toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' }),
+      });
+    } catch (err) {
+      console.error('saveStatusToFirestore error:', err);
+    }
+  }
+
   function wireEvents() {
     const saveBtn = $("#saveStatusBtn");
     if (saveBtn) {
-      saveBtn.addEventListener("click", () => {
+      saveBtn.addEventListener("click", async () => {
         const sel = $("#statusSelect");
         if (!sel) return;
 
-        state.report.status = sel.value;
+        if (window._isLeader === false) {
+          showToast('فقط قائد البلاغ يمكنه تغيير الحالة');
+          return;
+        }
+
+        const newStatus = sel.value;
+        state.report.status = newStatus;
         saveState();
         setHeader();
+
+        await saveStatusToFirestore(newStatus);
 
         const hint = $("#statusSavedHint");
         if (hint) hint.style.display = "inline-flex";
@@ -518,6 +559,10 @@
 
   // -------- Init ----------
   function init() {
+    // نضع docId من URL في window حتى يقرأه الـ module script للتحقق من الليدر
+    const _params = new URLSearchParams(window.location.search);
+    window._currentReportDocId = _params.get('docId') || null;
+
     state = loadState();
     ensureImages();
     setReport();

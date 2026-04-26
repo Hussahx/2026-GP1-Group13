@@ -321,6 +321,19 @@ body.reports-page .bov{
        ─ Exposes window._fbTakeOver / window._fbJoin to classic script
        ─ HTML and CSS untouched
   ═══════════════════════════════════════════════════════════════ -->
+  <!-- ══ لوحة تعديل الحالة ══ -->
+  <div id="statusPanel" style="display:none;position:fixed;inset:0;background:rgba(20,10,0,.55);z-index:99995;align-items:flex-end;justify-content:center;">
+    <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:22px 20px 32px;font-family:'Tajawal',sans-serif;">
+      <div style="width:36px;height:4px;background:var(--s300);border-radius:2px;margin:0 auto 16px;"></div>
+      <div id="statusPanelLabel" style="font-size:15px;font-weight:800;color:var(--t900);margin-bottom:14px;text-align:right;"></div>
+      <select id="statusPanelSelect" style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--bdr);font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;color:var(--t900);background:var(--s100);outline:none;margin-bottom:14px;direction:rtl;"></select>
+      <div style="display:flex;gap:10px;">
+        <button id="statusPanelSave" type="button" style="flex:2;padding:13px;border-radius:12px;background:#9a7440;border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">حفظ الحالة</button>
+        <button id="statusPanelCancel" type="button" style="flex:1;padding:13px;border-radius:12px;background:var(--s100);border:1.5px solid var(--bdr);color:var(--t700);font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     (function () {
       var IS_HOMEPAGE = (function () {
@@ -567,19 +580,15 @@ body.reports-page .bov{
         snap.forEach((docSnap) => {
   const r = docToReport(docSnap.data(), docSnap.id, currentUid);
 
-  // الجديدة فقط
-  if (r.status !== 'active' && r.status !== 'org' && !r.userInTeam) {
-    NR.push(r);
-  }
-
-  // الجاري العمل عليها
-  if (r.status === 'active') {
-    AR.push(r);
-  }
-
-  // المنظم لها / المنضم لها
-  if (r.status === 'org' || r.userInTeam) {
+  // المنظم لها / المنضم لها — الأولوية للفريق
+  if (r.userInTeam) {
     MR.push(r);
+  } else if (r.status === 'active' || r.status === 'org') {
+    // جارٍ البحث — للمتطوعين خارج الفريق
+    AR.push(r);
+  } else {
+    // جديدة — لم يتولَّ بعد
+    NR.push(r);
   }
 });
         render(); // re-render UI whenever Firestore changes
@@ -625,7 +634,7 @@ body.reports-page .bov{
     }
 
     await updateDoc(doc(db, 'Report', docId), {
-      status: 'active',
+      status: 'accepted',
       createdBy: uid,
       teamMembers: arrayUnion(uid),
       leader: leaderName,
@@ -648,6 +657,20 @@ body.reports-page .bov{
         });
       } catch (err) {
         console.error('_fbJoin error:', err);
+      }
+    };
+
+    // ── Firestore action: updateStatus (leader only) ─────────────────────
+    window._fbUpdateStatus = async function(docId, newStatus) {
+      if (!docId || !newStatus) return;
+      try {
+        const now = new Date().toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' });
+        await updateDoc(doc(db, 'Report', docId), {
+          status:     newStatus,
+          lastUpdate: now
+        });
+      } catch (err) {
+        console.error('_fbUpdateStatus error:', err);
       }
     };
 
@@ -781,7 +804,7 @@ body.reports-page .bov{
         var r=arr[i],u=urgency(r.age,r.hlth);
         var badge=type==='new'?'<span class="badge bn">جديد</span>'
                  :type==='active'?'<span class="badge bk">جارٍ البحث</span>'
-                 :'<span class="badge bo">'+(r.role==='leader'?'أنت القائد':'عضو في الفريق')+'</span>';
+                 :'<span class="badge bo">'+(r.role==='leader'?'قائد':'عضو في الفريق')+'</span>';
         var rows='';
         if(type==='new'){
           rows='<div class="info-item"><span class="il">اسم المفقود</span><span class="iv">'+r.nm+'</span></div>'+
@@ -817,7 +840,12 @@ body.reports-page .bov{
           btns='<button class="btn bjn" data-act="join" data-id="'+r.id+'" type="button">انضمام للفريق</button>'+
                '<button class="btn bph" data-act="call" data-ph="'+r.lph+'" data-nm="'+r.ldr+'" type="button">📞 '+r.lph+'</button>';
         } else {
-          btns='<button class="btn bov" style="flex:2;" data-act="openmodal" data-id="'+r.id+'" data-type="org" type="button">متابعة العملية</button>';
+          if(r.role==='leader'){
+            btns='<button class="btn bov" data-act="opendetails" data-docid="'+r._docId+'" type="button">تفاصيل البلاغ</button>'+
+                 '<button class="btn bto" data-act="changestatus" data-id="'+r.id+'" type="button">✏️ تعديل الحالة</button>';
+          } else {
+            btns='<button class="btn bov" style="flex:2;" data-act="openmodal" data-id="'+r.id+'" data-type="org" type="button">متابعة العملية</button>';
+          }
         }
         h+='<div class="card c'+type[0]+'">'+
           '<div class="urg '+u.cls+'">'+u.lbl+'</div>'+
@@ -915,7 +943,7 @@ body.reports-page .bov{
       if(!r) return;
       var bh=type==='new'?'<span class="badge bn">جديد</span>'
             :type==='active'?'<span class="badge bk">جارٍ البحث</span>'
-            :'<span class="badge bo">'+(r.role==='leader'?'أنت القائد':'عضو في الفريق')+'</span>';
+            :'<span class="badge bo">'+(r.role==='leader'?'قائد':'عضو في الفريق')+'</span>';
       document.getElementById('mBadge').innerHTML=bh;
       document.getElementById('mName').textContent=r.nm;
       document.getElementById('mLoc').textContent='📍 '+r.loc;
@@ -977,13 +1005,72 @@ body.reports-page .bov{
            '<button class="btn bph" style="flex:1;padding:13px;" data-act="call" data-ph="'+r.lph+'" data-nm="'+r.ldr+'" type="button">📞 '+r.lph+'</button>'+
            '</div>';
       } else {
-        fh='<button class="btn bov" style="width:100%;padding:13px;" data-act="closemodal" type="button">متابعة العملية الميدانية</button>';
+        if(r.role==='leader'){
+          fh='<div style="display:flex;gap:9px;">'+
+             '<button class="btn bov" style="flex:1;padding:13px;" data-act="closemodal" type="button">متابعة العملية الميدانية</button>'+
+             '<button class="btn bto" style="flex:1;padding:13px;" data-act="modal-changestatus" data-id="'+id+'" type="button">✏️ تعديل الحالة</button>'+
+             '</div>';
+        } else {
+          fh='<button class="btn bov" style="width:100%;padding:13px;" data-act="closemodal" type="button">متابعة العملية الميدانية</button>';
+        }
       }
       document.getElementById('mFoot').innerHTML=fh;
       document.getElementById('modal').classList.add('on');
     }
 
     function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+
+    // ── لوحة تعديل الحالة (للقائد فقط) ──────────────────────────────
+    var STATUS_LABELS = {
+      'new':      'جديد',
+      'accepted': 'مقبول',
+      'active':   'جارٍ البحث',
+      'found':    'تم العثور',
+      'rescued':  'تم الإنقاذ'
+    };
+
+    function openStatusPanel(reportId){
+      var r=null;
+      for(var i=0;i<MR.length;i++) if(MR[i].id===reportId){ r=MR[i]; break; }
+      if(!r || r.role!=='leader'){ notify('فقط قائد البلاغ يمكنه تعديل الحالة','w'); return; }
+
+      var panel=document.getElementById('statusPanel');
+      var sel=document.getElementById('statusPanelSelect');
+      var lbl=document.getElementById('statusPanelLabel');
+
+      if(lbl) lbl.textContent='تعديل حالة البلاغ: '+r.ar;
+      if(sel){
+        sel.innerHTML='';
+        var opts=['accepted','active','found','rescued'];
+        for(var o=0;o<opts.length;o++){
+          var op=document.createElement('option');
+          op.value=opts[o];
+          op.textContent=STATUS_LABELS[opts[o]]||opts[o];
+          if(opts[o]===(r.status||'accepted')) op.selected=true;
+          sel.appendChild(op);
+        }
+      }
+
+      document.getElementById('statusPanelSave').onclick=function(){
+        var newStatus=sel?sel.value:'accepted';
+        if(window._fbUpdateStatus && r._docId){
+          window._fbUpdateStatus(r._docId, newStatus);
+        }
+        // نحدّث r.status محلياً فوراً بدون انتظار onSnapshot
+        r.status = newStatus;
+        notify('تم تحديث حالة البلاغ إلى: '+(STATUS_LABELS[newStatus]||newStatus),'s');
+        panel.style.display='none';
+        document.body.style.overflow='';
+      };
+
+      document.getElementById('statusPanelCancel').onclick=function(){
+        panel.style.display='none';
+        document.body.style.overflow='';
+      };
+
+      panel.style.display='flex';
+      document.body.style.overflow='hidden';
+    }
 
     document.addEventListener('click',function(e){
       var el=e.target.closest('[data-act]');
@@ -996,7 +1083,19 @@ body.reports-page .bov{
       else if(act==='openmodal') openModal(id,el.getAttribute('data-type'));
       else if(act==='modal-takeover'){ doTakeOver(id); closeModal(); }
       else if(act==='modal-join'){ doJoin(id); closeModal(); }
-      else if(act==='closemodal'){ window.location.href = "RealTimeReportDetails.html"; }
+      else if(act==='closemodal'){
+        // أحضر docId من البلاغ الحالي في MR
+        var _closeR=null;
+        for(var _ci=0;_ci<MR.length;_ci++){ if(MR[_ci].id===id){ _closeR=MR[_ci]; break; } }
+        var _docId=(_closeR&&_closeR._docId)?_closeR._docId:'';
+        window.location.href='RealTimeReportDetails.html'+(_docId?'?docId='+_docId:'');
+      }
+      else if(act==='opendetails'){
+        var _dId=el.getAttribute('data-docid')||'';
+        window.location.href='RealTimeReportDetails.html'+(_dId?'?docId='+_dId:'');
+      }
+      else if(act==='changestatus'){ openStatusPanel(id); }
+      else if(act==='modal-changestatus'){ closeModal(); openStatusPanel(id); }
     });
 
     document.getElementById('modal').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
