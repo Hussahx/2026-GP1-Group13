@@ -1476,6 +1476,167 @@ select.city-input {
 }
 
 .del-cancel-btn:hover { background: #ede0cc; }
+
+/* ══════════════════════════════════════════
+   CITY DROPDOWN — profile edit mode
+══════════════════════════════════════════ */
+
+/* Wrapper */
+.profile-page .city-group {
+  max-width: 160px !important;
+  width: 160px !important;
+  margin: 0 !important;
+}
+
+.profile-page .custom-dropdown {
+  position: relative;
+  font-family: 'Tajawal', sans-serif;
+  direction: rtl;
+}
+
+/* Trigger button — general */
+.profile-page .cd-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 36px;
+  padding: 0 0.75rem;
+  border: 1.5px solid rgba(166,124,82,0.22);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.78);
+  color: rgba(74,48,32,0.75);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  outline: none;
+  user-select: none;
+  text-align: right;
+  box-shadow: 0 2px 8px rgba(140,90,30,0.06);
+}
+
+/* Trigger — value selected */
+.profile-page .cd-trigger.has-value {
+  color: #2c1a08;
+}
+
+/* Trigger — hover */
+.profile-page .cd-trigger:hover {
+  border-color: rgba(166,124,82,0.45);
+  background: rgba(255,255,255,0.92);
+}
+
+/* Trigger — focus & open */
+.profile-page .cd-trigger:focus,
+.profile-page .cd-trigger.open {
+  border-color: rgba(166,124,82,0.65);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(166,124,82,0.11);
+}
+
+/* Trigger text */
+.profile-page .cd-trigger-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Arrow icon */
+.profile-page .cd-arrow {
+  flex-shrink: 0;
+  margin-right: 0.4rem;
+  color: #a67c52;
+  font-size: 0.65rem;
+  transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+.profile-page .cd-trigger.open .cd-arrow {
+  transform: rotate(180deg);
+}
+
+/* Dropdown panel */
+.profile-page .cd-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px) !important;
+  bottom: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 9999;
+  background: #fff;
+  border: 1.5px solid rgba(166,124,82,0.45);
+  border-radius: 16px !important;
+  box-shadow:
+    0 8px 32px rgba(62,47,28,0.13),
+    0 2px 8px  rgba(62,47,28,0.06) !important;
+  overflow: hidden;
+  animation: citySlideIn 0.18s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.profile-page .cd-panel.open { display: block; }
+
+@keyframes citySlideIn {
+  from { opacity: 0; transform: translateY(-6px) scaleY(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scaleY(1);    }
+}
+
+/* Options list */
+.profile-page .cd-list {
+  max-height: 120px !important;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.3rem 0 !important;
+}
+
+.profile-page .cd-list::-webkit-scrollbar       { width: 4px; }
+.profile-page .cd-list::-webkit-scrollbar-track  { background: transparent; }
+.profile-page .cd-list::-webkit-scrollbar-thumb  {
+  background: rgba(166,124,82,0.28);
+  border-radius: 4px;
+}
+
+/* Individual option */
+.profile-page .cd-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.85rem;
+  font-size: 13px;
+  color: #5c4530;
+  cursor: pointer;
+  transition: background 0.13s ease, color 0.13s ease;
+  direction: rtl;
+  text-align: right;
+  font-family: 'Tajawal', sans-serif;
+}
+
+/* Option — hover & keyboard focused */
+.profile-page .cd-option:hover,
+.profile-page .cd-option.focused {
+  background: rgba(166,124,82,0.09);
+  color: #a67c52;
+}
+
+/* Option — selected */
+.profile-page .cd-option.selected {
+  background: rgba(166,124,82,0.13);
+  color: #8b6b47;
+  font-weight: 700;
+}
+
+/* Checkmark on selected option */
+.profile-page .cd-option.selected::after {
+  content: '\f00c';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 0.65rem;
+  color: #a67c52;
+  margin-right: auto;
+  padding-right: 0.4rem;
+}
 </style>
 </head>
 <body>
@@ -1620,31 +1781,15 @@ select.city-input {
           <span class="bio-val display-only" id="bioEmailDisplay" dir="ltr" style="opacity:.75;">—</span>
         </div>
 
-        <div class="bio-row">
+        <div class="bio-row" id="cityBioRow">
           <span class="bio-ico">📍</span>
           <span class="bio-val display-only" id="bioCityDisplay">—</span>
-<select id="bioCityInput" class="edit-input city-input">
-  <option value="">اختر المدينة</option>
-  <option value="الرياض">الرياض</option>
-  <option value="جدة">جدة</option>
-  <option value="الدمام">الدمام</option>
-  <option value="مكة">مكة</option>
-  <option value="المدينة المنورة">المدينة المنورة</option>
-  <option value="الطائف">الطائف</option>
-  <option value="تبوك">تبوك</option>
-  <option value="أبها">أبها</option>
-  <option value="خميس مشيط">خميس مشيط</option>
-  <option value="حائل">حائل</option>
-  <option value="بريدة">بريدة</option>
-  <option value="نجران">نجران</option>
-  <option value="جازان">جازان</option>
-  <option value="الخبر">الخبر</option>
-  <option value="الجبيل">الجبيل</option>
-</select>     </div>
+          <input type="text" id="bioCityInput" class="edit-input city-input" value="" maxlength="50" placeholder="المدينة">
+        </div>
 
         <div class="bio-row">
-          <span class="bio-ico">🪪</span>
-          <span class="bio-val" id="bioJoin" dir="ltr">—</span>
+          <span class="bio-ico" style="color:#3b82f6;font-size:15px;"><i class="fas fa-calendar-days"></i></span>
+          <span class="bio-val" id="bioJoin" style="color:#3b82f6;font-weight:600;">—</span>
         </div>
       </div>
 
@@ -1991,13 +2136,27 @@ window._isEditing = false;
 function formatJoinDate(ts) {
   if (!ts) return null;
   let d;
-  if (typeof ts.toDate === 'function') d = ts.toDate();
-  else if (ts instanceof Date)         d = ts;
-  else                                 d = new Date(ts);
-  if (isNaN(d.getTime())) return null;
+  if (typeof ts.toDate === 'function') {
+    // Firestore Timestamp
+    d = ts.toDate();
+  } else if (ts instanceof Date) {
+    d = ts;
+  } else if (typeof ts === 'string') {
+    // Handle "M/D/YYYY" string stored in Firebase e.g. "5/1/2020"
+    var parts = ts.split('/');
+    if (parts.length === 3) {
+      // parts[0]=month, parts[1]=day, parts[2]=year
+      d = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+    } else {
+      d = new Date(ts);
+    }
+  } else {
+    d = new Date(ts);
+  }
+  if (!d || isNaN(d.getTime())) return null;
   const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
                   'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-  return 'انضم ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  return 'انضم ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
 }
 
 /* ── ربط بيانات Firestore بعناصر الصفحة ── */
@@ -2029,7 +2188,7 @@ function bindProfileToDOM(data, user) {
   }
 
   if (joinEl) {
-    const joinStr = formatJoinDate(data.JoinDate);
+    const joinStr = formatJoinDate(data.JoindAt);
     joinEl.textContent = joinStr || '—';
   }
 }
@@ -2120,7 +2279,7 @@ window._origName  = '';
 function _hasChanges() {
   var phone = (document.getElementById('bioPhoneInput').value || '').trim();
   var city  = (document.getElementById('bioCityInput').value  || '').trim();
-  var name  = (document.getElementById('bioNameInput').value  || '').trim();
+  var name  = (document.getElementById('bioNameInput').value   || '').trim();
   return phone !== window._origPhone || city !== window._origCity || name !== window._origName;
 }
 
@@ -2145,23 +2304,28 @@ window.startEdit = function() {
   window._isEditing = true;
 
   // Save original values for change detection
-  window._origName  = (document.getElementById('bioNameDisplay').textContent === '—') ? '' : document.getElementById('bioNameDisplay').textContent.trim();
   window._origPhone = (document.getElementById('bioPhoneDisplay').textContent === '—') ? '' : document.getElementById('bioPhoneDisplay').textContent.trim();
   window._origCity  = (document.getElementById('bioCityDisplay').textContent  === '—') ? '' : document.getElementById('bioCityDisplay').textContent.trim();
 
   // Set input values
-  document.getElementById('bioNameInput').value  = window._origName;
   document.getElementById('bioPhoneInput').value = window._origPhone;
-  document.getElementById('bioCityInput').value  = window._origCity;
+
+  // Sync city dropdown to current city value
+  var citySelect = document.getElementById('bioCityInput');
+  if (citySelect) citySelect.value = window._origCity;
+  var cityTrigText = document.getElementById('cityTriggerText');
+  var cityTrig     = document.getElementById('cityTrigger');
+  if (cityTrigText) cityTrigText.textContent = window._origCity || 'اختر المدينة';
+  if (cityTrig) cityTrig.classList.toggle('has-value', !!window._origCity);
+  if (window._cityDropdownRebuild) window._cityDropdownRebuild();
 
   // Show inputs, hide displays
-  document.getElementById('bioNameDisplay').classList.add('display-only');
   document.getElementById('bioPhoneDisplay').classList.add('display-only');
   document.getElementById('bioCityDisplay').classList.add('display-only');
 
-  document.getElementById('bioNameInput').style.display  = 'inline-block';
   document.getElementById('bioPhoneInput').style.display = 'inline-block';
-  document.getElementById('bioCityInput').style.display  = 'inline-block';
+  // Show custom dropdown wrapper
+  document.getElementById('cityDropdown').style.display = 'block';
 
   // Email stays visible but read-only
   document.getElementById('bioEmailDisplay').classList.remove('display-only');
@@ -2169,13 +2333,13 @@ window.startEdit = function() {
   _setEditBtnState('cancel');
 
   // Watch for changes to switch button to "حفظ"
-  ['bioNameInput','bioPhoneInput','bioCityInput'].forEach(function(id) {
+  ['bioPhoneInput','bioCityInput'].forEach(function(id) {
     document.getElementById(id).addEventListener('input', _onFieldInput);
   });
 
   // Clear any stale errors
   document.getElementById('phoneError').classList.remove('show');
-  document.getElementById('nameError').classList.remove('show');
+
 
   document.getElementById('bioNameInput').focus();
 };
@@ -2184,23 +2348,29 @@ function _onFieldInput() {
   if (!window._isEditing) return;
   _setEditBtnState(_hasChanges() ? 'save' : 'cancel');
 }
+window._onFieldInput = _onFieldInput;
 
 /* ── helper: exit edit mode ── */
 function _exitEditMode() {
   window._isEditing = false;
 
   // Remove input listeners
-  ['bioNameInput','bioPhoneInput','bioCityInput'].forEach(function(id) {
+  ['bioPhoneInput','bioCityInput'].forEach(function(id) {
     document.getElementById(id).removeEventListener('input', _onFieldInput);
   });
 
-  document.getElementById('bioNameDisplay').classList.remove('display-only');
+
   document.getElementById('bioPhoneDisplay').classList.remove('display-only');
   document.getElementById('bioCityDisplay').classList.remove('display-only');
 
-  document.getElementById('bioNameInput').style.display  = 'none';
   document.getElementById('bioPhoneInput').style.display = 'none';
-  document.getElementById('bioCityInput').style.display  = 'none';
+  // Hide city dropdown wrapper
+  document.getElementById('cityDropdown').style.display  = 'none';
+  // Close panel if open
+  var panel = document.getElementById('cityPanel');
+  var trig  = document.getElementById('cityTrigger');
+  if (panel) panel.classList.remove('open');
+  if (trig)  trig.classList.remove('open');
 
   document.getElementById('phoneError').classList.remove('show');
   document.getElementById('nameError').classList.remove('show');
@@ -2212,9 +2382,15 @@ function _exitEditMode() {
 window.cancelEdit = function() {
   if (!window._isEditing) return;
 
-  document.getElementById('bioNameInput').value  = window._origName;
+ 
   document.getElementById('bioPhoneInput').value = window._origPhone;
-  document.getElementById('bioCityInput').value  = window._origCity;
+  // Reset city dropdown
+  var cs = document.getElementById('bioCityInput');
+  if (cs) cs.value = window._origCity;
+  var ctt = document.getElementById('cityTriggerText');
+  var ct  = document.getElementById('cityTrigger');
+  if (ctt) ctt.textContent = window._origCity || 'اختر المدينة';
+  if (ct)  ct.classList.toggle('has-value', !!window._origCity);
 
   _exitEditMode();
 };
@@ -2810,6 +2986,112 @@ setTimeout(pushDrone, 1800);
 setTimeout(pushDrone, 4500);
 
 renderOps();
+
+/* ── City Dropdown Init ── */
+(function initCityDropdown() {
+  var citySelect  = document.getElementById('bioCityInput');
+  var trigger     = document.getElementById('cityTrigger');
+  var triggerText = document.getElementById('cityTriggerText');
+  var panel       = document.getElementById('cityPanel');
+  var listEl      = document.getElementById('cityList');
+  var wrapper     = document.getElementById('cityDropdown');
+  if (!citySelect || !trigger || !panel || !listEl) return;
+
+  var cities = Array.from(citySelect.options)
+    .filter(function(o){ return o.value !== ''; })
+    .map(function(o){ return o.value; });
+
+  var isOpen = false;
+  var focusedIdx = -1;
+
+  function buildList() {
+    listEl.innerHTML = '';
+    focusedIdx = -1;
+    cities.forEach(function(city) {
+      var opt = document.createElement('div');
+      var isSel = city === citySelect.value;
+      opt.className = 'cd-option' + (isSel ? ' selected' : '');
+      opt.textContent = city;
+      opt.setAttribute('role', 'option');
+      opt.setAttribute('data-value', city);
+      opt.setAttribute('aria-selected', isSel ? 'true' : 'false');
+      opt.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        selectCity(city);
+      });
+      listEl.appendChild(opt);
+    });
+  }
+  window._cityDropdownRebuild = buildList;
+
+  function selectCity(val) {
+    citySelect.value = val;
+    triggerText.textContent = val;
+    trigger.classList.add('has-value');
+    closePanel();
+    trigger.focus();
+    buildList();
+    // Trigger change detection — same logic as phone input
+    if (window._isEditing && window._onFieldInput) window._onFieldInput();
+  }
+
+  function openPanel() {
+    isOpen = true;
+    buildList();
+    panel.classList.add('open');
+    trigger.classList.add('open');
+    trigger.setAttribute('aria-expanded', 'true');
+    wrapper.setAttribute('aria-expanded', 'true');
+    var opts = listEl.querySelectorAll('.cd-option');
+    focusedIdx = -1;
+    opts.forEach(function(o, i) { if (o.classList.contains('selected')) focusedIdx = i; });
+    requestAnimationFrame(function() { if (focusedIdx >= 0) setFocused(focusedIdx); });
+  }
+
+  function closePanel() {
+    isOpen = false;
+    panel.classList.remove('open');
+    trigger.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+    wrapper.setAttribute('aria-expanded', 'false');
+    focusedIdx = -1;
+    listEl.querySelectorAll('.cd-option.focused').forEach(function(o) { o.classList.remove('focused'); });
+  }
+
+  function setFocused(idx) {
+    var opts = listEl.querySelectorAll('.cd-option');
+    opts.forEach(function(o, i) { o.classList.toggle('focused', i === idx); });
+    if (opts[idx]) opts[idx].scrollIntoView({ block: 'nearest' });
+    focusedIdx = idx;
+  }
+
+  trigger.addEventListener('click', function() { isOpen ? closePanel() : openPanel(); });
+
+  trigger.addEventListener('keydown', function(e) {
+    var opts = listEl.querySelectorAll('.cd-option');
+    if (!isOpen) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); openPanel();
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown')      { e.preventDefault(); setFocused(Math.min(focusedIdx + 1, opts.length - 1)); }
+    else if (e.key === 'ArrowUp')   { e.preventDefault(); setFocused(Math.max(focusedIdx - 1, 0)); }
+    else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (focusedIdx >= 0 && opts[focusedIdx]) selectCity(opts[focusedIdx].dataset.value);
+    } else if (e.key === 'Escape' || e.key === 'Tab') {
+      if (e.key === 'Escape') e.preventDefault();
+      closePanel();
+    }
+  });
+
+  document.addEventListener('mousedown', function(e) {
+    if (isOpen && !wrapper.contains(e.target)) closePanel();
+  });
+
+  buildList();
+})();
 
 /* navbar hide on scroll down */
 var navbar = document.getElementById('navbar');
