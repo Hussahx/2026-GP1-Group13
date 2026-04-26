@@ -3,8 +3,7 @@ const API = {};
     const STORAGE_KEY = "admin_pending_requests_v1";
     let requests = [];
     let filtered = [];
-    let pendingRejectId = null;
-
+  let pendingAction = null;
     const $ = (sel) => document.querySelector(sel);
 
     function formatDateTime(dt = new Date()){
@@ -76,6 +75,32 @@ const API = {};
   return Date.now();
 }
 
+function generateTemporaryPassword(length = 12) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+  let password = "";
+
+  for (let i = 0; i < length; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  return password;
+}
+
+async function sendVolunteerEmail({ type, name, email, password = "", reason = "" }) {
+  const emailjs = await import('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm');
+
+  emailjs.default.init('jl8cOTzNL4mqFGXJW');
+
+  await emailjs.default.send("service_ilejgsc", "template_tov9o4t", {
+    to_email: email,
+    name: name,
+    email: email,
+    password: password,
+    reason: reason,
+    type: type
+  });
+}
+
 
 
 
@@ -121,12 +146,14 @@ const API = {};
 
 
    async function acceptRequest(id) {
-  const [{ db }, fsMod] = await Promise.all([
+  const [{ db }, fsMod, authMod] = await Promise.all([
     import('/JS/firebase.js'),
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
   ]);
 
   const { doc, getDoc, setDoc, updateDoc, serverTimestamp } = fsMod;
+  const { getAuth, createUserWithEmailAndPassword } = authMod;
 
   const volunteerRef = doc(db, "Volunteer", id);
   const volunteerSnap = await getDoc(volunteerRef);
@@ -137,20 +164,46 @@ const API = {};
 
   const volunteer = volunteerSnap.data();
 
-  await setDoc(doc(db, "User", id), {
-    FirstName: volunteer.FirstName || '',
-    LastName: volunteer.LastName || '',
-    Email: volunteer.Email || '',
-    Phone: volunteer.Phone || '',
+  const email = volunteer.Email || "";
+  const fullName = `${volunteer.FirstName || ""} ${volunteer.LastName || ""}`.trim() || "المتطوع";
+
+  if (!email) {
+    throw new Error("لا يوجد إيميل للمتطوع");
+  }
+
+  const temporaryPassword = generateTemporaryPassword();
+  const auth = getAuth();
+
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    temporaryPassword
+  );
+
+  const uid = userCredential.user.uid;
+
+  await setDoc(doc(db, "User", uid), {
+    FirstName: volunteer.FirstName || "",
+    LastName: volunteer.LastName || "",
+    Email: email,
+    Phone: volunteer.Phone || "",
     CreatedAt: serverTimestamp(),
-    Role: "volunteer"
+    Role: "volunteer",
+    AccountStatus: "active"
   });
 
   await updateDoc(volunteerRef, {
     ApprovalStatus: "approved",
     Status: "active",
+    UserID: uid,
     approvedAt: serverTimestamp()
   });
+
+ return {
+  email,
+  fullName,
+  password: temporaryPassword
+};
 }
 
 
@@ -160,13 +213,32 @@ const API = {};
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
   ]);
 
-  const { doc, updateDoc } = fsMod;
+  const { doc, getDoc, updateDoc, serverTimestamp } = fsMod;
 
-  await updateDoc(doc(db, "Volunteer", id), {
+  const volunteerRef = doc(db, "Volunteer", id);
+  const volunteerSnap = await getDoc(volunteerRef);
+
+  if (!volunteerSnap.exists()) {
+    throw new Error("الطلب غير موجود");
+  }
+
+  const volunteer = volunteerSnap.data();
+
+  const email = volunteer.Email || "";
+  const fullName = `${volunteer.FirstName || ""} ${volunteer.LastName || ""}`.trim() || "المتطوع";
+
+  await updateDoc(volunteerRef, {
     ApprovalStatus: "rejected",
     Status: "rejected",
-    RejectionReason: reason || ""
+    RejectionReason: reason || "",
+    rejectedAt: serverTimestamp()
   });
+
+  return {
+    email,
+    fullName,
+    reason
+  };
 }
 
 
@@ -218,7 +290,7 @@ function render() {
             </button>
             <button class="btn danger" type="button" data-action="reject" title="رفض الطلب" style="height:44px;">
               <i class="fa-solid fa-trash" aria-hidden="true"></i>
-              <span class="btn-label">حذف</span>
+              <span class="btn-label">رفض</span>
             </button>
           </div>
 
@@ -263,19 +335,45 @@ function render() {
       render();
     }
 
-    function openRejectModal(id){
-      pendingRejectId = id;
-      const r = requests.find(x => x.id === id);
-      $("#modalSubtitle").textContent = r ? `الطلب: ${r.name} — ${r.email || ""}` : "—";
-      $("#rejectReason").value = "";
-      $("#modalBackdrop").style.display = "flex";
-      $("#rejectReason").focus();
-    }
+    function openDecisionModal(type, id) {
+  const r = requests.find(x => x.id === id);
+  if (!r) return;
 
-    function closeRejectModal(){
-      pendingRejectId = null;
-      $("#modalBackdrop").style.display = "none";
-    }
+  pendingAction = {
+    type,
+    id,
+    name: r.name,
+    email: r.email
+  };
+
+  $("#modalTitle").textContent = type === "accept" ? "تأكيد القبول" : "تأكيد الرفض";
+  $("#modalSubtitle").textContent =
+    type === "accept"
+      ? `هل أنت متأكد من قبول ${r.name}؟`
+      : `هل أنت متأكد من رفض ${r.name}؟`;
+
+  $("#confirmActionLabel").textContent =
+    type === "accept" ? "تأكيد القبول" : "تأكيد الرفض";
+
+  $("#rejectReason").value = "";
+  $("#rejectReasonWrap").style.display = type === "reject" ? "grid" : "none";
+
+  $("#modalBackdrop").style.display = "flex";
+  $("#modalBackdrop").setAttribute("aria-hidden", "false");
+
+  if (type === "reject") {
+    $("#rejectReason").focus();
+  } else {
+    $("#confirmActionBtn").focus();
+  }
+}
+
+function closeDecisionModal() {
+  pendingAction = null;
+  $("#rejectReason").value = "";
+  $("#modalBackdrop").style.display = "none";
+  $("#modalBackdrop").setAttribute("aria-hidden", "true");
+}
 
     $("#searchInput").addEventListener("input", applyFilter);
 
@@ -294,26 +392,14 @@ function render() {
     const action = btn.getAttribute("data-action");
 
     if (action === "accept") {
-      btn.disabled = true;
-      btn.classList.add("loading");
-      try {
-        await acceptRequest(id);
-        showToast("تم قبول الطلب");
-        await reload(false);
-      } catch (err) {
-        console.error(err);
-        showToast("حدث خطأ أثناء القبول");
-        btn.disabled = false;
-      } finally {
-        btn.classList.remove("loading");
-      }
-      return;
-    }
+  openDecisionModal("accept", id);
+  return;
+}
 
-    if (action === "reject") {
-      openRejectModal(id);
-      return;
-    }
+if (action === "reject") {
+  openDecisionModal("reject", id);
+  return;
+}
   }
 
   const toggleArea = e.target.closest('[data-toggle="details"]');
@@ -325,38 +411,81 @@ function render() {
   }
 });
 
-    $("#closeModalBtn").addEventListener("click", closeRejectModal);
-    $("#cancelRejectBtn").addEventListener("click", closeRejectModal);
-    $("#modalBackdrop").addEventListener("click", (e)=>{
-      if(e.target === $("#modalBackdrop")) closeRejectModal();
-    });
+   $("#closeModalBtn").addEventListener("click", closeDecisionModal);
+$("#cancelRejectBtn").addEventListener("click", closeDecisionModal);
 
-    $("#confirmRejectBtn").addEventListener("click", async ()=>{
-      const id = pendingRejectId;
-      if(!id) return;
+$("#modalBackdrop").addEventListener("click", (e) => {
+  if (e.target === $("#modalBackdrop")) closeDecisionModal();
+});
 
-      const reason = $("#rejectReason").value.trim();
-      const confirmBtn = $("#confirmRejectBtn");
-      confirmBtn.disabled = true;
-      confirmBtn.classList.add("loading");
+$("#confirmActionBtn").addEventListener("click", async () => {
+  if (!pendingAction) return;
 
-      try{
-        await rejectRequest(id, reason);
-        closeRejectModal();
-        showToast(reason ? "تم الحذف مع السبب" : "تم الحذف");
-        await reload(false);
-      }catch(err){
-        console.error(err);
-        showToast("حدث خطأ أثناء الحذف");
-      }finally{
-        confirmBtn.disabled = false;
-        confirmBtn.classList.remove("loading");
-      }
-    });
+  const { type, id, name } = pendingAction;
+  const reason = $("#rejectReason").value.trim();
+  const confirmBtn = $("#confirmActionBtn");
+
+  if (type === "reject" && !reason) {
+    showToast("اكتب سبب الرفض أولًا");
+    $("#rejectReason").focus();
+    return;
+  }
+
+  confirmBtn.disabled = true;
+  confirmBtn.classList.add("loading");
+
+  try {
+    if (type === "accept") {const result = await acceptRequest(id);
+
+try {
+  await sendVolunteerEmail({
+    type: "accepted",
+    name: result.fullName,
+    email: result.email,
+    password: result.password
+  });
+
+  showToast(`تم قبول ${name} وإرسال الإيميل`);
+} catch (emailErr) {
+  console.error("Accept email error:", emailErr);
+  showToast(`تم قبول ${name} لكن فشل إرسال الإيميل`);
+}
+
+closeDecisionModal();
+await reload(false);
+    }
+
+    if (type === "reject") {const result = await rejectRequest(id, reason);
+
+try {
+  await sendVolunteerEmail({
+    type: "rejected",
+    name: result.fullName,
+    email: result.email,
+    reason: result.reason
+  });
+
+  showToast(`تم رفض ${name} وإرسال الإيميل`);
+} catch (emailErr) {
+  console.error("Reject email error:", emailErr);
+  showToast(`تم رفض ${name} لكن فشل إرسال الإيميل`);
+}
+
+closeDecisionModal();
+await reload(false);
+    }
+  } catch (err) {
+    console.error(err);
+    showToast("حدث خطأ أثناء تنفيذ العملية");
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.classList.remove("loading");
+  }
+});
 
     document.addEventListener("keydown", (e)=>{
       if(e.key === "Escape" && $("#modalBackdrop").style.display === "flex"){
-        closeRejectModal();
+        closeDecisionModal();
       }
     });
 

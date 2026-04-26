@@ -1343,6 +1343,12 @@ body {
 }
 .delete-account-btn:active { opacity: .8; }
 
+select.city-input {
+  direction: rtl;
+  text-align: center;
+  appearance: none;
+}
+
 /* ══ Overlay تأكيد الحذف ══ */
 .del-overlay {
   position: fixed;
@@ -1433,6 +1439,42 @@ body {
   cursor: pointer;
   transition: background .15s;
 }
+.custom-dropdown {
+  position: relative;
+  width: 120px;
+}
+
+.custom-dropdown .selected {
+  background: white;
+  padding: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+}
+
+.custom-dropdown .options {
+  position: absolute;
+  top: 100%; /* 👈 تحت */
+  right: 0;
+  left: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 999;
+}
+
+.custom-dropdown .options div {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.custom-dropdown .options div:hover {
+  background: #f5efe6;
+}
+
 .del-cancel-btn:hover { background: #ede0cc; }
 </style>
 </head>
@@ -1548,8 +1590,7 @@ body {
 
       <div class="name-row" id="editWrap">
         <div class="hero-name display-only" id="bioNameDisplay">...</div>
-        <input type="text" id="bioNameInput" class="edit-input name-input" value="" maxlength="50" placeholder="الاسم الكامل" style="display:none;">
-
+        <input type="hidden" id="bioNameInput">
         <!-- زر واحد يتغير حسب الحالة -->
         <button class="pencil-btn" id="editBtn" onclick="handleEditBtn()">
           <svg viewBox="0 0 24 24" id="editBtnIcon">
@@ -1582,8 +1623,24 @@ body {
         <div class="bio-row">
           <span class="bio-ico">📍</span>
           <span class="bio-val display-only" id="bioCityDisplay">—</span>
-          <input type="text" id="bioCityInput" class="edit-input city-input" value="" maxlength="50" placeholder="المدينة">
-        </div>
+<select id="bioCityInput" class="edit-input city-input">
+  <option value="">اختر المدينة</option>
+  <option value="الرياض">الرياض</option>
+  <option value="جدة">جدة</option>
+  <option value="الدمام">الدمام</option>
+  <option value="مكة">مكة</option>
+  <option value="المدينة المنورة">المدينة المنورة</option>
+  <option value="الطائف">الطائف</option>
+  <option value="تبوك">تبوك</option>
+  <option value="أبها">أبها</option>
+  <option value="خميس مشيط">خميس مشيط</option>
+  <option value="حائل">حائل</option>
+  <option value="بريدة">بريدة</option>
+  <option value="نجران">نجران</option>
+  <option value="جازان">جازان</option>
+  <option value="الخبر">الخبر</option>
+  <option value="الجبيل">الجبيل</option>
+</select>     </div>
 
         <div class="bio-row">
           <span class="bio-ico">🪪</span>
@@ -2775,6 +2832,19 @@ window.addEventListener('scroll', function(){
 
   lastScrollY = currentY;
 });
+
+
+let selectedCity = "";
+
+function toggleDropdown() {
+  document.getElementById("cityOptions").style.display = "block";
+}
+
+function selectCity(city) {
+  selectedCity = city;
+  document.querySelector("#cityDropdown .selected").innerText = city;
+  document.getElementById("cityOptions").style.display = "none";
+}
 
 </script>
 <script type="module">
