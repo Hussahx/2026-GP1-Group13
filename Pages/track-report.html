@@ -538,14 +538,19 @@
     }
 
     function mapStatus(status) {
+      /* doneUpTo = how many timeline nodes should be GREEN (completed)
+         'new' / 'accepted': step 1 is already done the moment report is submitted */
       const map = {
-        'new':      { label: 'جديد',           pillCls: 'pill-pending', step: 1, text: 'تم استلام البلاغ' },
-        'active':   { label: 'جاري البحث',      pillCls: 'pill-active',  step: 3, text: 'جاري البحث الميداني' },
-        'org':      { label: 'قيد التنظيم',     pillCls: 'pill-pending', step: 2, text: 'قيد المراجعة والتنظيم' },
-        'closed':   { label: 'مُغلق',           pillCls: 'pill-closed',  step: 4, text: 'تم إغلاق البلاغ' },
-        'rejected': { label: 'مرفوض',           pillCls: 'pill-rejected',step: 1, text: 'تم رفض البلاغ' },
+        'new':      { label: 'تم استلام البلاغ',     pillCls: 'pill-pending',  step: 1, doneUpTo: 1, text: 'تم استلام البلاغ وتسجيله في النظام' },
+        'accepted': { label: 'تم استلام البلاغ',     pillCls: 'pill-pending',  step: 1, doneUpTo: 1, text: 'تم استلام البلاغ وتسجيله في النظام' },
+        'org':      { label: 'قيد المراجعة',          pillCls: 'pill-pending',  step: 2, doneUpTo: 2, text: 'تمت مراجعة البلاغ والتحقق من بياناته' },
+        'active':   { label: 'عملية البحث جارية',    pillCls: 'pill-active',   step: 3, doneUpTo: 3, text: 'عملية البحث جارية في المنطقة المحددة' },
+        'rescued':  { label: 'تم إغلاق البلاغ',       pillCls: 'pill-closed',   step: 4, doneUpTo: 4, text: 'تم إغلاق البلاغ بنجاح' },
+        'found':    { label: 'تم إغلاق البلاغ',       pillCls: 'pill-closed',   step: 4, doneUpTo: 4, text: 'تم إغلاق البلاغ بنجاح' },
+        'closed':   { label: 'تم إغلاق البلاغ',       pillCls: 'pill-closed',   step: 4, doneUpTo: 4, text: 'تم إغلاق البلاغ بنجاح' },
+        'rejected': { label: 'مرفوض',                 pillCls: 'pill-rejected', step: 1, doneUpTo: 0, text: 'تم رفض البلاغ' },
       };
-      return map[status] || { label: status || 'جديد', pillCls: 'pill-pending', step: 1, text: 'تم استلام البلاغ' };
+      return map[status] || { label: 'تم استلام البلاغ', pillCls: 'pill-pending', step: 1, doneUpTo: 1, text: 'تم استلام البلاغ وتسجيله في النظام' };
     }
 
     /* ── Events ── */
@@ -643,75 +648,126 @@
       resultsWrap.classList.add('visible');
 
       const stepToAnimate = isRejected ? 1 : statusInfo.step;
+      const doneUpTo      = isRejected ? 0 : (statusInfo.doneUpTo ?? statusInfo.step - 1);
       const dates = buildStepDates(data);
 
-      setTimeout(() => animateTimeline(stepToAnimate, dates), 280);
+      setTimeout(() => animateTimeline(stepToAnimate, doneUpTo, dates), 280);
       stagger('.info-col',  600, 75);
       stagger('.log-entry', 950, 85);
       smoothScroll();
     }
 
-    /* ── Build log entries ── */
-    function buildLogEntries(data) {
-      const entries = [];
-      const status  = data.status || 'new';
+    /* ═══════════════════════════════════════════════════════════
+       buildLogEntries
+       ─────────────────────────────────────────────────────────
+       DISPLAY ORDER (newest first, i.e. reverse chronological):
+         [latest update]
+         ...
+         [Report Received]   ← ALWAYS the last row shown = oldest
 
-      entries.push({
+       The log is built oldest→newest then reversed for display,
+       so "Report Received" always anchors the bottom of the list
+       and step-1 node is always green (done).
+    ═══════════════════════════════════════════════════════════ */
+    function buildLogEntries(data) {
+      const status = data.status || 'new';
+
+      /* ── STEP A: Build the "Report Received" anchor entry ──
+         This is ALWAYS the first chronological event (index 0 = oldest).
+         It is written here unconditionally so it never gets lost. */
+      const receivedEntry = {
         time: formatTime(data.reportTime),
         text: 'تم استلام البلاغ وتسجيله في النظام.',
         type: 'done'
-      });
+      };
 
-      if (['active', 'org', 'closed', 'rejected'].includes(status)) {
-        entries.push({
-          time: '—',
-          text: 'تمت مراجعة البلاغ والتحقق من بياناته.',
-          type: (status === 'active' || status === 'closed') ? 'done' : 'active'
+      /* ── STEP B: Collect subsequent updates ── */
+      let updates = [];
+
+      if (Array.isArray(data.statusLog) && data.statusLog.length > 0) {
+        /* Sort oldest → newest by Firestore timestamp */
+        const sorted = [...data.statusLog].sort((a, b) => {
+          const tA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate().getTime() : 0;
+          const tB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate().getTime() : 0;
+          return tA - tB;
         });
+
+        /* Filter out any duplicate "report_received" entries that may have
+           been written to Firestore — we always inject it ourselves above */
+        const filtered = sorted.filter(e =>
+          e.status !== 'report_received' && e.status !== 'new'
+        );
+
+        const isClosed = ['rescued', 'found', 'closed'].includes(status);
+
+        filtered.forEach((e, idx) => {
+          const isLatest = idx === filtered.length - 1;
+          updates.push({
+            time: e.loggedAt || '—',
+            text: e.note     || e.label || '—',
+            /* Latest entry is 'active' (pulsing dot) unless report is closed */
+            type: (isLatest && !isClosed) ? 'active' : 'done'
+          });
+        });
+      } else {
+        /* ── Fallback: infer updates from the status field alone ── */
+        if (['org', 'active', 'rescued', 'found', 'closed', 'rejected'].includes(status)) {
+          updates.push({
+            time: '—',
+            text: 'تمت مراجعة البلاغ والتحقق من بياناته.',
+            type: (['active', 'rescued', 'found', 'closed'].includes(status)) ? 'done' : 'active'
+          });
+        }
+        if (['active', 'rescued', 'found', 'closed'].includes(status)) {
+          updates.push({
+            time: '—',
+            text: 'عملية البحث جارية في المنطقة المحددة.',
+            type: (['rescued', 'found', 'closed'].includes(status)) ? 'done' : 'active'
+          });
+        }
+        if (['rescued', 'found', 'closed'].includes(status)) {
+          const outcomeNote = data.outcomeNotes ? ' ' + data.outcomeNotes : '';
+          updates.push({
+            time: data.closedAt ? formatTime(data.closedAt) : '—',
+            text: 'تم إغلاق البلاغ.' + outcomeNote,
+            type: 'done'
+          });
+        }
+        if (status === 'rejected') {
+          updates.push({
+            time: '—',
+            text: 'تم رفض البلاغ من قِبل الجهة المختصة.',
+            type: 'active'
+          });
+        }
       }
 
-      if (status === 'active' || status === 'closed') {
-        entries.push({
-          time: '—',
-          text: 'انطلقت عملية البحث الميداني في المنطقة المحددة.',
-          type: status === 'closed' ? 'done' : 'active'
-        });
-      }
-
-      if (status === 'closed') {
-        entries.push({
-          time: data.closedAt ? formatTime(data.closedAt) : '—',
-          text: 'تم إغلاق البلاغ بنجاح.' + (data.outcomeNotes ? ' ' + data.outcomeNotes : ''),
-          type: 'done'
-        });
-      }
-
-      if (status === 'rejected') {
-        entries.push({
-          time: '—',
-          text: 'تم رفض البلاغ من قِبل الجهة المختصة.',
-          type: 'active'
-        });
-      }
-
-      return entries.reverse();
+      /* ── STEP C: Assemble oldest→newest, then reverse for display ──
+         Result: newest entry at top, "Report Received" always at bottom */
+      const chronological = [receivedEntry, ...updates];
+      return chronological.reverse();
     }
 
     /* ── Build step dates ── */
     function buildStepDates(data) {
-      const status = data.status || 'new';
-      const t = data.reportTime ? formatTime(data.reportTime) : null;
-      const c = data.closedAt   ? formatTime(data.closedAt)   : null;
+      const status   = data.status || 'new';
+      const t        = data.reportTime ? formatTime(data.reportTime) : null;
+      const c        = data.closedAt   ? formatTime(data.closedAt)   : null;
+      const isClosed = ['rescued', 'found', 'closed'].includes(status);
       return [
-        t,
-        ['active','org','closed'].includes(status) ? t    : null,
-        ['active','closed'].includes(status)       ? null : null,
-        status === 'closed'                        ? c    : null
+        t,                                                                    /* step 1: report time */
+        ['org','active','rescued','found','closed'].includes(status) ? t : null, /* step 2 */
+        ['active','rescued','found','closed'].includes(status) ? null : null, /* step 3 */
+        isClosed ? c : null                                                   /* step 4 */
       ];
     }
 
-    /* ── Timeline animation ── */
-    function animateTimeline(activeStep, dates) {
+    /* ── Timeline animation ─────────────────────────────────────────
+       activeStep : current step (1–4)
+       doneUpTo   : nodes 1…doneUpTo are GREEN (done)
+                    node activeStep is AMBER (live) only when > doneUpTo
+       ──────────────────────────────────────────────────────────────*/
+    function animateTimeline(activeStep, doneUpTo, dates) {
       progressEl.style.transition = 'none';
       progressEl.style.width = '0%';
       void progressEl.offsetWidth;
@@ -731,10 +787,12 @@
             const node = document.getElementById('tln' + s);
             const date = document.getElementById('tld' + s);
             node.classList.add('in');
-            if (s < activeStep) {
+            if (s <= doneUpTo) {
+              /* Completed step → green */
               step.classList.add('done');
               if (date && dates[s-1]) date.textContent = dates[s-1];
             } else if (s === activeStep) {
+              /* Current step → amber pulse (only when beyond done range) */
               step.classList.add('live');
               if (date) {
                 if (dates[s-1]) {
@@ -747,13 +805,15 @@
                 }
               }
             } else {
+              /* Future step → grey */
               step.classList.add('future');
             }
           }, (i - 1) * 150);
         })(i);
       }
 
-      const pct = [0, 0, 33.3, 66.6, 100][activeStep];
+      /* Progress bar: fill through all completed (done) steps */
+      const pct = [0, 0, 33.3, 66.6, 100][doneUpTo] ?? 0;
       setTimeout(() => { progressEl.style.width = pct + '%'; }, 100);
     }
 

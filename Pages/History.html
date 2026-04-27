@@ -1047,6 +1047,15 @@
   const STATUS_LBL = {
     'rescued': 'تم الإنقاذ',
     'found':   'تم العثور عليه',
+    'closed':  'تم الإغلاق',
+  };
+
+  // Outcome label mapping for the new system
+  const OUTCOME_LBL_MAP = {
+    'found_safe':     { text: 'تم العثور بحالة جيدة', outcome: 'found' },
+    'found_deceased': { text: 'تم العثور متوفياً',    outcome: 'found' },
+    'found_injured':  { text: 'تم العثور مصاباً',      outcome: 'found' },
+    'not_found':      { text: 'لم يتم العثور',         outcome: 'notfound' }
   };
 
   onAuthStateChanged(auth, user => {
@@ -1067,15 +1076,54 @@
 
       snap.forEach(docSnap => {
         const d = docSnap.data();
-        // فقط المغلقة
-        if (d.status !== 'rescued' && d.status !== 'found') return;
+        // Show closed reports: rescued, found, or the new 'report_closed' firebase value
+        const isClosed = d.status === 'rescued' || d.status === 'found' || d.status === 'closed';
+        if (!isClosed) return;
 
         let closedDate = d.lastUpdate || '—';
         let closedTimestamp = new Date();
-        if (d.reportTime && d.reportTime.toDate) {
+        if (d.closedAt && d.closedAt.toDate) {
+          const dt = d.closedAt.toDate();
+          closedTimestamp = dt;
+          closedDate = dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+        } else if (d.reportTime && d.reportTime.toDate) {
           const dt = d.reportTime.toDate();
           closedTimestamp = dt;
           closedDate = dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+        }
+
+        // Determine outcome from new system (d.outcome) or fallback
+        let outcomeKey   = 'found';
+        let outcomeLbl   = STATUS_LBL[d.status] || 'تم الإغلاق';
+        if (d.outcome && OUTCOME_LBL_MAP[d.outcome]) {
+          outcomeKey = OUTCOME_LBL_MAP[d.outcome].outcome;
+          outcomeLbl = OUTCOME_LBL_MAP[d.outcome].text;
+        } else if (d.status === 'rescued' || d.status === 'found') {
+          outcomeKey = 'found';
+        }
+
+        // Build log from Firestore statusLog if available
+        let logEntries = [];
+        if (Array.isArray(d.statusLog) && d.statusLog.length > 0) {
+          const sorted = [...d.statusLog].sort((a, b) => {
+            const tA = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate() : new Date(0);
+            const tB = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
+            return tB - tA; // newest first
+          });
+          logEntries = sorted.map(e => ({
+            time: e.loggedAt || '—',
+            text: e.note || e.label || '—'
+          }));
+        }
+
+        // Always ensure "report received" entry exists
+        const hasReceived = logEntries.some(e =>
+          e.text.includes('استلام البلاغ')
+        );
+        if (!hasReceived && d.reportTime) {
+          const rt = d.reportTime.toDate ? d.reportTime.toDate() : new Date(d.reportTime);
+          const timeStr = rt.toLocaleTimeString('ar-SA', { hour:'2-digit', minute:'2-digit' });
+          logEntries.push({ time: timeStr, text: 'تم استلام البلاغ وتسجيله في النظام.' });
         }
 
         const isLeader = d.createdBy === user.uid;
@@ -1084,20 +1132,24 @@
           _fromFirebase: true,
           id:            d.reportId || docSnap.id,
           title:         'بلاغ مفقود — ' + (d.location || 'غير محدد'),
-          closedDate:    d.lastUpdate || closedDate,
+          closedDate,
           closedTimestamp,
-          outcome:       d.status === 'rescued' ? 'found' : 'found',
-          outcomeLbl:    STATUS_LBL[d.status] || 'تم الإغلاق',
+          outcome:       outcomeKey,
+          outcomeLbl,
           region:        d.location || '—',
           location:      d.location || '—',
-          reportDate:    closedDate,
+          reportDate:    (() => {
+            if (!d.reportTime) return '—';
+            const dt = d.reportTime.toDate ? d.reportTime.toDate() : new Date(d.reportTime);
+            return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+          })(),
           volunteers:    Array.isArray(d.teamMembers) ? String(d.teamMembers.length) + ' متطوعاً' : '—',
           duration:      d.lastUpdate || '—',
           durationHours: 0,
           missing:       d.missingPersonName || '—',
-          notes:         d.description || 'لا توجد ملاحظات.',
+          notes:         d.description || (d.outcomeNotes || 'لا توجد ملاحظات.'),
           role:          isLeader ? 'leader' : 'member',
-          log: []
+          log:           logEntries
         });
       });
 

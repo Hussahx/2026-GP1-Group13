@@ -492,23 +492,15 @@
           <div class="v" id="reportDetails">—</div>
         </div>
 
-        <!-- يظهر فقط للقائد — يتحكم فيه ReportDetails.js -->
+        <!-- يظهر فقط للقائد -->
         <div class="statusRow" id="statusRow" style="display:none;">
-          <select id="statusSelect" class="select" aria-label="تغيير حالة البلاغ">
-            <option value="accepted">مقبول</option>
-            <option value="searching">جاري البحث</option>
-            <option value="found">تم العثور</option>
-            <option value="rescued">تم الإنقاذ</option>
-          </select>
-
-          <button class="btn" id="saveStatusBtn" type="button">
-            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
-            <span class="btn-label">حفظ الحالة</span>
+          <button class="btn" id="updateStatusBtn" type="button" onclick="openStatusModal()">
+            <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+            <span class="btn-label">تحديث الحالة</span>
           </button>
-
           <span class="hintPill" id="statusSavedHint" style="display:none;">
             <i class="fa-solid fa-check" aria-hidden="true"></i>
-            تم حفظ الحالة
+            تم تحديث الحالة
           </span>
         </div>
 
@@ -805,46 +797,34 @@
 <script type="module">
   import { auth, db } from '/JS/firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { doc, getDoc, updateDoc, arrayUnion, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
 
-    // ── تحديث اسم المستخدم في الهيدر ─────────────────────────────
+    /* ── Update header name ── */
     const userSnap = await getDoc(doc(db, "User", user.uid));
     if (userSnap.exists()) {
       const { FirstName, LastName } = userSnap.data();
-      const fullName = `${FirstName} ${LastName}`;
-      const initial  = FirstName ? FirstName.charAt(0) : '?';
-
       const nameEl    = document.getElementById('userName');
       const initialEl = document.getElementById('userInitial');
-      if (nameEl)    nameEl.textContent    = fullName;
-      if (initialEl) initialEl.textContent = initial;
+      if (nameEl)    nameEl.textContent    = `${FirstName} ${LastName}`;
+      if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '?';
     }
 
-    // ── التحقق: هل المستخدم هو قائد هذا البلاغ؟ ──────────────────
-    // نحصل على reportId من URL أو من window._currentReportDocId الذي يضبطه ReportDetails.js
+    /* ── Resolve docId ── */
     const getDocId = () => {
       const params = new URLSearchParams(window.location.search);
       return params.get('docId') || window._currentReportDocId || null;
     };
 
-    // ننتظر قليلاً حتى يجهّز ReportDetails.js الـ docId إن احتجنا له
     const tryCheck = async (attempt) => {
       const docId = getDocId();
-      if (!docId && attempt < 10) {
-        setTimeout(() => tryCheck(attempt + 1), 300);
-        return;
-      }
+      if (!docId && attempt < 10) { setTimeout(() => tryCheck(attempt + 1), 300); return; }
 
       const statusRow     = document.getElementById('statusRow');
       const leaderOnlyMsg = document.getElementById('leaderOnlyMsg');
-
-      if (!docId) {
-        // لا يوجد docId — أخفِ كلاهما بهدوء
-        return;
-      }
+      if (!docId) return;
 
       const reportSnap = await getDoc(doc(db, "Report", docId));
       if (!reportSnap.exists()) return;
@@ -852,24 +832,309 @@
       const reportData = reportSnap.data();
       const isLeader   = reportData.createdBy === user.uid;
 
+      /* Expose to status modal JS */
+      window._leaderDocId      = docId;
+      window._leaderUid        = user.uid;
+      window._isLeader         = isLeader;
+      window._firestoreDb      = db;
+      window._firestoreDoc     = doc;
+      window._firestoreUpdate  = updateDoc;
+      window._firestoreUnion   = arrayUnion;
+      window._firestoreTS      = Timestamp;
+      /* Track current status to populate previousStatus */
+      const statusMap = { 'new':'report_received','accepted':'report_received','org':'under_review','active':'search_in_progress','rescued':'report_closed','found':'report_closed','closed':'report_closed' };
+      window._currentStatusKey = statusMap[reportData.status || 'new'] || 'report_received';
+      /* Guard: if already closed, disable button */
+      if (reportData.status === 'rescued' || reportData.status === 'found' || reportData.status === 'closed') {
+        window._reportAlreadyClosed = true;
+      }
+
       if (isLeader) {
-        // القائد: أظهر الـ dropdown وأخبر ReportDetails.js بالـ docId
         if (statusRow)     statusRow.style.display     = '';
         if (leaderOnlyMsg) leaderOnlyMsg.style.display = 'none';
-        // نمرر الـ docId والـ uid لـ ReportDetails.js عبر window
-        window._leaderDocId  = docId;
-        window._leaderUid    = user.uid;
-        window._isLeader     = true;
+        /* If already closed, show hint only */
+        if (window._reportAlreadyClosed) {
+          const btn = document.getElementById('updateStatusBtn');
+          if (btn) { btn.disabled = true; btn.style.opacity = '.45'; btn.style.pointerEvents = 'none'; }
+        }
       } else {
-        // عضو عادي: أظهر رسالة "للقائد فقط"
         if (statusRow)     statusRow.style.display     = 'none';
         if (leaderOnlyMsg) leaderOnlyMsg.style.display = '';
-        window._isLeader = false;
       }
     };
 
     tryCheck(0);
   });
+</script>
+
+<!-- ══════════════════════════════════════════════════
+     UPDATE STATUS MODAL
+══════════════════════════════════════════════════ -->
+<div id="usBackdrop" style="display:none;position:fixed;inset:0;background:rgba(15,8,0,.62);z-index:99999;align-items:center;justify-content:center;padding:16px;font-family:'Tajawal',sans-serif;">
+  <div style="background:#faf6ef;border-radius:22px;width:min(520px,100%);box-shadow:0 28px 80px rgba(42,28,8,.28);overflow:hidden;animation:fadeUp .2s ease both;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:.75rem;padding:1rem 1.2rem;border-bottom:1px solid rgba(166,124,82,.18);background:rgba(245,239,230,.95);">
+      <span style="width:34px;height:34px;border-radius:50%;background:rgba(166,124,82,.15);display:flex;align-items:center;justify-content:center;color:#a67c52;font-size:.95rem;flex-shrink:0;">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </span>
+      <h3 style="margin:0;font-size:1rem;font-weight:900;color:#2a1e0e;">تحديث حالة البلاغ</h3>
+      <div style="margin-right:auto;"></div>
+      <button onclick="closeStatusModal()" style="background:rgba(166,124,82,.1);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;color:#7a5828;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-family:'Tajawal',sans-serif;" type="button">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:1.2rem;display:grid;gap:1rem;">
+
+      <!-- Status dropdown -->
+      <div>
+        <label style="display:block;font-size:.72rem;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:#8c6840;margin-bottom:.5rem;">الحالة الجديدة <span style="color:#c0392b;">*</span></label>
+        <select id="usStatusSelect" onchange="onUsStatusChange()" style="width:100%;height:48px;padding:0 1rem;border-radius:12px;background:rgba(245,239,230,.9);border:1.5px solid rgba(166,124,82,.28);color:#2a1e0e;font-weight:800;font-family:'Tajawal',sans-serif;font-size:.92rem;outline:none;cursor:pointer;direction:rtl;">
+          <option value="">— اختر الحالة —</option>
+          <option value="under_review">قيد المراجعة</option>
+          <option value="search_in_progress">عملية البحث جارية</option>
+          <option value="report_closed">تم إغلاق البلاغ بنجاح</option>
+        </select>
+      </div>
+
+      <!-- Outcome section (closed only) -->
+      <div id="usOutcomeSection" style="display:none;grid-template-columns:1fr;gap:1rem;">
+        <div>
+          <label style="display:block;font-size:.72rem;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:#8c6840;margin-bottom:.5rem;">نتيجة البحث <span style="color:#c0392b;">*</span></label>
+          <select id="usOutcomeSelect" style="width:100%;height:48px;padding:0 1rem;border-radius:12px;background:rgba(245,239,230,.9);border:1.5px solid rgba(166,124,82,.28);color:#2a1e0e;font-weight:800;font-family:'Tajawal',sans-serif;font-size:.92rem;outline:none;cursor:pointer;direction:rtl;">
+            <option value="found_safe">تم العثور بحالة جيدة</option>
+            <option value="found_deceased">تم العثور متوفياً</option>
+            <option value="found_injured">تم العثور مصاباً</option>
+            <option value="not_found">لم يتم العثور</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:.72rem;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:#8c6840;margin-bottom:.5rem;">ملاحظات النتيجة <span style="opacity:.6;font-weight:500;">(اختياري)</span></label>
+          <textarea id="usOutcomeNotes" rows="2" placeholder="أضف تفاصيل حول نتيجة العملية..." style="width:100%;padding:.8rem 1rem;border-radius:12px;background:rgba(245,239,230,.9);border:1.5px solid rgba(166,124,82,.28);color:#2a1e0e;font-weight:700;font-family:'Tajawal',sans-serif;font-size:.88rem;outline:none;resize:vertical;box-sizing:border-box;line-height:1.65;direction:rtl;"></textarea>
+        </div>
+      </div>
+
+      <!-- Custom note (any status) -->
+      <div>
+        <label style="display:block;font-size:.72rem;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:#8c6840;margin-bottom:.5rem;">ملاحظة إضافية <span style="opacity:.6;font-weight:500;">(اختياري)</span></label>
+        <textarea id="usCustomNote" rows="2" placeholder="أضف ملاحظة مخصصة إن وجدت..." style="width:100%;padding:.8rem 1rem;border-radius:12px;background:rgba(245,239,230,.9);border:1.5px solid rgba(166,124,82,.28);color:#2a1e0e;font-weight:700;font-family:'Tajawal',sans-serif;font-size:.88rem;outline:none;resize:vertical;box-sizing:border-box;line-height:1.65;direction:rtl;"></textarea>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:.9rem 1.2rem;border-top:1px solid rgba(166,124,82,.15);background:rgba(245,239,230,.7);display:flex;gap:.65rem;justify-content:flex-end;">
+      <button onclick="closeStatusModal()" type="button" style="padding:.6rem 1.2rem;border-radius:10px;background:rgba(166,124,82,.1);border:1.5px solid rgba(166,124,82,.22);color:#7a5828;font-family:'Tajawal',sans-serif;font-size:.88rem;font-weight:800;cursor:pointer;">إلغاء</button>
+      <button onclick="submitStatusUpdate()" type="button" id="usConfirmBtn" disabled style="padding:.6rem 1.4rem;border-radius:10px;background:linear-gradient(135deg,#a67c52,#7a5828);border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:.88rem;font-weight:900;cursor:pointer;opacity:.42;transition:opacity .18s;display:flex;align-items:center;gap:.5rem;">
+        <i class="fa-solid fa-check"></i>
+        تأكيد التحديث
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   STATUS MODAL — Full Logic
+   Works with Firestore refs exposed by the module above.
+   Status values written to Firestore:
+     under_review       → 'org'
+     search_in_progress → 'active'
+     report_closed      → 'rescued'
+═══════════════════════════════════════════════════════════ */
+
+/* Predefined auto-notes (NOT shown in modal — stored in log only) */
+const _STATUS_CFG = {
+  under_review:       { label: 'قيد المراجعة',         fbVal: 'org',     note: 'تمت مراجعة البلاغ والتحقق من بياناته.' },
+  search_in_progress: { label: 'عملية البحث جارية',    fbVal: 'active',  note: 'عملية البحث جارية في المنطقة المحددة.' },
+  report_closed:      { label: 'تم إغلاق البلاغ بنجاح',fbVal: 'rescued', note: 'تم إغلاق البلاغ.' },
+};
+
+const _OUTCOME_LBL = {
+  found_safe:     'تم العثور بحالة جيدة',
+  found_deceased: 'تم العثور متوفياً',
+  found_injured:  'تم العثور مصاباً',
+  not_found:      'لم يتم العثور',
+};
+
+function openStatusModal() {
+  if (window._reportAlreadyClosed) {
+    _showToast('البلاغ مغلق بالفعل ولا يمكن تحديث حالته.');
+    return;
+  }
+  const bd = document.getElementById('usBackdrop');
+  bd.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  /* Reset */
+  document.getElementById('usStatusSelect').value  = '';
+  document.getElementById('usOutcomeSection').style.display = 'none';
+  document.getElementById('usOutcomeSelect').value = 'found_safe';
+  document.getElementById('usOutcomeNotes').value  = '';
+  document.getElementById('usCustomNote').value    = '';
+  const btn = document.getElementById('usConfirmBtn');
+  btn.disabled = true; btn.style.opacity = '.42'; btn.style.cursor = 'not-allowed';
+}
+
+function closeStatusModal() {
+  document.getElementById('usBackdrop').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function onUsStatusChange() {
+  const val = document.getElementById('usStatusSelect').value;
+  const outSec = document.getElementById('usOutcomeSection');
+  const btn    = document.getElementById('usConfirmBtn');
+  outSec.style.display = (val === 'report_closed') ? 'grid' : 'none';
+  if (val) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+  else     { btn.disabled = true;  btn.style.opacity = '.42'; btn.style.cursor = 'not-allowed'; }
+}
+
+async function submitStatusUpdate() {
+  if (window._reportAlreadyClosed) return;
+
+  const statusVal  = document.getElementById('usStatusSelect').value;
+  if (!statusVal) return;
+
+  const cfg        = _STATUS_CFG[statusVal];
+  const customNote = document.getElementById('usCustomNote').value.trim();
+  const now        = new Date();
+  const loggedAt   = now.toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' });
+
+  /* Combine auto note + optional custom note */
+  let fullNote = cfg.note;
+  if (customNote) fullNote += ' ' + customNote;
+
+  const prevStatus = window._currentStatusKey || 'report_received';
+
+  const logEntry = {
+    status:         statusVal,
+    previousStatus: prevStatus,
+    label:          cfg.label,
+    note:           fullNote,
+    loggedAt:       loggedAt,
+    timestamp:      null, /* will be replaced with Firestore Timestamp */
+    outcome:        null,
+    outcomeLbl:     null,
+    outcomeNotes:   null,
+  };
+
+  if (statusVal === 'report_closed') {
+    const outcomeVal  = document.getElementById('usOutcomeSelect').value;
+    const outcomeNts  = document.getElementById('usOutcomeNotes').value.trim();
+    logEntry.outcome      = outcomeVal;
+    logEntry.outcomeLbl   = _OUTCOME_LBL[outcomeVal];
+    logEntry.outcomeNotes = outcomeNts || null;
+  }
+
+  /* Disable confirm to prevent double-click */
+  const confirmBtn = document.getElementById('usConfirmBtn');
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ الحفظ…';
+
+  try {
+    await _writeToFirestore(logEntry, cfg.fbVal, now);
+  } catch(e) {
+    console.error('Status update failed:', e);
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> تأكيد التحديث';
+    _showToast('حدث خطأ أثناء الحفظ. حاول مجدداً.');
+    return;
+  }
+
+  /* Update in-memory state */
+  window._currentStatusKey = statusVal;
+
+  /* Update toolbar badge */
+  const statusTextEl = document.getElementById('statusText');
+  if (statusTextEl) statusTextEl.textContent = cfg.label;
+
+  /* Show hint */
+  const hint = document.getElementById('statusSavedHint');
+  if (hint) { hint.style.display = 'inline-flex'; setTimeout(() => hint.style.display = 'none', 4000); }
+
+  closeStatusModal();
+  _showToast('✓  تم تحديث الحالة بنجاح');
+
+  /* If closed → redirect to History after short delay */
+  if (statusVal === 'report_closed') {
+    window._reportAlreadyClosed = true;
+    /* Disable button so it can't be clicked again */
+    const updateBtn = document.getElementById('updateStatusBtn');
+    if (updateBtn) { updateBtn.disabled = true; updateBtn.style.opacity = '.45'; updateBtn.style.pointerEvents = 'none'; }
+    _showToast('تم إغلاق البلاغ. جارٍ التحويل إلى السجل…');
+    setTimeout(() => { window.location.href = 'History.html'; }, 2200);
+  }
+
+  /* Broadcast event */
+  document.dispatchEvent(new CustomEvent('reportStatusUpdated', { detail: logEntry }));
+}
+
+async function _writeToFirestore(logEntry, fbStatusVal, nowDate) {
+  const docId  = window._leaderDocId;
+  const db     = window._firestoreDb;
+  const docFn  = window._firestoreDoc;
+  const updFn  = window._firestoreUpdate;
+  const unionFn= window._firestoreUnion;
+  const TSClass= window._firestoreTS;
+
+  if (!docId || !db || !docFn || !updFn) throw new Error('Firestore refs not ready');
+
+  const tsNow = TSClass.fromDate(nowDate);
+
+  /* Build the log entry with a real Timestamp */
+  const firestoreEntry = {
+    status:         logEntry.status,
+    previousStatus: logEntry.previousStatus,
+    label:          logEntry.label,
+    note:           logEntry.note,
+    loggedAt:       logEntry.loggedAt,
+    timestamp:      tsNow,
+    outcome:        logEntry.outcome     || null,
+    outcomeLbl:     logEntry.outcomeLbl  || null,
+    outcomeNotes:   logEntry.outcomeNotes || null,
+  };
+
+  const payload = {
+    status:     fbStatusVal,
+    lastUpdate: logEntry.loggedAt,
+    statusLog:  unionFn(firestoreEntry),
+  };
+
+  if (logEntry.status === 'report_closed') {
+    payload.closedAt      = tsNow;
+    payload.outcome       = logEntry.outcome;
+    payload.outcomeLbl    = logEntry.outcomeLbl;
+    payload.outcomeNotes  = logEntry.outcomeNotes || null;
+  }
+
+  await updFn(docFn(db, 'Report', docId), payload);
+}
+
+function _showToast(msg) {
+  const box  = document.getElementById('toastBox');
+  const text = document.getElementById('toastText');
+  if (!box || !text) return;
+  text.textContent = msg;
+  box.style.display = 'flex';
+  clearTimeout(box._toastTimer);
+  box._toastTimer = setTimeout(() => { box.style.display = 'none'; }, 3400);
+}
+
+/* Close modal on backdrop click */
+document.getElementById('usBackdrop').addEventListener('click', function(e) {
+  if (e.target === this) closeStatusModal();
+});
+
+/* Escape key — runs in capture phase so it fires before sidebar/logout handlers */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const bd = document.getElementById('usBackdrop');
+    if (bd && bd.style.display === 'flex') { closeStatusModal(); e.stopImmediatePropagation(); }
+  }
+}, true);
 </script>
 </body>
 </html>
