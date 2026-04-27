@@ -1343,12 +1343,6 @@ body {
 }
 .delete-account-btn:active { opacity: .8; }
 
-select.city-input {
-  direction: rtl;
-  text-align: center;
-  appearance: none;
-}
-
 /* ══ Overlay تأكيد الحذف ══ */
 .del-overlay {
   position: fixed;
@@ -1439,42 +1433,6 @@ select.city-input {
   cursor: pointer;
   transition: background .15s;
 }
-.custom-dropdown {
-  position: relative;
-  width: 120px;
-}
-
-.custom-dropdown .selected {
-  background: white;
-  padding: 8px;
-  border-radius: 12px;
-  cursor: pointer;
-  border: 1px solid #ccc;
-}
-
-.custom-dropdown .options {
-  position: absolute;
-  top: 100%; /* 👈 تحت */
-  right: 0;
-  left: 0;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-  display: none;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 999;
-}
-
-.custom-dropdown .options div {
-  padding: 10px;
-  cursor: pointer;
-}
-
-.custom-dropdown .options div:hover {
-  background: #f5efe6;
-}
-
 .del-cancel-btn:hover { background: #ede0cc; }
 
 /* ══════════════════════════════════════════
@@ -1751,7 +1709,8 @@ select.city-input {
 
       <div class="name-row" id="editWrap">
         <div class="hero-name display-only" id="bioNameDisplay">...</div>
-        <input type="hidden" id="bioNameInput">
+        <input type="text" id="bioNameInput" class="edit-input name-input" value="" maxlength="50" placeholder="الاسم الكامل" style="display:none;">
+
         <!-- زر واحد يتغير حسب الحالة -->
         <button class="pencil-btn" id="editBtn" onclick="handleEditBtn()">
           <svg viewBox="0 0 24 24" id="editBtnIcon">
@@ -1784,7 +1743,34 @@ select.city-input {
         <div class="bio-row" id="cityBioRow">
           <span class="bio-ico">📍</span>
           <span class="bio-val display-only" id="bioCityDisplay">—</span>
-          <input type="text" id="bioCityInput" class="edit-input city-input" value="" maxlength="50" placeholder="المدينة">
+
+          <!-- Custom city dropdown (edit mode only) -->
+          <div class="city-group custom-dropdown" id="cityDropdown" style="display:none;" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+            <!-- Hidden native select for value binding -->
+            <select id="bioCityInput" style="display:none!important;">
+              <option value="">اختر المدينة</option>
+              <option>الرياض</option><option>جدة</option><option>مكة المكرمة</option>
+              <option>المدينة المنورة</option><option>الدمام</option><option>الخبر</option>
+              <option>الظهران</option><option>الطائف</option><option>تبوك</option>
+              <option>بريدة</option><option>خميس مشيط</option><option>أبها</option>
+              <option>نجران</option><option>جازان</option><option>الجبيل</option>
+              <option>حائل</option><option>الأحساء</option><option>القطيف</option>
+              <option>ينبع</option><option>عرعر</option><option>سكاكا</option>
+              <option>الباحة</option><option>بيشة</option><option>الخرج</option>
+              <option>المجمعة</option>
+            </select>
+
+            <!-- Trigger button -->
+            <button type="button" class="cd-trigger" id="cityTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="cd-trigger-text" id="cityTriggerText">اختر المدينة</span>
+              <i class="fas fa-chevron-down cd-arrow"></i>
+            </button>
+
+            <!-- Options panel -->
+            <div class="cd-panel" id="cityPanel" role="listbox" aria-label="اختر المدينة">
+              <div class="cd-list" id="cityList"></div>
+            </div>
+          </div>
         </div>
 
         <div class="bio-row">
@@ -3114,19 +3100,6 @@ window.addEventListener('scroll', function(){
 
   lastScrollY = currentY;
 });
-
-
-let selectedCity = "";
-
-function toggleDropdown() {
-  document.getElementById("cityOptions").style.display = "block";
-}
-
-function selectCity(city) {
-  selectedCity = city;
-  document.querySelector("#cityDropdown .selected").innerText = city;
-  document.getElementById("cityOptions").style.display = "none";
-}
 
 </script>
 <script type="module">
