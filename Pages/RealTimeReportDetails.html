@@ -487,6 +487,16 @@
 
         <div style="height:.8rem"></div>
 
+        <!-- ── قسم الفريق ── -->
+        <div id="teamSection" style="background:rgba(245,239,230,0.6);border:1.5px solid rgba(180,140,80,0.15);border-radius:14px;padding:14px 16px;margin-bottom:.9rem;">
+          <div style="font-size:11px;letter-spacing:1.5px;color:var(--t300,#b89870);font-weight:700;margin-bottom:10px;">فريق البحث والإنقاذ</div>
+          <div id="teamList" style="display:flex;flex-direction:column;gap:8px;">
+            <div style="color:var(--t300,#b89870);font-size:13px;">جارٍ التحميل...</div>
+          </div>
+        </div>
+
+        <div style="height:.8rem"></div>
+
         <div class="field">
           <div class="k">وصف وتفاصيل البلاغ</div>
           <div class="v" id="reportDetails">—</div>
@@ -847,6 +857,50 @@
       /* Guard: if already closed, disable button */
       if (reportData.status === 'rescued' || reportData.status === 'found' || reportData.status === 'closed') {
         window._reportAlreadyClosed = true;
+      }
+
+      /* ── ملأ قائد الفريق ── */
+      const leaderEl = document.getElementById('reportLeader');
+      if (leaderEl) leaderEl.textContent = reportData.leader || '—';
+
+      /* ── بناء قائمة الفريق (القائد + الأعضاء بأسمائهم) ── */
+      const teamList = document.getElementById('teamList');
+      if (teamList) {
+        const members = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
+        const creatorUid = reportData.createdBy || '';
+
+        if (members.length === 0) {
+          teamList.innerHTML = '<div style="color:var(--t300,#b89870);font-size:13px;">لا يوجد أعضاء بعد</div>';
+        } else {
+          // نجيب أسماء كل الأعضاء من Firestore
+          const namePromises = members.map(uid =>
+            getDoc(doc(db, 'User', uid))
+              .then(s => {
+                if (!s.exists()) return { uid, name: uid };
+                const d = s.data();
+                return { uid, name: (d.FirstName || '') + ' ' + (d.LastName || '') };
+              })
+              .catch(() => ({ uid, name: uid }))
+          );
+
+          Promise.all(namePromises).then(resolved => {
+            const total = resolved.length;
+            const rows = resolved.map(m => {
+              const isLeaderMember = m.uid === creatorUid;
+              const badge = isLeaderMember
+                ? '<span style="font-size:9px;font-weight:800;background:#fef0d0;color:#9a6010;border:1px solid #e8c870;border-radius:6px;padding:1px 7px;margin-right:6px;">قائد</span>'
+                : '<span style="font-size:9px;font-weight:700;background:#f0f4ff;color:#3050a0;border:1px solid #b0c0f0;border-radius:6px;padding:1px 7px;margin-right:6px;">عضو</span>';
+              return `<div style="display:flex;align-items:center;padding:7px 10px;background:#fff;border-radius:10px;border:1px solid rgba(180,140,80,0.12);">
+                <div style="width:32px;height:32px;border-radius:50%;background:var(--s400,#b8965e);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;margin-left:10px;">${m.name.trim().charAt(0)||'؟'}</div>
+                <span style="font-size:13px;font-weight:600;color:var(--t900,#2a1e0e);flex:1;">${m.name.trim()||'—'}</span>
+                ${badge}
+              </div>`;
+            }).join('');
+
+            teamList.innerHTML =
+              `<div style="font-size:11px;color:var(--t500,#8c6840);font-weight:700;margin-bottom:6px;">👥 ${total} متطوع مشارك</div>` + rows;
+          });
+        }
       }
 
       if (isLeader) {

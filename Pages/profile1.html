@@ -1724,7 +1724,7 @@ body {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0;">
             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
           </svg>
-          حذف حسابي
+          تعطيل حسابي
         </button>
       </div>
 
@@ -1785,7 +1785,7 @@ body {
 
       <div class="stats-row">
         <div class="stat so" onclick="filterOps('all')"><span class="stat-num" id="stTotal">٠</span><span class="stat-lbl">اجمالي العمليات</span></div>
-        <div class="stat sg" onclick="filterOps('leader')"><span class="stat-num" id="stLead">٠</span><span class="stat-lbl">قاد فيها</span></div>
+        <div class="stat sg" onclick="filterOps('leader')"><span class="stat-num" id="stLead">٠</span><span class="stat-lbl">قائد فيها</span></div>
         <div class="stat sb" onclick="filterOps('member')"><span class="stat-num" id="stMem">٠</span><span class="stat-lbl">عضو فيها</span></div>
         <div class="stat sd" onclick="filterOps('closed')"><span class="stat-num" id="stDone">٠</span><span class="stat-lbl">منجزة</span></div>
       </div>
@@ -1914,7 +1914,7 @@ body {
       ولن تتمكن من الوصول للمنصة.
     </div>
     <div class="del-actions">
-      <button class="del-confirm-btn" id="delConfirmBtn" onclick="executeDeleteAccount()">نعم، احذف حسابي</button>
+      <button class="del-confirm-btn" id="delConfirmBtn" onclick="executeDeleteAccount()">نعم، اتعطيل حسابي</button>
       <button class="del-cancel-btn" onclick="closeDeleteModal()">إلغاء</button>
     </div>
   </div>
@@ -2228,7 +2228,7 @@ window.executeDeleteAccount = async function() {
   } catch (e) {
     console.error('deleteAccount error:', e);
     btn.disabled = false;
-    btn.textContent = 'نعم، احذف حسابي';
+    btn.textContent = 'نعم، اتعطيل حسابي';
     window.showToast('✗ حدث خطأ — حاول مرة أخرى', 'error');
   }
 };
@@ -2530,6 +2530,7 @@ onAuthStateChanged(auth, function(user) {
         days:      daysText,
         ld:        reportTimeStr,
         role:      isLeader ? 'leader' : 'member',
+        teamCount: Array.isArray(d.teamMembers) ? d.teamMembers.length : 0,
         closed:    d.status === 'rescued' || d.status === 'found',
         hlth:      d.healthStatus      || 'لا يوجد',
         veh:       d.vehicle           || '—',
@@ -2698,9 +2699,10 @@ if(!filtered.length){
       avs += '<div class="p-av" style="background:#a67c52;">+'+toAr(r.mbr.length-5)+'</div>';
     }
 
+        var volBadge = '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--t700,#5a3e20);background:rgba(245,239,230,0.9);border:1px solid rgba(180,140,80,0.2);border-radius:8px;padding:2px 8px;">👥 '+(r.teamCount||0)+' متطوع</span>';
     var actBtn = r.closed
       ? '<button class="op-act act-green" onclick="openLog(\''+r.id+'\')">📋 عرض السجل</button>'
-      : '<button class="op-act act-blue" onclick="openTrack(\''+r.id+'\')">تفاصيل العملية</button>';
+      : '<span style="display:none;" onclick="openTrack(\''+r.id+'\'")">تفاصيل العملية</button>';
 
     h += '<div class="'+opCls+'">'+
           '<div class="op-head">'+
@@ -2730,7 +2732,7 @@ if(!filtered.length){
           '<div class="op-foot">'+
             '<div style="display:flex;align-items:center;gap:8px;">'+
               '<div class="p-avs">'+avs+'</div>'+
-              '<span style="font-size:11.5px;color:var(--ink-muted);">'+toAr(r.mbr.length)+' متطوع</span>'+
+              '<span style="font-size:11.5px;color:var(--ink-muted);">👥 '+toAr(r.teamCount||r.mbr.length||0)+' متطوع</span>'+
             '</div>'+
             '<div class="p-dtag">⏱ '+r.days+'</div>'+
           '</div>'+
@@ -2786,7 +2788,7 @@ function openTrack(id){
 
   document.getElementById('mtTeam').innerHTML = th;
   document.getElementById('mtFoot').innerHTML =
-    '<button class="op-act act-blue" style="width:100%;padding:13px;border-radius:12px;font-size:14px;" onclick="window.location.href=\'RealTimeReportDetails.html?docId='+r.id+'\'">📍 تفاصيل العملية الميدانية</button>';
+    '';
 
   document.getElementById('modalTrack').classList.add('on');
 }

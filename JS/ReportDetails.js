@@ -229,6 +229,9 @@
     const leaderEl = $("#reportLeader");
     if (leaderEl) leaderEl.textContent = r.leader || '—';
 
+    const volCountEl = $("#reportVolCount");
+    if (volCountEl) volCountEl.textContent = r.teamCount != null ? toArNum(r.teamCount) + ' متطوع' : '—';
+
     const selectEl = $("#statusSelect");
     if (selectEl) selectEl.value = r.status;
 
@@ -642,6 +645,7 @@
         healthStatus: d.healthStatus || 'لا يوجد',
         vehicle:      d.vehicle || '—',
         contact:      d.contact || '—',
+        teamCount:    Array.isArray(d.teamMembers) ? d.teamMembers.length : 0,
       };
     } catch (err) {
       console.error('loadFromFirestore error:', err);
@@ -674,6 +678,7 @@
           state.report.vehicle      = reportData.vehicle;
           state.report.contact      = reportData.contact;
           state.report.leader       = reportData.leader;
+          state.report.teamCount    = reportData.teamCount;
 
           // نخزن معلومات إضافية للاستخدام لاحقاً
           window._reportLeader      = reportData.leader;
