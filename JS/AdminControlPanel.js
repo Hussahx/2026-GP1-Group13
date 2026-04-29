@@ -95,7 +95,7 @@ const isAccepted = type === "accepted";
 
 const subject = isAccepted
   ? "تهانينا بانضمامك إلى منصة راصد"
-  : "";
+  : "نتيجة طلب الانضمام إلى منصة راصد";
 
 const main_message = isAccepted
   ? `
@@ -103,7 +103,7 @@ const main_message = isAccepted
 يسعدنا إبلاغك بأنه تم قبول طلب انضمامك كمتطوع في منصة راصد.
 
 نرحب بك ضمن فريقنا، ونتطلع إلى مساهمتك معنا في دعم جهود البحث والإنقاذ، وإحداث أثر إيجابي في المجتمع.`
-  : `مرحبًا 
+  : `
 
 نشكر لك اهتمامك بالانضمام إلى منصة راصد.
 
@@ -220,6 +220,42 @@ try {
     temporaryPassword
   );
 
+  let uid = id;
+
+try {
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    temporaryPassword
+  );
+
+  uid = userCredential.user.uid;
+
+  // 🔥 أهم سطر (يحفظه في الداتابيس)
+  await setDoc(doc(db, "User", uid), {
+    email: email,
+    name: fullName,
+    role: "volunteer",
+    accountStatus: "approved"
+  });
+
+} catch (error) {
+  if (error.code === "auth/email-already-in-use") {
+    console.log("المستخدم موجود مسبقًا");
+
+    // حتى لو موجود، لازم نحفظه في Firestore
+    await setDoc(doc(db, "User", uid), {
+      email: email,
+      name: fullName,
+      role: "volunteer",
+      accountStatus: "approved"
+    });
+
+  } else {
+    throw error;
+  }
+}
+
   uid = userCredential.user.uid;
 } catch (error) {
   if (error.code === "auth/email-already-in-use") {
@@ -230,16 +266,20 @@ try {
   }
 }
 
-  await setDoc(doc(db, "User", uid), {
-    FirstName: volunteer.FirstName || "",
-    LastName: volunteer.LastName || "",
-    Email: email,
-    Phone: volunteer.Phone || "",
-    CreatedAt: serverTimestamp(),
-    Role: "volunteer",
-    AccountStatus: "active"
-  });
+ await setDoc(doc(db, "User", uid), {
+  FirstName: volunteer.FirstName || "",
+  LastName: volunteer.LastName || "",
+  Email: email,
+  email: email,
+  Phone: volunteer.Phone || "",
+  CreatedAt: serverTimestamp(),
 
+  Role: "volunteer",
+  role: "volunteer",
+
+  AccountStatus: "active",
+  accountStatus: "approved"
+});
   await updateDoc(volunteerRef, {
     ApprovalStatus: "approved",
     Status: "active",
