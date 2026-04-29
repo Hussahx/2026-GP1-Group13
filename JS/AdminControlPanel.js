@@ -89,16 +89,53 @@ function generateTemporaryPassword(length = 12) {
 async function sendVolunteerEmail({ type, name, email, password = "", reason = "" }) {
   const emailjs = await import('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm');
 
-  emailjs.default.init('jl8cOTzNL4mqFGXJW');
+ const websiteLink = "https://database-b28a1.web.app";
 
-  await emailjs.default.send("service_ilejgsc", "template_tov9o4t", {
-    to_email: email,
-    name: name,
-    email: email,
-    password: password,
-    reason: reason,
-    type: type
-  });
+const isAccepted = type === "accepted";
+
+const subject = isAccepted
+  ? "تهانينا بانضمامك إلى منصة راصد"
+  : "";
+
+const main_message = isAccepted
+  ? `
+
+يسعدنا إبلاغك بأنه تم قبول طلب انضمامك كمتطوع في منصة راصد.
+
+نرحب بك ضمن فريقنا، ونتطلع إلى مساهمتك معنا في دعم جهود البحث والإنقاذ، وإحداث أثر إيجابي في المجتمع.`
+  : `مرحبًا 
+
+نشكر لك اهتمامك بالانضمام إلى منصة راصد.
+
+نأسف لإبلاغك بأنه تعذر قبول طلبك في الوقت الحالي، وذلك بعد مراجعة البيانات المقدمة.`;
+
+const details = isAccepted
+  ? `بيانات الدخول:
+
+البريد الإلكتروني: ${email}
+كلمة المرور المؤقتة: ${password}
+
+يرجى تغيير كلمة المرور بعد تسجيل الدخول.`
+  : `سبب الرفض:
+${reason}`;
+
+const closing_message = isAccepted
+  ? `للدخول إلى المنصة:
+${websiteLink}
+
+نسعد بانضمامك إلينا.`
+  : `نتمنى لك التوفيق مستقبلًا.`;
+
+emailjs.default.init('EY2NhkcwxrvArGrdR');
+
+await emailjs.default.send("service_7c6tubl", "template_bb87v3a", {
+  to_email: email,
+  subject,
+  name,
+  main_message,
+  details,
+  closing_message
+});
 }
 
 
@@ -174,13 +211,24 @@ async function sendVolunteerEmail({ type, name, email, password = "", reason = "
   const temporaryPassword = generateTemporaryPassword();
   const auth = getAuth();
 
+  let uid = id;
+
+try {
   const userCredential = await createUserWithEmailAndPassword(
     auth,
     email,
     temporaryPassword
   );
 
-  const uid = userCredential.user.uid;
+  uid = userCredential.user.uid;
+} catch (error) {
+  if (error.code === "auth/email-already-in-use") {
+    console.log("المستخدم موجود مسبقًا، سيتم إكمال القبول بدون إنشاء حساب جديد");
+    uid = id;
+  } else {
+    throw error;
+  }
+}
 
   await setDoc(doc(db, "User", uid), {
     FirstName: volunteer.FirstName || "",
