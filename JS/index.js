@@ -670,6 +670,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const rContact  = document.getElementById('rContact');
   const rLocation = document.getElementById('rLocation');
   const rDesc     = document.getElementById('rDesc');
+  const rLostDate = document.getElementById('rLostDate');
+  const rRegion   = document.getElementById('rRegion');
 
   const rFile     = document.getElementById('rFile');
   const rFileName = document.getElementById('rFileName');
@@ -695,7 +697,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const validateReportForm = () => {
     let ok = true;
 
-    const nameVal = String(rName?.value || '').trim();
+    const nameVal     = String(rName?.value     || '').trim();
+      const lostDateVal = String(rLostDate?.value || '').trim();
+      const regionVal   = String(rRegion?.value   || '').trim();
     if (!nameVal || nameVal.length < 2) {
       ok = false;
       setFieldError(rName, document.getElementById('rNameErr'), 'الرجاء إدخال الاسم (حرفين على الأقل).');
@@ -874,6 +878,16 @@ if (!rFile || !rFile.files.length) {
           'الرجاء إدخال الموقع بشكل واضح (10 أحرف على الأقل).'); ok = false;
       } else { setFieldError(rLocation, document.getElementById('rLocationErr'), ''); }
 
+      // ── التحقق من تاريخ الفقدان ─────────────────────────────
+      if (!lostDateVal) {
+        setFieldError(rLostDate, document.getElementById('rLostDateErr'), 'الرجاء إدخال تاريخ الفقدان.'); ok = false;
+      } else { setFieldError(rLostDate, document.getElementById('rLostDateErr'), ''); }
+
+      // ── التحقق من المنطقة ────────────────────────────────────
+      if (!regionVal) {
+        setFieldError(rRegion, document.getElementById('rRegionErr'), 'الرجاء اختيار المنطقة.'); ok = false;
+      } else { setFieldError(rRegion, document.getElementById('rRegionErr'), ''); }
+
       // ── التحقق من الحالة الصحية ───────────────────────────
       if (!healthVal || healthVal.length < 4) {
         setFieldError(
@@ -939,10 +953,16 @@ if (!rFile || !rFile.files.length) {
           healthStatus:      healthVal,
           vehicle:           vehicleVal,
           location:          locVal,
+          region:            regionVal,
+          lostDate:          lostDateVal,
           description:       descVal,
           contact:           contactVal,
           reportTime:        new Date(),
-          status:            'new'
+          status:            'new',
+          teamMembers:       [],
+          currentVolunteers: 0,
+          closedAt:          null,
+          durationHours:     0
         });
 
         // ── إرسال EmailJS بعد نجاح Firebase ─────────────────

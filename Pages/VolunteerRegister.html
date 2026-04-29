@@ -1722,38 +1722,114 @@
 
               <div class="divider"></div>
 
-              <!-- الأيام المتاحة -->
-              <div class="form-group">
-                <p class="field-label">الأيام المتاحة <span class="opt-badge">(اختياري)</span></p>
-                <div class="days-grid">
-                  <label class="day-chip"><input type="checkbox" name="days" value="الأحد" /> الأحد</label>
-                  <label class="day-chip"><input type="checkbox" name="days" value="الاثنين" /> الاثنين</label>
-                  <label class="day-chip"><input type="checkbox" name="days" value="الثلاثاء" /> الثلاثاء</label>
-                  <label class="day-chip"><input type="checkbox" name="days" value="الأربعاء" /> الأربعاء</label>
-                  <label class="day-chip"><input type="checkbox" name="days" value="الخميس" /> الخميس</label>
-                  <label class="day-chip"><input type="checkbox" name="days" value="الجمعة" /> الجمعة</label>
-                  <label class="day-chip"><input type="checkbox" name="days" value="السبت" /> السبت</label>
-                </div>
-              </div>
+              <!-- الأيام المتاحة + وقت كل يوم -->
+              <div class="form-group" style="grid-column:1/-1;">
+                <p class="field-label">الأيام والأوقات المتاحة <span class="opt-badge">(اختياري)</span></p>
+                <p style="font-size:12px;color:var(--ink-muted,#8c6840);margin-bottom:12px;">اختر الأيام التي تكون متاحاً فيها وحدد الوقت لكل يوم</p>
 
-              <div class="divider"></div>
+                <div id="availabilitySchedule" style="display:flex;flex-direction:column;gap:10px;">
 
-              <!-- الفترة -->
-              <div class="form-group">
-                <p class="field-label">الفترة المتاحة <span class="opt-badge">(اختياري)</span></p>
-                <div class="check-grid">
-                  <label class="check-item">
-                    <input type="radio" name="period" value="صباح" />
-                    <span><i class="fas fa-sun" style="color:var(--primary-light);margin-left:5px" aria-hidden="true"></i> صباح</span>
-                  </label>
-                  <label class="check-item">
-                    <input type="radio" name="period" value="مساء" />
-                    <span><i class="fas fa-moon" style="color:var(--primary);margin-left:5px" aria-hidden="true"></i> مساء</span>
-                  </label>
-                  <label class="check-item" style="grid-column:1/-1">
-                    <input type="radio" name="period" value="طوارئ" />
-                    <span><i class="fas fa-bolt" style="color:var(--secondary);margin-left:5px" aria-hidden="true"></i> طوارئ (متاح في أي وقت)</span>
-                  </label>
+                  <!-- قالب لكل يوم -->
+                  <style>
+                  .avail-row{display:flex;align-items:center;gap:12px;background:rgba(245,239,230,0.5);border:1.5px solid rgba(180,140,80,0.15);border-radius:12px;padding:10px 14px;transition:background .2s;}
+                  .avail-row:has(.day-cb:checked){background:rgba(245,239,230,0.95);border-color:rgba(154,116,64,0.4);}
+                  .avail-row .day-name{min-width:70px;font-weight:700;font-size:13px;color:var(--ink,#2a1e0e);}
+                  .avail-row .time-select{flex:1;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(180,140,80,0.2);font-family:'Tajawal',sans-serif;font-size:13px;color:var(--ink,#2a1e0e);background:#fff;outline:none;opacity:0.4;pointer-events:none;transition:opacity .2s;}
+                  .avail-row:has(.day-cb:checked) .time-select{opacity:1;pointer-events:auto;}
+                  .avail-row .day-toggle{width:20px;height:20px;accent-color:var(--primary,#9a7440);cursor:pointer;flex-shrink:0;}
+                  </style>
+
+                  <div class="avail-row">
+                    <input class="day-toggle day-cb" type="checkbox" name="days" value="الأحد" id="day-sun">
+                    <label class="day-name" for="day-sun">الأحد</label>
+                    <select class="time-select" name="time-الأحد">
+                      <option value="">— اختر الوقت —</option>
+                      <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
+                      <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
+                      <option value="مساء (4م-9م)">مساء (4م - 9م)</option>
+                      <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
+                      <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
+                    </select>
+                  </div>
+
+                  <div class="avail-row">
+                    <input class="day-toggle day-cb" type="checkbox" name="days" value="الاثنين" id="day-mon">
+                    <label class="day-name" for="day-mon">الاثنين</label>
+                    <select class="time-select" name="time-الاثنين">
+                      <option value="">— اختر الوقت —</option>
+                      <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
+                      <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
+                      <option value="مساء (4م-9م)">مساء (4م - 9م)</option>
+                      <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
+                      <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
+                    </select>
+                  </div>
+
+                  <div class="avail-row">
+                    <input class="day-toggle day-cb" type="checkbox" name="days" value="الثلاثاء" id="day-tue">
+                    <label class="day-name" for="day-tue">الثلاثاء</label>
+                    <select class="time-select" name="time-الثلاثاء">
+                      <option value="">— اختر الوقت —</option>
+                      <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
+                      <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
+                      <option value="مساء (4م-9م)">مساء (4م - 9م)</option>
+                      <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
+                      <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
+                    </select>
+                  </div>
+
+                  <div class="avail-row">
+                    <input class="day-toggle day-cb" type="checkbox" name="days" value="الأربعاء" id="day-wed">
+                    <label class="day-name" for="day-wed">الأربعاء</label>
+                    <select class="time-select" name="time-الأربعاء">
+                      <option value="">— اختر الوقت —</option>
+                      <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
+                      <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
+                      <option value="مساء (4م-9م)">مساء (4م - 9م)</option>
+                      <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
+                      <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
+                    </select>
+                  </div>
+
+                  <div class="avail-row">
+                    <input class="day-toggle day-cb" type="checkbox" name="days" value="الخميس" id="day-thu">
+                    <label class="day-name" for="day-thu">الخميس</label>
+                    <select class="time-select" name="time-الخميس">
+                      <option value="">— اختر الوقت —</option>
+                      <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
+                      <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
+                      <option value="مساء (4م-9م)">مساء (4م - 9م)</option>
+                      <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
+                      <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
+                    </select>
+                  </div>
+
+                  <div class="avail-row">
+                    <input class="day-toggle day-cb" type="checkbox" name="days" value="الجمعة" id="day-fri">
+                    <label class="day-name" for="day-fri">الجمعة</label>
+                    <select class="time-select" name="time-الجمعة">
+                      <option value="">— اختر الوقت —</option>
+                      <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
+                      <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
+                      <option value="مساء (4م-9م)">مساء (4م - 9م)</option>
+                      <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
+                      <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
+                    </select>
+                  </div>
+
+                  <div class="avail-row">
+                    <input class="day-toggle day-cb" type="checkbox" name="days" value="السبت" id="day-sat">
+                    <label class="day-name" for="day-sat">السبت</label>
+                    <select class="time-select" name="time-السبت">
+                      <option value="">— اختر الوقت —</option>
+                      <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
+                      <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
+                      <option value="مساء (4م-9م)">مساء (4م - 9م)</option>
+                      <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
+                      <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
+                    </select>
+                  </div>
+
                 </div>
               </div>
 
@@ -2349,10 +2425,16 @@ console.log('A-start');
     const skills = Array.from(document.querySelectorAll('input[name="skills"]:checked'))
       .map(el => el.value);
 
-    const availableDays = Array.from(document.querySelectorAll('input[name="days"]:checked'))
-      .map(el => el.value);
-
-    const availablePeriod = document.querySelector('input[name="period"]:checked')?.value || '';
+    // جمع الأيام مع وقت كل يوم
+    const availableDays = [];
+    const availableSchedule = {}; // { 'الأحد': 'صباح (6ص-12م)', ... }
+    document.querySelectorAll('input[name="days"]:checked').forEach(cb => {
+      const day = cb.value;
+      availableDays.push(day);
+      const timeSelect = document.querySelector(`select[name="time-${day}"]`);
+      availableSchedule[day] = timeSelect?.value || 'غير محدد';
+    });
+    const availablePeriod = ''; // لم يعد مستخدماً — الوقت لكل يوم منفصل
 
 
 
@@ -2378,7 +2460,32 @@ nationalFileName = '';
 
 
 
-console.log('D-before-addDoc');
+    // ── التحقق: هل الإيميل مسجّل مسبقاً؟ ──────────────────
+    try {
+      const { getFirestore, collection, query, where, getDocs: getDocsCheck } =
+        await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const dbCheck = getFirestore(app);
+      const emailQ  = query(collection(dbCheck, 'Volunteer'), where('Email', '==', email));
+      const emailSnap = await getDocsCheck(emailQ);
+      if (!emailSnap.empty) {
+        // إيميل موجود — أظهر رسالة خطأ وأوقف التسجيل
+        const emailEl  = document.getElementById('email');
+        const emailErr = document.getElementById('e-email');
+        if (emailEl)  emailEl.classList.add('is-invalid');
+        if (emailErr) emailErr.textContent = 'تعذّر إنشاء الحساب، يرجى التحقق من البيانات المُدخلة.';
+        // ارجع للـ step الأول
+        goToStep(1);
+        if (emailEl) emailEl.focus();
+        // أعد تفعيل زر الإرسال
+        const sb = document.getElementById('submitBtn');
+        if (sb) { sb.disabled = false; sb.textContent = 'إرسال الطلب'; }
+        return;
+      }
+    } catch (_emailCheckErr) {
+      // فشل التحقق — كمّل الإرسال بدون توقف
+    }
+
+    console.log('D-before-addDoc');
 
 
 
@@ -2400,6 +2507,7 @@ console.log('D-before-addDoc');
       approvedAt: null,
       Skills: skills,
       AvailableDays: availableDays,
+      AvailableSchedule: availableSchedule,
       AvailablePeriods: availablePeriod
     });
 

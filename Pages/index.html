@@ -613,6 +613,33 @@
 </div>
 
               <div class="form-group">
+                <label for="rLostDate">تاريخ الفقدان <span style="color:#c0392b;">*</span></label>
+                <input type="date" id="rLostDate" name="rLostDate" required />
+                <small class="field-error" id="rLostDateErr" aria-live="polite"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="rRegion">المنطقة <span style="color:#c0392b;">*</span></label>
+                <select id="rRegion" name="rRegion" required style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--bdr,rgba(180,140,80,0.2));font-family:'Tajawal',sans-serif;font-size:14px;background:#fff;color:#2a1e0e;outline:none;">
+                  <option value="">— اختر المنطقة —</option>
+                  <option value="الرياض">الرياض</option>
+                  <option value="مكة المكرمة">مكة المكرمة</option>
+                  <option value="المدينة المنورة">المدينة المنورة</option>
+                  <option value="القصيم">القصيم</option>
+                  <option value="المنطقة الشرقية">المنطقة الشرقية</option>
+                  <option value="عسير">عسير</option>
+                  <option value="تبوك">تبوك</option>
+                  <option value="حائل">حائل</option>
+                  <option value="الحدود الشمالية">الحدود الشمالية</option>
+                  <option value="جازان">جازان</option>
+                  <option value="نجران">نجران</option>
+                  <option value="الباحة">الباحة</option>
+                  <option value="الجوف">الجوف</option>
+                </select>
+                <small class="field-error" id="rRegionErr" aria-live="polite"></small>
+              </div>
+
+              <div class="form-group">
                 <label for="rContact"> البريد الإلكتروني</label>
                 <input type="email" id="rContact" name="rContact" placeholder="مثال: name@email.com" required />
                 <small class="field-error" id="rContactErr" aria-live="polite"></small>
@@ -903,4 +930,3 @@
 </div>
 </body>
 </html>
-
