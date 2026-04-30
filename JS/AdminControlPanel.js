@@ -113,9 +113,10 @@ const details = isAccepted
   ? `بيانات الدخول:
 
 البريد الإلكتروني: ${email}
-كلمة المرور المؤقتة: ${password}
 
-يرجى تغيير كلمة المرور بعد تسجيل الدخول.`
+لإعداد كلمة المرور الخاصة بك، يرجى استخدام الرابط المرسل إلى بريدك الإلكتروني.
+
+(قد يظهر لك خيار "إعادة تعيين كلمة المرور"، وهو نفس الإجراء المستخدم لإنشاء كلمة المرور لأول مرة).`
   : `سبب الرفض:
 ${reason}`;
 
@@ -190,8 +191,7 @@ await emailjs.default.send("service_7c6tubl", "template_bb87v3a", {
   ]);
 
   const { doc, getDoc, setDoc, updateDoc, serverTimestamp } = fsMod;
-  const { getAuth, createUserWithEmailAndPassword } = authMod;
-
+const { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } = authMod;
   const volunteerRef = doc(db, "Volunteer", id);
   const volunteerSnap = await getDoc(volunteerRef);
 
@@ -217,54 +217,36 @@ try {
   const userCredential = await createUserWithEmailAndPassword(
     auth,
     email,
-    temporaryPassword
-  );
-
-  let uid = id;
-
-try {
-  const userCredential = await createUserWithEmailAndPassword(
-    auth,
-    email,
-    temporaryPassword
+    generateTemporaryPassword()
   );
 
   uid = userCredential.user.uid;
-
-  // 🔥 أهم سطر (يحفظه في الداتابيس)
-  await setDoc(doc(db, "User", uid), {
-    email: email,
-    name: fullName,
-    role: "volunteer",
-    accountStatus: "approved"
-  });
 
 } catch (error) {
   if (error.code === "auth/email-already-in-use") {
     console.log("المستخدم موجود مسبقًا");
-
-    // حتى لو موجود، لازم نحفظه في Firestore
-    await setDoc(doc(db, "User", uid), {
-      email: email,
-      name: fullName,
-      role: "volunteer",
-      accountStatus: "approved"
-    });
-
   } else {
     throw error;
   }
 }
 
-  uid = userCredential.user.uid;
-} catch (error) {
-  if (error.code === "auth/email-already-in-use") {
-    console.log("المستخدم موجود مسبقًا، سيتم إكمال القبول بدون إنشاء حساب جديد");
-    uid = id;
-  } else {
-    throw error;
-  }
-}
+await setDoc(doc(db, "User", uid), {
+  FirstName: volunteer.FirstName || "",
+  LastName: volunteer.LastName || "",
+  Email: email,
+  email: email,
+  Phone: volunteer.Phone || "",
+
+  Role: "volunteer",
+  role: "volunteer",
+
+  AccountStatus: "active",
+  accountStatus: "valid",
+
+  CreatedAt: serverTimestamp()
+}, { merge: true });
+
+await sendPasswordResetEmail(auth, email);
 
  await setDoc(doc(db, "User", uid), {
   FirstName: volunteer.FirstName || "",
@@ -277,7 +259,7 @@ try {
   Role: "volunteer",
   role: "volunteer",
 
-  AccountStatus: "active",
+  
   accountStatus: "approved"
 });
   await updateDoc(volunteerRef, {
