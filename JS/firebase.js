@@ -23,7 +23,7 @@ const firebaseConfig = {
   projectId:         "rasid-1bb06",
   storageBucket:     "rasid-1bb06.firebasestorage.app",
   messagingSenderId: "668525115587",
-  appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
+  appId:             "1:668525111587:web:e017be3b5cbf4ac3b30a76",
   measurementId:     "G-MZ3KB7WBK4"
 };
 
@@ -40,85 +40,98 @@ export async function loginAndRedirect(email, password) {
     const credential = await signInWithEmailAndPassword(auth, email, password);
     const uid        = credential.user.uid;
 
-    // 2. Fetch user document from Firestore to get role
-    const userRef  = doc(db, "User", uid);
-    const userSnap = await getDoc(userRef);
+    // 2. ندور في User أول
+    const userSnap = await getDoc(doc(db, "User", uid));
+    if (userSnap.exists()) {
+      const data          = userSnap.data();
+      const role          = data.role          || "";
+      const accountStatus = data.accountStatus || "";
 
-    if (!userSnap.exists()) {
+      if (role === "admin") {
+        window.location.href = "/Pages/AdminControlPanel.html";
+        return { success: true };
+      }
+
+      if (role === "volunteer" && accountStatus === "approved") {
+        window.location.href = "/Pages/Control-panel.html";
+        return { success: true };
+      }
+
+      // موجود في User لكن الحالة غير مقبولة
       await signOut(auth);
       return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
     }
 
-    const { role, accountStatus } = userSnap.data();
+    // 3. مو في User → ندور في Volunteer
+    const volSnap = await getDoc(doc(db, "Volunteer", uid));
+    if (volSnap.exists()) {
+      const data           = volSnap.data();
+      const approvalStatus = data.ApprovalStatus || "";
+      const status         = data.Status         || "";
 
-    // 3. Redirect based on role
-    switch (role) {
-      case "admin":
-        window.location.href = "/Pages/AdminControlPanel.html";
-        break;
-      case "volunteer":
-
-        if (accountStatus === "valid") {
-          window.location.href = "../Pages/Control-panel.html";
-        } else {
-          await signOut(auth);
-          return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
-        }
-
+      if (approvalStatus === "approved" && status === "active") {
         window.location.href = "/Pages/Control-panel.html";
+        return { success: true };
+      }
 
-        break;
-      default:
-        await signOut(auth);
-        return { success: false, error: " لبريد الإلكتروني أو كلمة المرور غير صحيحة." };
+      await signOut(auth);
+      return { success: false, error: "حسابك لم يتم قبوله بعد أو غير نشط." };
     }
 
-    return { success: true };
+    // 4. مو موجود في أي جدول
+    await signOut(auth);
+    return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
 
   } catch (err) {
     const msg = firebaseErrorToArabic(err.code);
     return { success: false, error: msg };
   }
 }
+
 // ── Auth state helper (used on protected pages) ──────────────
 export async function requireAuth(requiredRole) {
   return new Promise((resolve) => {
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      unsubscribe(); // 🔥 يمنع التكرار
+      unsubscribe();
 
-      // ❌ إذا ما فيه مستخدم
       if (!user) {
         window.location.href = "/Pages/index.html";
         return;
       }
 
-  
       if (requiredRole) {
         try {
-          const snap = await getDoc(doc(db, "User", user.uid));
-          const role = snap.exists() ? snap.data().role : null;
+          let role = null;
 
-         
+          const userSnap = await getDoc(doc(db, "User", user.uid));
+          if (userSnap.exists()) {
+            role = userSnap.data().role || null;
+          } else {
+            const volSnap = await getDoc(doc(db, "Volunteer", user.uid));
+            if (volSnap.exists()) {
+              role = "volunteer";
+            }
+          }
+
           if (role !== requiredRole) {
             window.location.href = "/Pages/index.html";
             return;
           }
 
         } catch (error) {
-       
           console.error("Auth Error:", error);
           window.location.href = "/Pages/index.html";
           return;
         }
       }
 
-     
       resolve(user);
     });
 
   });
 }
+
 // ── Sign-out helper ──────────────────────────────────────────
 export async function logout() {
   await signOut(auth);
