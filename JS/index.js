@@ -847,6 +847,8 @@ if (!rFile || !rFile.files.length) {
       const ageVal     = String(document.getElementById('rAge')?.value    || '').trim();
       const healthVal  = String(document.getElementById('rHealth')?.value || '').trim();
       const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
+      const lostDateVal  = String(rLostDate?.value || '').trim();
+      const regionVal    = String(rRegion?.value   || '').trim();
 
       let ok = true;
 

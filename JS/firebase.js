@@ -2,8 +2,8 @@
 //  RASID – Firebase Initialization + Auth Helper
 // ============================================================
 
-import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAnalytics }         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAnalytics }           from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -23,12 +23,12 @@ const firebaseConfig = {
   projectId:         "rasid-1bb06",
   storageBucket:     "rasid-1bb06.firebasestorage.app",
   messagingSenderId: "668525115587",
-  appId:             "1:668525111587:web:e017be3b5cbf4ac3b30a76",
+  appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
   measurementId:     "G-MZ3KB7WBK4"
 };
 
-// ── Initialize ───────────────────────────────────────────────
-const app       = initializeApp(firebaseConfig);
+// ── Initialize (نتجنب duplicate-app إذا شُغّل مرتين) ────────
+const app       = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth      = getAuth(app);
 const db        = getFirestore(app);
@@ -40,7 +40,7 @@ export async function loginAndRedirect(email, password) {
     const credential = await signInWithEmailAndPassword(auth, email, password);
     const uid        = credential.user.uid;
 
-    // 2. ندور في User أول
+    // 2. ندور في User أول (الأدمن والفولنتير اللي في User)
     const userSnap = await getDoc(doc(db, "User", uid));
     if (userSnap.exists()) {
       const data          = userSnap.data();
@@ -57,7 +57,6 @@ export async function loginAndRedirect(email, password) {
         return { success: true };
       }
 
-      // موجود في User لكن الحالة غير مقبولة
       await signOut(auth);
       return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
     }
