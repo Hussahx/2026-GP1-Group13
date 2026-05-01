@@ -165,6 +165,12 @@ body.reports-page .bov{
       <div class="mbody">
         <div class="msec"><div class="mstitle">معلومات المفقود</div><div class="dgrid" id="mDetails"></div></div>
         <div class="msec"><div class="mstitle">تفاصيل</div><div class="mdesc" id="mDesc"></div></div>
+        <!-- ADDED: قسم ملف الدليل -->
+        <div class="msec" id="mEvidenceSec">
+          <div class="mstitle">ملف الدليل المرفق</div>
+          <div id="mEvidence" style="margin-top:6px;"></div>
+        </div>
+        <!-- END ADDED -->
         <div class="msec"><div class="mstitle">فريق البحث</div><div id="mTeam"></div></div>
       </div>
       <div class="mfoot" id="mFoot"></div>
@@ -570,7 +576,10 @@ body.reports-page .bov{
         },
         desc: data.description || 'لا توجد تفاصيل إضافية.',
         teamCount: teamMembers.length,
-        mbr:  []   // visual avatars — kept empty (team shown via mTeam section)
+        mbr:  [],   // visual avatars — kept empty (team shown via mTeam section)
+        // ADDED: بيانات ملف الدليل من Cloudinary
+        evidenceFile:     data.evidenceFile     || '',
+        evidenceFileType: data.evidenceFileType || 'image',
       };
     }
 
@@ -964,6 +973,41 @@ body.reports-page .bov{
       }
       document.getElementById('mDetails').innerHTML=dh;
       document.getElementById('mDesc').textContent=r.desc||'لا توجد تفاصيل إضافية.';
+
+      // ADDED: عرض ملف الدليل في المودال ─────────────────────────────
+      var mEvidence = document.getElementById('mEvidence');
+      var mEvidenceSec = document.getElementById('mEvidenceSec');
+      if (mEvidence && mEvidenceSec) {
+        if (r.evidenceFile) {
+          mEvidenceSec.style.display = '';
+          if (r.evidenceFileType === 'image') {
+            mEvidence.innerHTML =
+              '<a href="' + r.evidenceFile + '" target="_blank" title="فتح الصورة بالحجم الكامل">' +
+              '<img src="' + r.evidenceFile + '" alt="صورة الدليل" ' +
+              'style="max-width:100%;max-height:240px;border-radius:10px;object-fit:contain;' +
+              'cursor:pointer;border:1.5px solid rgba(166,124,82,0.3);display:block;" />' +
+              '</a>' +
+              '<div style="font-size:11px;color:#aaa;margin-top:5px;text-align:center;">اضغط على الصورة لعرضها كاملة</div>';
+          } else if (r.evidenceFileType === 'video') {
+            mEvidence.innerHTML =
+              '<video controls style="max-width:100%;max-height:240px;border-radius:10px;' +
+              'border:1.5px solid rgba(166,124,82,0.3);">' +
+              '<source src="' + r.evidenceFile + '">' +
+              'متصفحك لا يدعم تشغيل الفيديو.' +
+              '</video>';
+          } else if (r.evidenceFileType === 'pdf') {
+            mEvidence.innerHTML =
+              '<a href="' + r.evidenceFile + '" target="_blank" ' +
+              'style="display:inline-flex;align-items:center;gap:8px;padding:11px 18px;' +
+              'background:#f5f5f5;border:1.5px solid rgba(166,124,82,0.3);border-radius:9px;' +
+              'color:#333;text-decoration:none;font-weight:700;font-family:Tajawal,sans-serif;">📄 فتح ملف PDF</a>';
+          }
+        } else {
+          // لا يوجد ملف — أخفِ القسم كلياً
+          mEvidenceSec.style.display = 'none';
+        }
+      }
+      // END ADDED ────────────────────────────────────────────────────
       var rows=[];
       if(type==='org'){
         if(r.role==='leader'){
