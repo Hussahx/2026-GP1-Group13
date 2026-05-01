@@ -53,7 +53,7 @@ export async function loginAndRedirect(email, password) {
       }
 
       if (role === "volunteer" && accountStatus === "approved") {
-        window.location.href = "/Pages/Control-panel.html";
+        window.location.href = "/Pages/Reports.html";
         return { success: true };
       }
 
@@ -69,7 +69,7 @@ export async function loginAndRedirect(email, password) {
       const status         = data.Status         || "";
 
       if (approvalStatus === "approved" && status === "active") {
-        window.location.href = "/Pages/Control-panel.html";
+        window.location.href = "/Pages/Reports.html";
         return { success: true };
       }
 
