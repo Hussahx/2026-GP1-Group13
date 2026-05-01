@@ -865,8 +865,10 @@ body.reports-page .bov{
           btns='<button class="btn bto" data-act="takeover" data-id="'+r.id+'" type="button">تولّي البلاغ</button>'+
                '<button class="btn bvw" data-act="openmodal" data-id="'+r.id+'" data-type="new" type="button">التفاصيل</button>';
         } else if(type==='active'){
-          btns='<button class="btn bjn" data-act="join" data-id="'+r.id+'" type="button">انضمام للفريق</button>'+
-               '<button class="btn bph" data-act="call" data-ph="'+r.lph+'" data-nm="'+r.ldr+'" type="button">📞 '+r.lph+'</button>';
+          btns=(r.userInTeam
+            ? '<button class="btn bjn" disabled style="opacity:0.6;cursor:default;" type="button">أنت منضم لهذا الفريق</button>'
+            : '<button class="btn bjn" data-act="join" data-id="'+r.id+'" type="button">انضمام للفريق</button>')+
+              '<button class="btn bvw" data-act="openmodal" data-id="'+r.id+'" data-type="active" type="button">التفاصيل</button>';
         } else {
           if(r.role==='leader'){
             btns='<button class="btn bov" data-act="opendetails" data-docid="'+r._docId+'" type="button">تفاصيل البلاغ</button>'+
@@ -1044,7 +1046,7 @@ body.reports-page .bov{
               '<span style="font-size:13px;color:var(--t900);font-weight:600;">'+rw.n+'</span>'+
               '<span style="font-size:10px;padding:2px 6px;border-radius:5px;background:#fff;border:1px solid var(--s300);color:'+rc+';font-weight:700;">'+rw.role+'</span>'+
               '</div><div style="font-size:11.5px;color:var(--t500);margin-top:1px;">'+rw.p+'</div></div>'+
-              '<button class="call-btn" data-act="call" data-ph="'+rw.p+'" data-nm="'+rw.n+'" type="button">📞</button>'+
+              //'<button class="call-btn" data-act="call" data-ph="'+rw.p+'" data-nm="'+rw.n+'" type="button">📞</button>'+
               '</div>';
         }
         th+='</div>';
@@ -1055,11 +1057,15 @@ body.reports-page .bov{
       var fh='';
       if(type==='new'){
         fh='<button class="btn bto" style="width:100%;padding:13px;" data-act="modal-takeover" data-id="'+id+'" type="button">تولّي البلاغ</button>';
-      } else if(type==='active'){
-        fh='<div style="display:flex;gap:9px;">'+
-           '<button class="btn bjn" style="flex:1;padding:13px;" data-act="modal-join" data-id="'+id+'" type="button">انضمام للفريق</button>'+
-           '<button class="btn bph" style="flex:1;padding:13px;" data-act="call" data-ph="'+r.lph+'" data-nm="'+r.ldr+'" type="button">📞 '+r.lph+'</button>'+
-           '</div>';
+     } else if(type==='active'){
+  if(r.userInTeam){
+    fh='<div style="display:flex;gap:9px;">'+
+       '<button class="btn bjn" disabled style="flex:1;padding:13px;opacity:0.6;cursor:default;" type="button">أنت منضم للفريق</button>'+
+       '<button class="btn bov" style="flex:1;padding:13px;" data-act="opendetails" data-docid="'+r._docId+'" type="button">تفاصيل البلاغ</button>'+
+       '</div>';
+  } else {
+    fh='<button class="btn bjn" style="width:100%;padding:13px;" data-act="modal-join" data-id="'+id+'" type="button">انضمام للفريق</button>';
+  }
       } else {
         if(r.role==='leader'){
           fh='<div style="display:flex;gap:9px;">'+
