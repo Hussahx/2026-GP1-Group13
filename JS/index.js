@@ -739,8 +739,11 @@ if (!healthVal || healthVal.length < 4) {
 
     const descVal = String(rDesc?.value || '').trim();
     const ageVal     = String(document.getElementById('rAge')?.value    || '').trim();
-const healthVal  = String(document.getElementById('rHealth')?.value || '').trim();
-const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
+    const rHealthRadio = document.querySelector('input[name="rHealthRadio"]:checked');
+    const healthVal  = rHealthRadio?.value === 'yes'
+      ? String(document.getElementById('rHealth')?.value || '').trim()
+      : (rHealthRadio?.value === 'no' ? null : undefined);
+    const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
     if (!descVal || descVal.length < 10) {
       ok = false;
       setFieldError(rDesc, document.getElementById('rDescErr'), 'الرجاء إدخال وصف البلاغ (10 أحرف على الأقل).');
@@ -845,7 +848,10 @@ if (!rFile || !rFile.files.length) {
       const locVal     = String(rLocation?.value || '').trim();
       const descVal    = String(rDesc?.value    || '').trim();
       const ageVal     = String(document.getElementById('rAge')?.value    || '').trim();
-      const healthVal  = String(document.getElementById('rHealth')?.value || '').trim();
+      const rHealthRadio = document.querySelector('input[name="rHealthRadio"]:checked');
+      const healthVal  = rHealthRadio?.value === 'yes'
+        ? String(document.getElementById('rHealth')?.value || '').trim()
+        : (rHealthRadio?.value === 'no' ? null : undefined);
       const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
       const lostDateVal  = String(rLostDate?.value || '').trim();
       const regionVal    = String(rRegion?.value   || '').trim();
@@ -891,13 +897,16 @@ if (!rFile || !rFile.files.length) {
       } else { setFieldError(rRegion, document.getElementById('rRegionErr'), ''); }
 
       // ── التحقق من الحالة الصحية ───────────────────────────
-      if (!healthVal || healthVal.length < 4) {
-        setFieldError(
-          document.getElementById('rHealth'),
-          document.getElementById('rHealthErr'),
-          'الرجاء وصف الحالة الصحية (4 أحرف على الأقل).'
-        ); ok = false;
-      } else { setFieldError(document.getElementById('rHealth'), document.getElementById('rHealthErr'), ''); }
+            if (!rHealthRadio) {
+              document.getElementById('rHealthErr').textContent = 'الرجاء تحديد ما إذا كان المفقود يعاني من أمراض.';
+              ok = false;
+            } else if (rHealthRadio.value === 'yes' && (!healthVal || healthVal.length < 4)) {
+              setFieldError(
+                document.getElementById('rHealth'),
+                document.getElementById('rHealthErr'),
+                'الرجاء وصف الحالة الصحية (4 أحرف على الأقل).'
+              ); ok = false;
+            } else { document.getElementById('rHealthErr').textContent = ''; }
 
       // ── التحقق من الوصف ───────────────────────────────────
       if (!descVal || descVal.length < 10) {
