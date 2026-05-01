@@ -608,6 +608,7 @@ body.reports-page .bov{
   if (r.userInTeam) {
     // المستخدم في الفريق — تظهر في "المنظّم لها"
     MR.push(r);
+    AR.push(r);
   } else if (r._teamMembers.length > 0) {
     // فيها أعضاء لكن المستخدم ليس منهم — "جارٍ العمل"
     AR.push(r);
