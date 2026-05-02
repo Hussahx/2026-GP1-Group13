@@ -593,7 +593,10 @@ body.reports-page .bov{
         unsubscribeSnapshot = null;
       }
 
-      const q = query(collection(db, 'Report'), orderBy('reportTime', 'desc'));
+      /* orderBy('reportTime') حُذف — يحتاج composite index في Firestore
+         قد لا يكون موجوداً وهذا يرجع قائمة فاضية بدون خطأ واضح.
+         نجلب كل البلاغات ونفلتر/نرتب محلياً — أبسط وأضمن. */
+      const q = query(collection(db, 'Report'));
 
       unsubscribeSnapshot = onSnapshot(q, (snap) => {
         // Clear all three arrays in-place (keeps same reference for existing code)
@@ -602,21 +605,36 @@ body.reports-page .bov{
         MR.length = 0;
 
         snap.forEach((docSnap) => {
-  const r = docToReport(docSnap.data(), docSnap.id, currentUid);
+          const data = docSnap.data();
 
-  // التصنيف بناءً على حالة الفريق
-  if (r.userInTeam) {
-    // المستخدم في الفريق — تظهر في "المنظّم لها"
-    MR.push(r);
-    AR.push(r);
-  } else if (r._teamMembers.length > 0) {
-    // فيها أعضاء لكن المستخدم ليس منهم — "جارٍ العمل"
-    AR.push(r);
-  } else {
-    // ما فيها أحد بعد — "جديدة"
-    NR.push(r);
-  }
-});
+          /* ─────────────────────────────────────────────────────────
+             FILTER: يظهر في هذه الصفحة فقط البلاغات المقبولة
+             أي التي قبلها الأدمن في Control.html وأصبح Status == "Under Review"
+             البلاغات بحالة "Report Received" أو "Rejected" لا تظهر هنا.
+          ───────────────────────────────────────────────────────── */
+          /* نتحقق من Status (capital) و status (lowercase) للتوافق مع كلا الحالتين */
+          const dbStatus = data.Status || data.status || '';
+          if (dbStatus !== 'Under Review') return;
+
+          const r = docToReport(data, docSnap.id, currentUid);
+
+          // التصنيف بناءً على حالة الفريق
+          if (r.userInTeam) {
+            // المستخدم في الفريق — تظهر في "المنظّم لها"
+            MR.push(r);
+            AR.push(r);
+          } else if (r._teamMembers.length > 0) {
+            // فيها أعضاء لكن المستخدم ليس منهم — "جارٍ العمل"
+            AR.push(r);
+          } else {
+            // ما فيها أحد بعد — "جديدة"
+            NR.push(r);
+          }
+        });
+        /* ترتيب محلي بدل orderBy في Firestore */
+        NR.sort((a, b) => (b.dt || 0) - (a.dt || 0));
+        AR.sort((a, b) => (b.dt || 0) - (a.dt || 0));
+        MR.sort((a, b) => (b.dt || 0) - (a.dt || 0));
         render(); // re-render UI whenever Firestore changes
       }, (err) => {
         console.error('onSnapshot error:', err);

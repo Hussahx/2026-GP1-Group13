@@ -438,10 +438,10 @@
               <span class="tc" id="tcAll">٠</span>كل البلاغات
             </button>
             <button class="atab t-pend" data-tab="pending" onclick="switchTab(this)">
-              <span class="tc" id="tcPend">٠</span>قيد المراجعة
+              <span class="tc" id="tcPend">٠</span>تم استلام البلاغ
             </button>
             <button class="atab t-acc" data-tab="accepted" onclick="switchTab(this)">
-              <span class="tc" id="tcAcc">٠</span>المقبولة
+              <span class="tc" id="tcAcc">٠</span>قيد المراجعة
             </button>
             <button class="atab t-rej" data-tab="rejected" onclick="switchTab(this)">
               <span class="tc" id="tcRej">٠</span>المرفوضة
@@ -680,20 +680,116 @@
     /* ════ ألوان أفاتار ════ */
     var AVC = ['#9a7440','#7a5828','#b8965e','#c0392b','#2d9e52','#4060c8','#8c6840','#5a3e20'];
 
-    /* ════ البيانات التجريبية — صيغة RASID-XXXXX ════ */
-    var reports = [
-      {id:'RASID-60841', missingName:'سالم الرشيدي',      phone:'0501234567', email:'ahmed.r@email.com',    priority:'uv', date:'٢٨ أبريل ٢٠٢٥', status:'pending',  location:'صحراء الدهناء',    desc:'مفقود آخر مرة شوهد عند إحداثيات 24.8°N، كان في رحلة مشي منفرداً في الصحراء.'},
-      {id:'RASID-60842', missingName:'ناصر المطيري',       phone:'0559876543', email:'sara.m@gmail.com',      priority:'uv', date:'٢٨ أبريل ٢٠٢٥', status:'pending',  location:'الربع الخالي',      desc:'إشارة استغاثة نشطة، عطل في المركبة على بعد ٨٠ كم جنوب نقطة التفتيش.'},
-      {id:'RASID-60843', missingName:'فيصل بن محمد',       phone:'0504567890', email:'omar.bm@work.sa',       priority:'uh', date:'٢٧ أبريل ٢٠٢٥', status:'accepted', location:'صحراء النفود',      desc:'مركبة متروكة تسد طريق الطوارئ بالقرب من القطاع ٧-B.'},
-      {id:'RASID-60844', missingName:'ليلى الزهراني',      phone:'0541112233', email:'f.zahrani@rasid.sa',    priority:'uv', date:'٢٧ أبريل ٢٠٢٥', status:'accepted', location:'جبال الحجاز',       desc:'طفلان مفقودان أبلغ عنهما مرشد محلي، آخر مرة شوهدا يتجهان نحو وادٍ جاف.'},
-      {id:'RASID-60845', missingName:'حامد العتيبي',       phone:'0563345566', email:'khalid.o@hotmail.com',  priority:'um', date:'٢٦ أبريل ٢٠٢٥', status:'rejected', location:'المنطقة الشرقية',   desc:'نار مشبوهة قرب محمية طبيعية. دوريات المنطقة أكدت السلامة وأغلقت القضية.'},
-      {id:'RASID-60846', missingName:'عبدالله الشمراني',   phone:'0507788899', email:'n.shamrani@mail.com',   priority:'uh', date:'٢٦ أبريل ٢٠٢٥', status:'pending',  location:'منطقة تبوك',        desc:'رجل مسن (٧٨ عاماً) ابتعد عن رحلة عائلية عند غروب الشمس، يعاني من قصور بصري.'},
-      {id:'RASID-60847', missingName:'راشد القحطاني',      phone:'0592223344', email:'y.qahtani@sa.net',      priority:'uv', date:'٢٥ أبريل ٢٠٢٥', status:'rejected', location:'جبال عسير',         desc:'مضيء استغاثة رُصد من قِبل الحراس. تبيّن لاحقاً أنه تدريب خاطئ لمجموعة مشي.'},
-      {id:'RASID-60848', missingName:'ريم الحربي',         phone:'0536677788', email:'mona.h@webmail.sa',     priority:'uh', date:'٢٥ أبريل ٢٠٢٥', status:'accepted', location:'وادي العلا',        desc:'مجموعة سياحية من ٤ أشخاص ضلت في ممر التراث. عُثر عليهم بسلامة.'},
-      {id:'RASID-60849', missingName:'طارق بن محمد',       phone:'0509900011', email:'smbm@saudinet.sa',      priority:'um', date:'٢٤ أبريل ٢٠٢٥', status:'pending',  location:'منطقة القصيم',      desc:'رصد وهج حراري غير اعتيادي واحتمال تسرب غاز قرب محطة مسح. يستدعي تفتيشاً.'},
-      {id:'RASID-60850', missingName:'وليد الدوسري',       phone:'0554432211', email:'r.dosari@rasid.net',    priority:'uv', date:'٢٤ أبريل ٢٠٢٥', status:'accepted', location:'الربع الخالي',      desc:'راكب جمل ضاع في عاصفة رملية، منارة التحديد نشطت وأُرسل فريق الإنقاذ بنجاح.'},
-    ];
+    /* ════════════════════════════════════════════════════════════
+       FIRESTORE INTEGRATION
+       ────────────────────────────────────────────────────────────
+       WHAT CHANGED & WHY:
+       • Replaced all hardcoded dummy data with live Firestore reads.
+       • Control.html now loads ONLY reports with Status "Report Received"
+         in the "pending" tab — the default status set by index.html.
+       • Accept action → sets Status to "Under Review" in Firestore
+         so track-report.html reflects it.
+       • Reject action → sets Status to "Rejected" in Firestore.
+       • Accepted reports also appear in Reports.html (filtered there
+         by Status == "Under Review").
+       • Field names match DB schema: MissingPersonName, Phone,
+         ReporterEmail, LastSeenLocation, Priority, Status, Details.
+    ════════════════════════════════════════════════════════════ */
+    /* — Firebase imports — */
+    var db = null;
+    var fsCollection, fsDocs, fsQuery, fsWhere, fsUpdateDoc, fsDoc;
 
+    (async function initFirebase() {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const fs   = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const auth = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+
+      const firebaseConfig = {
+        apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+        authDomain:        'rasid-1bb06.firebaseapp.com',
+        projectId:         'rasid-1bb06',
+        storageBucket:     'rasid-1bb06.firebasestorage.app',
+        messagingSenderId: '668525115587',
+        appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+        measurementId:     'G-MZ3KB7WBK4'
+      };
+
+      const app     = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+      const fbAuth  = auth.getAuth(app);
+      db            = fs.getFirestore(app);
+      fsCollection  = fs.collection;
+      fsDocs        = fs.getDocs;
+      fsQuery       = fs.query;
+      fsWhere       = fs.where;
+      fsUpdateDoc   = fs.updateDoc;
+      fsDoc         = fs.doc;
+
+      /* ── انتظر حتى Firebase Auth يؤكد حالة المستخدم ──
+         هذا هو سبب خطأ "Missing or insufficient permissions":
+         الكود كان يحاول يكتب في Firestore قبل ما Auth session
+         تتحمل، فـ Firestore يرى المستخدم كـ unauthenticated.
+         onAuthStateChanged يضمن أن الكتابة تصير بعد تأكيد الـ session. */
+      auth.onAuthStateChanged(fbAuth, async (user) => {
+        if (user) {
+          // المستخدم مسجّل دخول — حمّل البلاغات
+          await loadReports();
+        } else {
+          // مو مسجّل دخول — وجّهه لصفحة اللوقن
+          notify('يرجى تسجيل الدخول أولاً', 'ne');
+          setTimeout(function(){ window.location.href = 'index.html'; }, 1500);
+        }
+      });
+    })();
+
+    /* — Load all reports from Firestore — */
+    async function loadReports() {
+      try {
+        const snap = await fsDocs(fsCollection(db, 'Report'));
+        reports = snap.docs.map(function(d) {
+          var data = d.data();
+          /* Map DB fields → internal fields used by render functions.
+             Priority mapping: Arabic text from DB → internal code */
+          var priorityMap = { 'طارئ جداً':'uv', 'طارئ':'uh', 'متوسط':'um' };
+          return {
+            docId:       d.id,                                        // Firestore document ID for updates
+            id:          data.reportId        || d.id,
+            missingName: data.MissingPersonName || data.missingPersonName || '—',
+            phone:       data.Phone           || data.phone           || '—',
+            email:       data.ReporterEmail   || data.email           || '—',
+            priority:    priorityMap[data.Priority] || 'um',
+            date:        data.ReportDate      || data.LostDate        || '—',
+            /* IMPORTANT: Status values now match the new schema:
+               "Report Received" → pending tab
+               "Under Review"    → accepted tab
+               "Rejected"        → rejected tab */
+            status:      mapStatusToInternal(data.Status || data.status || 'Report Received'),
+            location:    data.LastSeenLocation || data.Region         || '—',
+            desc:        data.Details          || '—'
+          };
+        });
+        renderAll();
+      } catch (err) {
+        console.error('Firestore load error:', err);
+        notify('تعذّر تحميل البلاغات. تحقق من اتصالك.', 'ne');
+      }
+    }
+
+    /* Map DB Status string → internal status key used by UI */
+    function mapStatusToInternal(s) {
+      var m = {
+        'Report Received': 'pending',
+        'Under Review':    'accepted',
+        'Rejected':        'rejected',
+        // Legacy fallbacks
+        'pending':         'pending',
+        'accepted':        'accepted',
+        'rejected':        'rejected',
+        'In Progress':     'accepted'
+      };
+      return m[s] || 'pending';
+    }
+
+    var reports = [];
     var TAB = 'all';
     var pendingAction = null;
 
@@ -785,8 +881,8 @@
 
     function statusBadge(s){
       var m = {
-        pending:  ['status-badge sb-pend', 'fa-clock',        'قيد المراجعة'],
-        accepted: ['status-badge sb-acc',  'fa-circle-check', 'مقبول'],
+        pending:  ['status-badge sb-pend', 'fa-clock',        'تم استلام البلاغ'],
+        accepted: ['status-badge sb-acc',  'fa-circle-check', 'قيد المراجعة'],
         rejected: ['status-badge sb-rej',  'fa-circle-xmark', 'مرفوض']
       };
       var d = m[s] || m.pending;
@@ -859,14 +955,31 @@
     function execAction(){
       if (!pendingAction) return;
       var r = find(pendingAction.id);
-      if (r){
-        r.status = pendingAction.action === 'accept' ? 'accepted' : 'rejected';
-        var msg  = pendingAction.action === 'accept'
-          ? '✓ تم قبول بلاغ ' + r.missingName + ' بنجاح'
-          : '✗ تم رفض بلاغ ' + r.missingName;
-        notify(msg, pendingAction.action === 'accept' ? 's' : 'ne');
-        renderAll();
+      if (!r) return;
+
+      /* ── Map internal status → DB Status string ──
+         Accept → "Under Review" (appears in Reports.html and track-report.html)
+         Reject → "Rejected"    (shown in red in track-report.html)  */
+      var newDbStatus   = pendingAction.action === 'accept' ? 'Under Review' : 'Rejected';
+      var newIntStatus  = pendingAction.action === 'accept' ? 'accepted'     : 'rejected';
+      var msg           = pendingAction.action === 'accept'
+        ? '✓ تم قبول بلاغ ' + r.missingName + ' — الحالة: قيد المراجعة'
+        : '✗ تم رفض بلاغ ' + r.missingName;
+
+      /* ── Update Firestore ── */
+      if (db && r.docId) {
+        fsUpdateDoc(fsDoc(db, 'Report', r.docId), {
+          Status:         newDbStatus,
+          ApprovalStutes: pendingAction.action === 'accept' ? 'approved' : 'rejected'
+        }).catch(function(err) {
+          console.error('Update error:', err);
+          notify('حدث خطأ أثناء تحديث الحالة', 'ne');
+        });
       }
+
+      r.status = newIntStatus;
+      notify(msg, pendingAction.action === 'accept' ? 's' : 'ne');
+      renderAll();
       closeConfirm();
       pendingAction = null;
     }
@@ -895,7 +1008,7 @@
     function find(id){ for (var i=0;i<reports.length;i++) if(reports[i].id===id) return reports[i]; return null; }
     function di(l, v){ return '<div class="di"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>'; }
     function urgLbl(p){ return {uv:'طارئ جداً', uh:'طارئ', um:'متوسط'}[p] || p; }
-    function statLbl(s){ return {pending:'قيد المراجعة', accepted:'مقبول', rejected:'مرفوض'}[s] || s; }
+    function statLbl(s){ return {pending:'تم استلام البلاغ', accepted:'قيد المراجعة', rejected:'مرفوض'}[s] || s; }
 
     function notify(msg, type){
       var w = document.getElementById('nwrap');

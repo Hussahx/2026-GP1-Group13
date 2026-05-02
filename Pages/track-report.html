@@ -495,7 +495,10 @@
     import {
       getFirestore,
       collection,
-      getDocs
+      getDocs,
+      onSnapshot,
+      query,
+      where
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -538,9 +541,22 @@
     }
 
     function mapStatus(status) {
-      /* doneUpTo = how many timeline nodes should be GREEN (completed)
-         'new' / 'accepted': step 1 is already done the moment report is submitted */
+      /* ══════════════════════════════════════════════════════════
+         WHAT CHANGED & WHY:
+         New DB Status values are:
+           "Report Received" → step 1 (default, just submitted)
+           "Under Review"    → step 2 (accepted by admin in Control.html)
+           "Rejected"        → rejected (shown in red pill + red banner)
+         Old values ('new', 'accepted', 'org') kept as fallback.
+         The pill-rejected class applies red color per CSS.
+      ══════════════════════════════════════════════════════════ */
       const map = {
+        /* ── New DB Status values ── */
+        'Report Received': { label: 'تم استلام البلاغ',    pillCls: 'pill-pending',  step: 1, doneUpTo: 1, text: 'تم استلام البلاغ وتسجيله في النظام' },
+        'Under Review':    { label: 'قيد المراجعة',        pillCls: 'pill-active',   step: 2, doneUpTo: 2, text: 'تمت مراجعة البلاغ — عملية البحث جارية' },
+        'Rejected':        { label: 'تم رفض البلاغ',       pillCls: 'pill-rejected', step: 1, doneUpTo: 0, text: 'تم رفض البلاغ من قِبل الجهة المختصة' },
+        'In Progress':     { label: 'عملية البحث جارية',   pillCls: 'pill-active',   step: 3, doneUpTo: 3, text: 'عملية البحث جارية في المنطقة المحددة' },
+        /* ── Legacy fallback values ── */
         'new':      { label: 'تم استلام البلاغ',     pillCls: 'pill-pending',  step: 1, doneUpTo: 1, text: 'تم استلام البلاغ وتسجيله في النظام' },
         'accepted': { label: 'تم استلام البلاغ',     pillCls: 'pill-pending',  step: 1, doneUpTo: 1, text: 'تم استلام البلاغ وتسجيله في النظام' },
         'org':      { label: 'قيد المراجعة',          pillCls: 'pill-pending',  step: 2, doneUpTo: 2, text: 'تمت مراجعة البلاغ والتحقق من بياناته' },
@@ -548,7 +564,7 @@
         'rescued':  { label: 'تم إغلاق البلاغ',       pillCls: 'pill-closed',   step: 4, doneUpTo: 4, text: 'تم إغلاق البلاغ بنجاح' },
         'found':    { label: 'تم إغلاق البلاغ',       pillCls: 'pill-closed',   step: 4, doneUpTo: 4, text: 'تم إغلاق البلاغ بنجاح' },
         'closed':   { label: 'تم إغلاق البلاغ',       pillCls: 'pill-closed',   step: 4, doneUpTo: 4, text: 'تم إغلاق البلاغ بنجاح' },
-        'rejected': { label: 'مرفوض',                 pillCls: 'pill-rejected', step: 1, doneUpTo: 0, text: 'تم رفض البلاغ' },
+        'rejected': { label: 'تم رفض البلاغ',         pillCls: 'pill-rejected', step: 1, doneUpTo: 0, text: 'تم رفض البلاغ من قِبل الجهة المختصة' },
       };
       return map[status] || { label: 'تم استلام البلاغ', pillCls: 'pill-pending', step: 1, doneUpTo: 1, text: 'تم استلام البلاغ وتسجيله في النظام' };
     }
@@ -557,7 +573,18 @@
     input.addEventListener('input',   () => { input.classList.remove('invalid'); errEl.textContent = ''; });
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } });
 
-    btn.addEventListener('click', async () => {
+    /* ─────────────────────────────────────────────────────────────
+       المشكلة السابقة: كان يستخدم getDocs (جلب مرة واحدة فقط)
+       يعني لو الأدمن قبل البلاغ بعد ما المستخدم فتح الصفحة،
+       الحالة ما تتحدث إلا لو ضغط "تتبع" مرة ثانية.
+
+       الحل: onSnapshot — يستمع للتغييرات في real-time.
+       كل ما يغير الأدمن الـ Status في Firestore، الصفحة
+       تتحدث تلقائياً بدون أي تدخل من المستخدم.
+    ───────────────────────────────────────────────────────────── */
+    let activeListener = null; // نحتفظ بمرجع الـ listener لإلغائه عند بحث جديد
+
+    btn.addEventListener('click', () => {
       const val = input.value.trim().toUpperCase();
 
       if (!val) {
@@ -567,6 +594,9 @@
         return;
       }
 
+      /* ── إلغاء أي listener سابق ── */
+      if (activeListener) { activeListener(); activeListener = null; }
+
       btn.classList.add('loading');
       resultsWrap.classList.remove('visible');
       notFound.classList.remove('visible');
@@ -574,22 +604,31 @@
       errEl.textContent = '';
 
       try {
-        /* ── جلب كل الـ docs وفلترة محلياً — لا يحتاج Index ── */
-        const snap = await getDocs(collection(db, 'Report'));
-        btn.classList.remove('loading');
+        /* ── onSnapshot بدل getDocs: يستمع للتغييرات real-time ──
+           كل ما يتغير Status في Firestore، renderReport يُستدعى تلقائياً */
+        const q = query(collection(db, 'Report'), where('reportId', '==', val));
 
-        const matchingDocs = snap.docs.filter(d => {
-          const rid = (d.data().reportId || '').toUpperCase();
-          return rid === val;
+        activeListener = onSnapshot(q, (snap) => {
+          btn.classList.remove('loading');
+
+          if (snap.empty) {
+            /* جرّب بالـ reportId بالـ lowercase أيضاً */
+            const qFallback = query(collection(db, 'Report'), where('reportId', '==', val.toLowerCase()));
+            onSnapshot(qFallback, (snap2) => {
+              if (snap2.empty) { renderNotFound(); return; }
+              renderReport(val, snap2.docs[0].data());
+            });
+            return;
+          }
+
+          /* وُجد البلاغ — يتحدث تلقائياً مع كل تغيير في Firestore */
+          renderReport(val, snap.docs[0].data());
+
+        }, (err) => {
+          console.error('Firestore error:', err);
+          btn.classList.remove('loading');
+          errEl.textContent = 'حدث خطأ أثناء الاتصال. تحقق من اتصالك وأعد المحاولة.';
         });
-
-        if (matchingDocs.length === 0) {
-          renderNotFound();
-          return;
-        }
-
-        const data = matchingDocs[0].data();
-        renderReport(val, data);
 
       } catch (err) {
         console.error('Firestore error:', err);
@@ -608,33 +647,58 @@
 
     /* ── Render: Found ── */
     function renderReport(id, data) {
-      const statusInfo = mapStatus(data.status || 'new');
-      const isRejected = data.status === 'rejected';
+      /* WHAT CHANGED: DB now uses 'Status' (capital S) as the field name.
+         We check both 'Status' and 'status' for backwards compatibility. */
+      const rawStatus = data.Status || data.status || 'Report Received';
+      const statusInfo = mapStatus(rawStatus);
+      const isRejected = (rawStatus === 'Rejected' || rawStatus === 'rejected');
 
       /* ID bar */
       document.getElementById('idNumber').textContent = id;
       document.getElementById('idTitle').textContent  =
-        data.missingPersonName ? 'بلاغ مفقود — ' + data.missingPersonName : 'بلاغ مفقود';
+        data.MissingPersonName || data.missingPersonName
+          ? 'بلاغ مفقود — ' + (data.MissingPersonName || data.missingPersonName)
+          : 'بلاغ مفقود';
 
       const pill = document.getElementById('statusPill');
       pill.textContent = statusInfo.label;
+      /* Apply red styling for Rejected status */
       pill.className   = 'report-status-pill ' + statusInfo.pillCls;
+      if (isRejected) {
+        pill.style.background = 'rgba(155,58,58,0.12)';
+        pill.style.color      = '#9B3A3A';
+        pill.style.border     = '1px solid rgba(155,58,58,0.3)';
+      } else {
+        pill.style.background = '';
+        pill.style.color      = '';
+        pill.style.border     = '';
+      }
 
-      /* Info strip */
-      document.getElementById('icDate').textContent   = formatDate(data.reportTime);
-      document.getElementById('icLoc').textContent    = data.location           || '—';
-      document.getElementById('icName').textContent   = data.missingPersonName  || '—';
+      /* Info strip — map new DB field names */
+      document.getElementById('icDate').textContent   = formatDate(data.LoggedAt || data.reportTime);
+      document.getElementById('icLoc').textContent    = data.LastSeenLocation || data.location || '—';
+      document.getElementById('icName').textContent   = data.MissingPersonName || data.missingPersonName || '—';
       document.getElementById('icVol').textContent    =
         Array.isArray(data.teamMembers) && data.teamMembers.length
           ? data.teamMembers.length + ' عضو'
-          : '—';
-      document.getElementById('icStatus').textContent = statusInfo.text;
+          : (data.CurrentVolunteers ? data.CurrentVolunteers + ' عضو' : '—');
+
+      /* Status text — red for rejected */
+      const icStatusEl = document.getElementById('icStatus');
+      icStatusEl.textContent = statusInfo.text;
+      if (isRejected) {
+        icStatusEl.className = 'info-col-value red';
+      } else if (rawStatus === 'Under Review' || rawStatus === 'active') {
+        icStatusEl.className = 'info-col-value green';
+      } else {
+        icStatusEl.className = 'info-col-value';
+      }
 
       /* Rejected banner */
       document.getElementById('rejectedBanner').classList.toggle('visible', isRejected);
 
       /* Log */
-      const logEntries = buildLogEntries(data);
+      const logEntries = buildLogEntries({...data, status: rawStatus});
       document.getElementById('logList').innerHTML = logEntries.map(e => `
         <div class="log-entry">
           <div class="log-dot ${e.type}"></div>
@@ -649,7 +713,7 @@
 
       const stepToAnimate = isRejected ? 1 : statusInfo.step;
       const doneUpTo      = isRejected ? 0 : (statusInfo.doneUpTo ?? statusInfo.step - 1);
-      const dates = buildStepDates(data);
+      const dates = buildStepDates({...data, status: rawStatus});
 
       setTimeout(() => animateTimeline(stepToAnimate, doneUpTo, dates), 280);
       stagger('.info-col',  600, 75);
@@ -711,14 +775,15 @@
         });
       } else {
         /* ── Fallback: infer updates from the status field alone ── */
-        if (['org', 'active', 'rescued', 'found', 'closed', 'rejected'].includes(status)) {
+        if (['org', 'active', 'rescued', 'found', 'closed', 'rejected',
+             'Under Review', 'Rejected', 'In Progress'].includes(status)) {
           updates.push({
             time: '—',
             text: 'تمت مراجعة البلاغ والتحقق من بياناته.',
-            type: (['active', 'rescued', 'found', 'closed'].includes(status)) ? 'done' : 'active'
+            type: (['active', 'rescued', 'found', 'closed', 'Under Review', 'In Progress'].includes(status)) ? 'done' : 'active'
           });
         }
-        if (['active', 'rescued', 'found', 'closed'].includes(status)) {
+        if (['active', 'rescued', 'found', 'closed', 'In Progress'].includes(status)) {
           updates.push({
             time: '—',
             text: 'عملية البحث جارية في المنطقة المحددة.',
@@ -733,7 +798,7 @@
             type: 'done'
           });
         }
-        if (status === 'rejected') {
+        if (status === 'rejected' || status === 'Rejected') {
           updates.push({
             time: '—',
             text: 'تم رفض البلاغ من قِبل الجهة المختصة.',

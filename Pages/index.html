@@ -656,15 +656,31 @@
               </div>
 
               <div class="form-group">
-                <label for="rContact"> البريد الإلكتروني</label>
+                <label for="rContact">البريد الإلكتروني <span style="color:#c0392b;">*</span></label>
                 <input type="email" id="rContact" name="rContact" placeholder="مثال: name@email.com" required />
                 <small class="field-error" id="rContactErr" aria-live="polite"></small>
               </div>
 
+              <!-- [ADDED] رقم الهاتف — مطلوب لتتبع صاحب البلاغ والتواصل معه -->
               <div class="form-group">
-                <label for="rLocation">الموقع</label>
+                <label for="rPhone">رقم الجوال <span style="color:#c0392b;">*</span></label>
+                <input type="tel" id="rPhone" name="rPhone" placeholder="مثال: 0501234567" required pattern="[0-9]{10}" />
+                <small class="field-error" id="rPhoneErr" aria-live="polite"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="rLocation">الموقع (آخر مكان شوهد فيه المفقود) <span style="color:#c0392b;">*</span></label>
                 <input type="text" id="rLocation" name="rLocation" placeholder="مثال: طريق القصيم - قرب مخرج 10" required />
                 <small class="field-error" id="rLocationErr" aria-live="polite"></small>
+              </div>
+
+              <!-- [ADDED] وصف الموقع التفصيلي — يساعد فرق البحث على تحديد المنطقة بدقة -->
+              <div class="form-group form-group--full">
+                <label for="rLocationDesc">وصف الموقع التفصيلي</label>
+                <textarea id="rLocationDesc" name="rLocationDesc" rows="2"
+                  placeholder="مثال: منطقة رملية، بالقرب من برج كهرباء، يُشاهد منها جبل صغير ناحية الشمال"
+                  style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(180,140,80,0.2);font-family:'Tajawal',sans-serif;font-size:14px;resize:vertical;"></textarea>
+                <small class="field-error" id="rLocationDescErr" aria-live="polite"></small>
               </div>
 
               <div class="form-group form-group--full">
@@ -911,10 +927,54 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.16/typed.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <!-- EmailJS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="../JS/index.js"></script>
-  <script>
-    // Health radio toggle
+
+  <!-- ================================================================
+       FIREBASE — Report Submission + Login
+       ================================================================
+       WHAT CHANGED & WHY:
+       1. Report Submission: saves to Firestore 'Report' collection with
+          Status:"Report Received" (default), includes new Phone and
+          LocationDescription fields matching updated DB schema.
+       2. Login: queries the correct collection ('Admin','Volunteer','Reporter')
+          using the exact Firestore field names (Email, Password) from the DB
+          schema shown in screenshots. Previously the code likely used
+          mismatched field names causing auth failures.
+  ================================================================ -->
+  <script type="module">
+    import { initializeApp, getApps }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+      authDomain:        'rasid-1bb06.firebaseapp.com',
+      projectId:         'rasid-1bb06',
+      storageBucket:     'rasid-1bb06.firebasestorage.app',
+      messagingSenderId: '668525115587',
+      appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+      measurementId:     'G-MZ3KB7WBK4'
+    };
+
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    /* ──────────────────────────────────────────────────────────
+       HELPER: Generate report ID  e.g. RASID-48291
+    ────────────────────────────────────────────────────────── */
+    function genReportId() {
+      return 'RASID-' + Math.floor(10000 + Math.random() * 90000);
+    }
+
+    /* ──────────────────────────────────────────────────────────
+       HEALTH RADIO TOGGLE
+    ────────────────────────────────────────────────────────── */
     document.addEventListener('change', function(e) {
       if (e.target.name === 'rHealthRadio') {
         const wrap = document.getElementById('rHealthTextWrap');
@@ -929,6 +989,248 @@
         document.getElementById('rHealthErr').textContent = '';
       }
     });
+
+    /* ──────────────────────────────────────────────────────────
+       REPORT FORM SUBMISSION
+       - Saves document to Firestore 'Report' collection
+       - Default Status: "Report Received"  (matches new DB schema)
+       - Includes all new fields: Phone, LocationDescription
+       - Field names match DB schema exactly (PascalCase)
+    ────────────────────────────────────────────────────────── */
+    const reportForm = document.getElementById('reportForm');
+    if (reportForm) {
+      reportForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // — Basic field validation —
+        let valid = true;
+        function setErr(id, msg) {
+          const el = document.getElementById(id);
+          if (el) { el.textContent = msg; if (msg) valid = false; }
+        }
+        function clearErrors() {
+          ['rNameErr','rAgeErr','rVehicleErr','rLostDateErr','rRegionErr',
+           'rContactErr','rPhoneErr','rLocationErr','rDescErr','rHealthErr'].forEach(function(id){
+            const el = document.getElementById(id);
+            if (el) el.textContent = '';
+          });
+        }
+        clearErrors();
+
+        const name      = (document.getElementById('rName')?.value || '').trim();
+        const age       = (document.getElementById('rAge')?.value || '').trim();
+        const vehicle   = (document.getElementById('rVehicle')?.value || '').trim();
+        const lostDate  = (document.getElementById('rLostDate')?.value || '').trim();
+        const region    = (document.getElementById('rRegion')?.value || '').trim();
+        const email     = (document.getElementById('rContact')?.value || '').trim();
+        const phone     = (document.getElementById('rPhone')?.value || '').trim();
+        const location  = (document.getElementById('rLocation')?.value || '').trim();
+        const locDesc   = (document.getElementById('rLocationDesc')?.value || '').trim();
+        const desc      = (document.getElementById('rDesc')?.value || '').trim();
+        const healthRad = document.querySelector('input[name="rHealthRadio"]:checked');
+        const health    = healthRad?.value === 'yes'
+          ? (document.getElementById('rHealth')?.value || '').trim()
+          : '';
+        const priority  = document.getElementById('rPriority')?.value || 'متوسط';
+
+        if (!name)      setErr('rNameErr',    'اسم المفقود مطلوب');
+        if (!age)       setErr('rAgeErr',     'العمر مطلوب');
+        if (!vehicle)   setErr('rVehicleErr', 'المركبة مطلوبة');
+        if (!lostDate)  setErr('rLostDateErr','تاريخ الفقدان مطلوب');
+        if (!region)    setErr('rRegionErr',  'المنطقة مطلوبة');
+        if (!email)     setErr('rContactErr', 'البريد الإلكتروني مطلوب');
+        if (!phone)     setErr('rPhoneErr',   'رقم الجوال مطلوب');
+        if (!location)  setErr('rLocationErr','الموقع مطلوب');
+        if (desc.length < 10) setErr('rDescErr', 'الوصف قصير جداً (١٠ أحرف على الأقل)');
+
+        if (!valid) return;
+
+        const submitBtn = document.getElementById('submitReportBtn');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '...جارٍ الإرسال'; }
+
+        try {
+          const reportId = genReportId();
+
+          /* ── Save to Firestore ──
+             Field names match the DB schema exactly (same as Report collection
+             shown in screenshots: Activity, Age, ApprovalStutes, etc.)
+             Status is "Report Received" — only visible in Control.html initially. */
+          await addDoc(collection(db, 'Report'), {
+            reportId:            reportId,
+            MissingPersonName:   name,
+            Age:                 parseInt(age, 10),
+            HealthStatus:        health || 'لا يوجد',
+            Vehicle:             vehicle,
+            LostDate:            lostDate,
+            Region:              region,
+            ReporterEmail:       email,
+            Phone:               phone,
+            LastSeenLocation:    location,
+            LocationDescription: locDesc,
+            Details:             desc,
+            Priority:            priority,
+            Status:              'Report Received',   // ← default, only in Control.html
+            ApprovalStutes:      'pending',
+            ReportDate:          new Date().toLocaleDateString('en-SA'),
+            LoggedAt:            serverTimestamp(),
+            EvidanceFile:        '',
+            Outcome:             '',
+            OutcomeNote:         '',
+            RejectionReason:     '',
+            VolunteerID:         '',
+            AdminID:             '',
+            CurrentVolunteers:   0
+          });
+
+          // Show success banner
+          const banner = document.getElementById('reportSuccessBanner');
+          if (banner) { banner.style.display = 'flex'; setTimeout(function(){ banner.style.display = 'none'; }, 5000); }
+
+          // Close modal & reset
+          reportForm.reset();
+          const modal = document.getElementById('reportModal');
+          if (modal) modal.setAttribute('aria-hidden', 'true');
+
+        } catch (err) {
+          console.error('Report submission error:', err);
+          alert('حدث خطأ أثناء إرسال البلاغ. تحقق من اتصالك وأعد المحاولة.');
+        } finally {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال البلاغ'; }
+        }
+      });
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LOGIN FORM — Firebase Authentication
+       ══════════════════════════════════════════════════════════
+       المشكلة السابقة:
+         الكود القديم كان يبحث عن كلمة المرور مباشرة في Firestore
+         (Admin / Volunteer / Reporter) وهذا خطأ لأن كلمات المرور
+         مخزنة في Firebase Authentication وليس في Firestore.
+
+       الحل الصحيح (مطابق لـ firebase.js):
+         1. signInWithEmailAndPassword ← Firebase Auth يتحقق من الباسورد
+         2. بعد النجاح نقرأ الـ UID من Firebase Auth
+         3. نبحث في User (role: "admin" أو "volunteer")
+         4. إذا مو موجود في User نبحث في Volunteer
+         5. نوجّه حسب الـ role
+    ══════════════════════════════════════════════════════════ */
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const emailVal = (document.getElementById('lEmail')?.value || '').trim();
+        const passVal  = (document.getElementById('lPass')?.value  || '').trim();
+        const emailErr = document.getElementById('lEmailErr');
+        const passErr  = document.getElementById('lPassErr');
+
+        if (emailErr) emailErr.textContent = '';
+        if (passErr)  passErr.textContent  = '';
+
+        if (!emailVal) { if (emailErr) emailErr.textContent = 'البريد الإلكتروني مطلوب'; return; }
+        if (!passVal)  { if (passErr)  passErr.textContent  = 'كلمة المرور مطلوبة';      return; }
+
+        const submitBtn = document.getElementById('submitLoginBtn');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ التحقق...'; }
+
+        try {
+          /* ── الخطوة 1: تسجيل الدخول عبر Firebase Auth ─────────
+             كلمة المرور تتحقق هنا — لا نحتاج نخزنها في Firestore */
+          const { getAuth, signInWithEmailAndPassword, signOut } =
+            await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+
+          const auth       = getAuth(app);
+          const credential = await signInWithEmailAndPassword(auth, emailVal, passVal);
+          const uid        = credential.user.uid;
+
+          /* ── الخطوة 2: نحدد الـ role بالبحث في Collections ────────
+             الهيكل الفعلي في Firestore (من الصور):
+             - Admin/{uid}     → role: "admin",     AccountStutes: "valid"
+             - Volunteer/{uid} → ApprovalStatus: "approved", AccountStutes: "valid"
+             - User/{uid}      → role: "admin"/"volunteer" (بعض الأنظمة)
+             نبدأ بـ Admin لأن document ID = uid مباشرة */
+          const { doc, getDoc } =
+            await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+          /* ── 2a: ابحث في Admin/{uid} أولاً ── */
+          const adminSnap = await getDoc(doc(db, 'Admin', uid));
+          if (adminSnap.exists()) {
+            const data = adminSnap.data();
+            /* role في Firestore: "admin" أو "Admin" — نتحقق من الاثنين */
+            const role   = (data.role || '').toLowerCase();
+            const status = data.AccountStutes || data.accountStatus || '';
+            if (role === 'admin' || status === 'valid') {
+              window.location.href = 'Control.html';
+              return;
+            }
+          }
+
+          /* ── 2b: ابحث في User/{uid} ── */
+          const userSnap = await getDoc(doc(db, 'User', uid));
+          if (userSnap.exists()) {
+            const data   = userSnap.data();
+            const role   = (data.role || '').toLowerCase();
+            const status = data.accountStatus || data.AccountStutes || '';
+
+            if (role === 'admin') {
+              window.location.href = 'Control.html';
+              return;
+            }
+            if (role === 'volunteer' && status === 'approved') {
+              window.location.href = 'Reports.html';
+              return;
+            }
+
+            await signOut(auth);
+            if (emailErr) emailErr.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+            return;
+          }
+
+          /* ── 2c: ابحث في Volunteer/{uid} ── */
+          const volSnap = await getDoc(doc(db, 'Volunteer', uid));
+          if (volSnap.exists()) {
+            const data           = volSnap.data();
+            const approvalStatus = data.ApprovalStatus || '';
+            const accountStutes  = data.AccountStutes  || '';
+
+            if (approvalStatus === 'approved' && accountStutes === 'valid') {
+              window.location.href = 'Reports.html';
+              return;
+            }
+
+            await signOut(auth);
+            if (emailErr) emailErr.textContent = 'حسابك لم يتم قبوله بعد.';
+            return;
+          }
+
+          /* ── 2d: مو موجود في أي collection ── */
+          await signOut(auth);
+          if (emailErr) emailErr.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+
+        } catch (err) {
+          console.error('Login error:', err.code, err.message);
+
+          /* ترجمة أكواد Firebase Auth للعربية */
+          const arabicErrors = {
+            'auth/invalid-email':          'البريد الإلكتروني غير صالح.',
+            'auth/user-not-found':         'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+            'auth/wrong-password':         'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+            'auth/invalid-credential':     'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+            'auth/too-many-requests':      'تم تجاوز عدد المحاولات. حاول مجدداً لاحقاً.',
+            'auth/network-request-failed': 'خطأ في الاتصال. تحقق من الإنترنت.',
+            'auth/user-disabled':          'هذا الحساب موقوف.',
+          };
+          const msg = arabicErrors[err.code] || 'حدث خطأ غير متوقع. حاول مجدداً.';
+          const emailErr2 = document.getElementById('lEmailErr');
+          if (emailErr2) emailErr2.textContent = msg;
+
+        } finally {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-unlock-keyhole"></i> دخول'; }
+        }
+      });
+    }
+
   </script>
   <!-- ===== REPORT SUCCESS BANNER ===== -->
 <div id="reportSuccessBanner" style="
