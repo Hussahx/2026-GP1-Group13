@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F5EFE6" />
+  <title>راصد — لوحة تحكم الإدارة</title>
+  <link rel="icon" href="/assest/logo.PNG" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/CSS/Rasid.css" />
+
+  <style>
+    /* ══════════════════════════════════════════
+       متغيرات اللون — مطابقة تماماً للموقع
+    ══════════════════════════════════════════ */
+    :root {
+      --bg:#f9f6f1; --white:#fff;
+      --s100:#f5ece0; --s200:#e8d9c4; --s300:#d4bc98;
+      --s400:#b8965e; --s500:#9a7440; --s600:#7a5828;
+      --t900:#2a1e0e; --t700:#5a3e20; --t500:#8c6840; --t300:#b89870;
+      --bdr:rgba(180,140,80,0.15); --acc:#b8782a;
+      --ndot:#e07830; --adot:#2d9e52;
+      --red:#c0392b; --grn:#1e8040;
+    }
+
+    /* ══ إشعارات — مطابق ══ */
+    .nwrap{position:fixed!important;top:14px!important;left:50%!important;transform:translateX(-50%)!important;z-index:99999!important;display:flex!important;flex-direction:column!important;gap:7px!important;pointer-events:none!important;align-items:center!important;width:88%!important;max-width:380px!important;}
+    .nnotif{background:var(--white)!important;border-radius:12px!important;padding:11px 15px!important;box-shadow:0 6px 24px rgba(0,0,0,.13)!important;font-size:13px!important;color:var(--t900)!important;font-weight:500!important;width:100%!important;border-right:4px solid!important;animation:nin .3s ease,nout .3s ease 3.5s forwards!important;}
+    .ns{border-color:#2d9e52!important;}.ni{border-color:#4060c8!important;}.nw{border-color:#e07830!important;}.ne{border-color:#c0392b!important;}
+    @keyframes nin{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes nout{from{opacity:1;}to{opacity:0;}}
+
+    /* ══ منطقة المحتوى الإداري داخل page-body ══ */
+    .admin-wrap { padding: 0 0 60px; }
+
+    /* ══ شريط البحث والتابات الثابت ══ */
+    .admin-sticky {
+      position: sticky;
+      top: 0;
+      background: rgba(249,246,241,.97);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--bdr);
+      z-index: 50;
+    }
+    .admin-sticky-inner { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+    /* تابات */
+    .atabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--bdr); }
+    .atabs::-webkit-scrollbar { display: none; }
+    .atab {
+      flex-shrink: 0;
+      padding: 13px 16px;
+      font-size: 13px; font-weight: 700;
+      color: var(--t500);
+      cursor: pointer;
+      border: none; border-bottom: 2.5px solid transparent;
+      background: none;
+      font-family: 'Tajawal', sans-serif;
+      white-space: nowrap;
+      transition: all .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .atab .tc {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 17px; height: 17px; border-radius: 9px;
+      font-size: 10px; font-weight: 800; padding: 0 3px;
+      background: var(--s200); color: var(--s600);
+    }
+    .atab.on { color: var(--t900); border-bottom-color: var(--acc); font-weight: 800; }
+    .atab.on .tc { background: var(--acc); color: #fff; }
+    .atab.t-pend.on .tc { background: var(--ndot); color: #fff; }
+    .atab.t-acc.on  .tc { background: var(--adot); color: #fff; }
+    .atab.t-rej.on  .tc { background: var(--red);  color: #fff; }
+
+    /* صف البحث والترتيب */
+    .afilter-row {
+      display: flex; gap: 8px; padding: 9px 0 7px;
+      align-items: center;
+    }
+    .asinput {
+      flex: 1; min-width: 0;
+      padding: 9px 14px;
+      background: var(--white);
+      border: 1.5px solid var(--bdr);
+      border-radius: 22px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13px; color: var(--t900);
+      outline: none; direction: rtl;
+    }
+    .asinput:focus { border-color: var(--s300); }
+    .asinput::placeholder { color: var(--t300); }
+    .asselect {
+      flex-shrink: 0;
+      padding: 9px 11px;
+      background: var(--white);
+      border: 1.5px solid var(--bdr);
+      border-radius: 22px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 12px; color: var(--t700);
+      outline: none; cursor: pointer;
+    }
+
+    /* ══ المحتوى الداخلي ══ */
+    .admin-main { max-width: 1120px; margin: 0 auto; padding: 24px 24px 0; }
+
+    /* ══ بطاقات الإحصاء ══ */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 26px;
+    }
+    .stat-card {
+      background: var(--white);
+      border: 1.5px solid var(--bdr);
+      border-radius: 16px;
+      padding: 18px 20px;
+      position: relative; overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(100,60,20,.1); }
+    .stat-card::before {
+      content: ''; position: absolute;
+      top: 0; right: 0; width: 4px; height: 100%;
+      border-radius: 0 16px 16px 0;
+    }
+    .sc-all::before  { background: linear-gradient(180deg,var(--s400),var(--s600)); }
+    .sc-pend::before { background: linear-gradient(180deg,var(--ndot),#f0a060); }
+    .sc-acc::before  { background: linear-gradient(180deg,var(--adot),#60c880); }
+    .sc-rej::before  { background: linear-gradient(180deg,var(--red),#e05050); }
+    .stat-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; margin-bottom: 12px;
+    }
+    .si-all  { background: var(--s100); color: var(--s500); }
+    .si-pend { background: #fef0e0; color: #c05820; }
+    .si-acc  { background: #edfaf3; color: var(--grn); }
+    .si-rej  { background: #fef2f2; color: var(--red); }
+    .stat-val { font-size: 30px; font-weight: 800; color: var(--t900); line-height: 1; margin-bottom: 4px; }
+    .stat-lbl { font-size: 12px; color: var(--t500); font-weight: 600; }
+
+    /* ══ رأس الجدول ══ */
+    .sec-head-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+    .sec-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--s400); }
+    .sec-head-row h2 {
+      font-size: 12px; font-weight: 800; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--t700);
+    }
+    .sec-line { flex: 1; height: 1px; background: linear-gradient(to left, transparent, var(--s200)); }
+    .sec-cnt  { font-size: 11.5px; color: var(--t300); font-weight: 600; }
+
+    /* ══ الجدول ══ */
+    .table-wrap {
+      background: var(--white);
+      border: 1.5px solid var(--bdr);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+    .table-scroll { overflow-x: auto; }
+    .table-scroll::-webkit-scrollbar { height: 5px; }
+    .table-scroll::-webkit-scrollbar-track { background: var(--s100); }
+    .table-scroll::-webkit-scrollbar-thumb { background: var(--s300); border-radius: 3px; }
+
+    table { width: 100%; border-collapse: collapse; min-width: 680px; }
+    thead th {
+      padding: 11px 16px;
+      text-align: right;
+      font-size: 9.5px; font-weight: 800;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--t300);
+      border-bottom: 1.5px solid var(--s200);
+      background: var(--s100);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--s100); transition: background .15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fdf8f3; }
+    td { padding: 13px 16px; font-size: 13px; vertical-align: middle; }
+
+    /* خلية المفقود */
+    .missing-cell { display: flex; align-items: center; gap: 11px; }
+    .miss-av {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 13px; color: var(--white);
+      flex-shrink: 0; border: 2px solid var(--white);
+      box-shadow: 0 2px 8px rgba(100,60,10,.15);
+    }
+    .miss-name { font-size: 14px; font-weight: 700; color: var(--t900); }
+    .miss-id   { font-size: 10.5px; color: var(--t300); margin-top: 2px; font-family: 'Tajawal', monospace; letter-spacing: .3px; }
+
+    /* خلية التواصل */
+    .contact-cell { display: flex; flex-direction: column; gap: 4px; }
+    .contact-row  { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--t500); }
+    .contact-row i { width: 13px; font-size: 11px; color: var(--t300); }
+
+    /* الأولوية — مطابق لـ urgency في Reports.html */
+    .urg-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 6px;
+      font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase;
+      border: 1px solid;
+    }
+    .urg-uv { background: #fff0ee; color: var(--red);  border-color: #ffb8b0; }
+    .urg-uh { background: #fff5ee; color: #d4600a;     border-color: #ffc898; }
+    .urg-um { background: #f0faf4; color: var(--grn);  border-color: #a0d8b0; }
+
+    /* خلية التاريخ */
+    .date-cell { font-size: 12px; color: var(--t500); line-height: 1.6; }
+
+    /* شارة الحالة */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 800;
+      padding: 4px 11px; border-radius: 20px; border: 1px solid;
+      white-space: nowrap;
+    }
+    .status-badge i { font-size: 9px; }
+    .sb-pend { background: #fff5ee; color: #c05820;   border-color: #f0d4a8; }
+    .sb-acc  { background: #edfaf3; color: var(--grn); border-color: #a0d8b0; }
+    .sb-rej  { background: #fef2f2; color: var(--red); border-color: #ffc0b8; }
+
+    /* ══ أزرار — مطابق تماماً لـ Reports.html ══ */
+    .act-cell { display: flex; gap: 7px; align-items: center; }
+
+    /* الأزرار تستخدم نفس class .btn من Rasid.css + تخصيص */
+    .abtn {
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 12.5px; font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s, transform .15s, box-shadow .15s;
+      border: 1.5px solid;
+      display: inline-flex; align-items: center; gap: 5px;
+      white-space: nowrap; background: transparent;
+      min-height: 40px; touch-action: manipulation;
+    }
+    .abtn:active { opacity: .78; }
+    .abtn i { font-size: 11px; }
+
+    /* زر التفاصيل */
+    .abtn-view { background: var(--s100); border-color: var(--s200); color: var(--t500); }
+    .abtn-view:hover { background: var(--s200); color: var(--t700); }
+
+    /* زر القبول */
+    .abtn-acc { background: #edfaf3; border-color: #a0d8b0; color: var(--grn); }
+    .abtn-acc:hover { background: var(--grn); border-color: var(--grn); color: var(--white); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30,128,64,.25); }
+
+    /* زر الرفض */
+    .abtn-rej { background: #fef2f2; border-color: #ffc0b8; color: var(--red); }
+    .abtn-rej:hover { background: var(--red); border-color: var(--red); color: var(--white); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(192,57,43,.25); }
+
+    /* حالة فارغة */
+    .empty-state { padding: 56px 24px; text-align: center; }
+    .empty-icon  { font-size: 40px; margin-bottom: 12px; color: var(--t300); }
+    .empty-title { font-size: 15px; font-weight: 800; color: var(--t700); margin-bottom: 5px; }
+    .empty-sub   { font-size: 13px; color: var(--t300); }
+
+    /* ══ نافذة مودال ══ */
+    .aoverlay {
+      position: fixed!important; inset: 0!important;
+      background: rgba(20,10,0,.55)!important;
+      z-index: 99990!important;
+      display: flex!important; align-items: flex-end!important; justify-content: center!important;
+      opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .aoverlay.on { opacity: 1; pointer-events: all; }
+    .amodal {
+      background: var(--white);
+      border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 520px;
+      transform: translateY(40px); transition: transform .3s ease;
+    }
+    .aoverlay.on .amodal { transform: translateY(0); }
+    .mhandle { width: 36px; height: 4px; background: var(--s300); border-radius: 2px; margin: 12px auto 0; }
+    .mhead { padding: 16px 22px 14px; border-bottom: 1px solid var(--s100); display: flex; align-items: center; gap: 13px; }
+    .mhead-icon { width: 48px; height: 48px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .mhi-acc  { background: #edfaf3; color: var(--grn); }
+    .mhi-rej  { background: #fef2f2; color: var(--red); }
+    .mhi-view { background: var(--s100); color: var(--s500); }
+    .mhead-title { font-size: 17px; font-weight: 800; color: var(--t900); }
+    .mhead-sub   { font-size: 12.5px; color: var(--t500); margin-top: 3px; line-height: 1.55; }
+    .mclose {
+      margin-right: auto; background: none; border: none;
+      font-size: 18px; color: var(--t300); cursor: pointer;
+      padding: 6px 8px; border-radius: 8px;
+      min-width: 36px; min-height: 36px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mclose:active { background: var(--s100); }
+    .mbody { padding: 16px 22px; max-height: 55vh; overflow-y: auto; }
+    .dgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 14px; }
+    .di  { background: var(--s100); border-radius: 10px; padding: 11px 13px; }
+    .dl  { font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--t300); font-weight: 700; margin-bottom: 3px; }
+    .dv  { font-size: 13px; font-weight: 700; color: var(--t900); }
+    .mdesc { background: var(--s100); border-radius: 10px; padding: 13px; font-size: 13px; color: var(--t700); line-height: 1.75; margin-bottom: 14px; }
+    .mfoot { padding: 12px 22px 28px; border-top: 1px solid var(--s100); display: flex; gap: 10px; }
+    .mbtn {
+      flex: 1; padding: 12px 8px; border-radius: 11px;
+      font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 800;
+      cursor: pointer; border: 1.5px solid; transition: all .18s; text-align: center;
+    }
+    .mbtn-cancel { background: var(--s100); border-color: var(--s200); color: var(--t500); }
+    .mbtn-cancel:hover { background: var(--s200); }
+    .mbtn-acc { background: var(--grn); border-color: var(--grn); color: var(--white); }
+    .mbtn-acc:hover { background: #187a35; }
+    .mbtn-rej { background: var(--red); border-color: var(--red); color: var(--white); }
+    .mbtn-rej:hover { background: #a33025; }
+
+    /* ══ انيمشن صفوف ══ */
+    @keyframes rowIn { from{opacity:0;transform:translateX(8px);} to{opacity:1;transform:translateX(0);} }
+    tbody tr { animation: rowIn .25s ease both; }
+
+    /* ══ استجابية ══ */
+    @media(max-width:1100px) { .stats-row{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:640px) {
+      .stats-row{grid-template-columns:1fr 1fr;gap:10px;}
+      .stat-val{font-size:24px;}
+      .admin-main{padding:16px 14px 0;}
+      .admin-sticky-inner{padding:0 14px;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══ إشعارات ══ -->
+  <div class="nwrap" id="nwrap"></div>
+
+  <!-- ══════════════════════════════════
+       HEADER — من base.html
+  ══════════════════════════════════ -->
+  <header class="page-header" id="pageHeader">
+    <div class="header-logo-mark" aria-hidden="true">
+      <img src="/assest/New-logo.JPG.jpeg" alt="شعار راصد" />
+    </div>
+    <div class="header-brand">
+      <h1>راصد</h1>
+      <p>عين الصحراء — لوحة تحكم الإدارة</p>
+    </div>
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+    <nav class="header-nav" aria-label="تنقل سريع">
+      <div class="user-chip" title="حسابي">
+        <span class="avatar" id="userInitial">م</span>
+        <span class="name" id="userName">المشرف</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ══ طبقة السايدبار ══ -->
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+  <!-- ══════════════════════════════════
+       SIDEBAR — من base.html
+  ══════════════════════════════════ -->
+  <aside class="app-sidebar" id="appSidebar" aria-label="القائمة الجانبية" aria-hidden="true">
+    <div class="sidebar-close-row">
+      <button class="sidebar-close" id="sidebarClose" aria-label="إغلاق القائمة">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">القائمة الرئيسية</span>
+      <a href="#" class="sidebar-link">
+        <i class="fas fa-gauge"></i>
+        <span>لوحة التحكم</span>
+      </a>
+      <a href="#" class="sidebar-link active">
+        <i class="fas fa-file-lines"></i>
+        <span>إدارة البلاغات</span>
+      </a>
+      <a href="Reports.html" class="sidebar-link">
+        <i class="fas fa-bullhorn"></i>
+        <span>البلاغات الميدانية</span>
+      </a>
+      <a href="#" class="sidebar-link">
+        <i class="fas fa-users"></i>
+        <span>المتطوعون</span>
+      </a>
+      <a href="History.html" class="sidebar-link">
+        <i class="fas fa-clock-rotate-left"></i>
+        <span>السجل</span>
+      </a>
+      <div class="sidebar-divider"></div>
+      <span class="sidebar-section-label">الحساب</span>
+      <a href="profile1.html" class="sidebar-link">
+        <i class="fas fa-user"></i>
+        <span>الملف الشخصي</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
+        <i class="fas fa-right-from-bracket"></i>
+        <span>تسجيل الخروج</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══ نافذة تأكيد تسجيل الخروج ══ -->
+  <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+    <div class="logout-dialog">
+      <div class="logout-dialog-icon"><i class="fas fa-right-from-bracket"></i></div>
+      <h3 class="logout-dialog-title" id="logoutTitle">تسجيل الخروج</h3>
+      <p class="logout-dialog-msg">هل أنت متأكد من تسجيل الخروج؟</p>
+      <div class="logout-dialog-actions">
+        <button class="logout-cancel-btn" id="logoutCancel"><i class="fas fa-xmark"></i> إلغاء</button>
+        <button class="logout-confirm-btn" id="logoutConfirm"><i class="fas fa-right-from-bracket"></i> تسجيل الخروج</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       MAIN BODY
+  ══════════════════════════════════ -->
+  <main class="page-body">
+
+    <!-- عنوان الصفحة -->
+    <div class="page-heading">
+      <div class="page-heading-eyebrow" aria-hidden="true"><span></span>__ لوحة التحكم الإدارية __<span></span></div>
+      <h2>إدارة البلاغات</h2>
+      <p>مراجعة جميع البلاغات المقدمة واتخاذ الإجراء المناسب لكل بلاغ</p>
+    </div>
+
+    <div class="admin-wrap">
+
+      <!-- ══ شريط التابات والبحث الثابت ══ -->
+      <div class="admin-sticky">
+        <div class="admin-sticky-inner">
+          <div class="atabs">
+            <button class="atab on" data-tab="all" onclick="switchTab(this)">
+              <span class="tc" id="tcAll">٠</span>كل البلاغات
+            </button>
+            <button class="atab t-pend" data-tab="pending" onclick="switchTab(this)">
+              <span class="tc" id="tcPend">٠</span>قيد المراجعة
+            </button>
+            <button class="atab t-acc" data-tab="accepted" onclick="switchTab(this)">
+              <span class="tc" id="tcAcc">٠</span>المقبولة
+            </button>
+            <button class="atab t-rej" data-tab="rejected" onclick="switchTab(this)">
+              <span class="tc" id="tcRej">٠</span>المرفوضة
+            </button>
+          </div>
+          <div class="afilter-row">
+            <input class="asinput" id="searchInput" type="search" placeholder="🔍 ابحث باسم المفقود أو رقم البلاغ أو الموقع...">
+            <select class="asselect" id="sortSel">
+              <option value="newest">الأحدث</option>
+              <option value="oldest">الأقدم</option>
+              <option value="priority">الأعلى أولوية</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ المحتوى الداخلي ══ -->
+      <div class="admin-main">
+
+        <!-- بطاقات الإحصاء -->
+        <div class="stats-row">
+          <div class="stat-card sc-all">
+            <div class="stat-icon si-all"><i class="fas fa-layer-group"></i></div>
+            <div class="stat-val" id="statAll">٠</div>
+            <div class="stat-lbl">إجمالي البلاغات</div>
+          </div>
+          <div class="stat-card sc-pend">
+            <div class="stat-icon si-pend"><i class="fas fa-clock"></i></div>
+            <div class="stat-val" id="statPend">٠</div>
+            <div class="stat-lbl">قيد المراجعة</div>
+          </div>
+          <div class="stat-card sc-acc">
+            <div class="stat-icon si-acc"><i class="fas fa-circle-check"></i></div>
+            <div class="stat-val" id="statAcc">٠</div>
+            <div class="stat-lbl">البلاغات المقبولة</div>
+          </div>
+          <div class="stat-card sc-rej">
+            <div class="stat-icon si-rej"><i class="fas fa-circle-xmark"></i></div>
+            <div class="stat-val" id="statRej">٠</div>
+            <div class="stat-lbl">البلاغات المرفوضة</div>
+          </div>
+        </div>
+
+        <!-- رأس الجدول -->
+        <div class="sec-head-row">
+          <div class="sec-dot"></div>
+          <h2>قائمة البلاغات</h2>
+          <div class="sec-line"></div>
+          <div class="sec-cnt" id="secCnt"></div>
+        </div>
+
+        <!-- الجدول -->
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>اسم المفقود</th>
+                  <th>معلومات التواصل</th>
+                  <th>الأولوية</th>
+                  <th>التاريخ</th>
+                  <th>الحالة</th>
+                  <th>التفاصيل</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+            <div class="empty-title">لا توجد بلاغات</div>
+            <div class="empty-sub">لا توجد بلاغات تطابق عوامل التصفية الحالية.</div>
+          </div>
+        </div>
+
+      </div><!-- /admin-main -->
+    </div><!-- /admin-wrap -->
+  </main>
+
+  <!-- ══════════════════════════════════
+       FOOTER — من base.html
+  ══════════════════════════════════ -->
+  <footer>
+    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
+    </svg>
+    <div class="footer-inner">
+      <div class="f-brand">
+        <div class="f-logo">راصد<span>RASID</span></div>
+        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
+      </div>
+      <div class="f-col">
+        <h4>روابط سريعة</h4>
+        <ul>
+          <li><a href="index.html">الصفحة الرئيسية</a></li>
+          <li><a href="login.html">تسجيل الدخول</a></li>
+          <li><a href="Regester.html">انضم كمتطوع</a></li>
+          <li><a href="track-report.html">تتبع البلاغ</a></li>
+        </ul>
+      </div>
+      <div class="f-col">
+        <h4>أرقام الطوارئ</h4>
+        <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+        <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+      </div>
+    </div>
+    <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+    <div class="footer-dune"></div>
+  </footer>
+
+  <!-- ══ نافذة التأكيد ══ -->
+  <div class="aoverlay" id="confirmOvr">
+    <div class="amodal">
+      <div class="mhandle"></div>
+      <div class="mhead">
+        <div class="mhead-icon" id="mIcon"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="mhead-title" id="mTitle"></div>
+          <div class="mhead-sub"   id="mSub"></div>
+        </div>
+        <button class="mclose" onclick="closeConfirm()" type="button">✕</button>
+      </div>
+      <div class="mbody">
+        <div class="dgrid" id="mDetails"></div>
+      </div>
+      <div class="mfoot">
+        <button class="mbtn mbtn-cancel" onclick="closeConfirm()" type="button">إلغاء</button>
+        <button class="mbtn" id="mConfirmBtn" type="button"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ نافذة التفاصيل ══ -->
+  <div class="aoverlay" id="viewOvr">
+    <div class="amodal">
+      <div class="mhandle"></div>
+      <div class="mhead">
+        <div class="mhead-icon mhi-view"><i class="fas fa-file-magnifying-glass"></i></div>
+        <div style="flex:1;min-width:0;">
+          <div class="mhead-title" id="vTitle">تفاصيل البلاغ</div>
+          <div class="mhead-sub"   id="vSub"></div>
+        </div>
+        <button class="mclose" onclick="closeView()" type="button">✕</button>
+      </div>
+      <div class="mbody">
+        <div class="dgrid" id="vDetails"></div>
+        <div class="dl" style="margin-bottom:8px;">وصف البلاغ</div>
+        <div class="mdesc" id="vDesc"></div>
+      </div>
+      <div class="mfoot">
+        <button class="mbtn mbtn-cancel" onclick="closeView()" type="button" style="flex:none;width:100%;">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       SIDEBAR SCRIPT — من base.html
+  ══════════════════════════════════ -->
+  <script>
+    (function () {
+      var IS_HOMEPAGE = (function () {
+        var p = window.location.pathname;
+        return p === '/' || p.endsWith('index.html') || p.endsWith('index.htm') || p === '';
+      })();
+      var toggle     = document.getElementById('sidebarToggle');
+      var sidebar    = document.getElementById('appSidebar');
+      var overlay    = document.getElementById('sidebarOverlay');
+      var closeBtn   = document.getElementById('sidebarClose');
+      var pageHeader = document.getElementById('pageHeader');
+      var logoutBtn  = document.getElementById('sidebarLogoutBtn');
+      var logoutOvr  = document.getElementById('logoutOverlay');
+      var logoutCanc = document.getElementById('logoutCancel');
+      var logoutConf = document.getElementById('logoutConfirm');
+
+      function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden','false');
+        sidebar.setAttribute('aria-hidden','false');
+        toggle.setAttribute('aria-expanded','true');
+        toggle.setAttribute('aria-label','إغلاق القائمة');
+        document.body.style.overflow = 'hidden';
+        if (!IS_HOMEPAGE && pageHeader) pageHeader.classList.add('header-hidden');
+      }
+      function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+        overlay.setAttribute('aria-hidden','true');
+        sidebar.setAttribute('aria-hidden','true');
+        toggle.setAttribute('aria-expanded','false');
+        toggle.setAttribute('aria-label','فتح القائمة');
+        document.body.style.overflow = '';
+        if (pageHeader) pageHeader.classList.remove('header-hidden');
+      }
+      function openLogout()  { logoutOvr.classList.add('on'); document.body.style.overflow='hidden'; logoutConf.focus(); }
+      function closeLogout() { logoutOvr.classList.remove('on'); document.body.style.overflow=''; }
+
+      toggle.addEventListener('click', function(){ sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
+      closeBtn.addEventListener('click', closeSidebar);
+      overlay.addEventListener('click', closeSidebar);
+      sidebar.querySelectorAll('.sidebar-link').forEach(function(link){
+        link.addEventListener('click', function(){
+          sidebar.querySelectorAll('.sidebar-link').forEach(function(l){ l.classList.remove('active'); });
+          link.classList.add('active');
+          if (window.innerWidth < 768) closeSidebar();
+        });
+      });
+      logoutBtn.addEventListener('click', openLogout);
+      logoutCanc.addEventListener('click', closeLogout);
+      logoutOvr.addEventListener('click', function(e){ if (e.target===logoutOvr) closeLogout(); });
+      logoutConf.addEventListener('click', function(){
+        logoutConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الخروج…';
+        logoutConf.disabled = true;
+        sessionStorage.clear();
+        setTimeout(function(){ window.location.href='index.html'; }, 900);
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key==='Escape'){
+          if (logoutOvr.classList.contains('on')) { closeLogout(); return; }
+          if (sidebar.classList.contains('open')) { closeSidebar(); toggle.focus(); }
+        }
+      });
+      var resizeTimer;
+      window.addEventListener('resize', function(){
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function(){ if (window.innerWidth>=1024) closeSidebar(); }, 150);
+      });
+    })();
+  </script>
+
+  <!-- ══════════════════════════════════
+       ADMIN LOGIC
+  ══════════════════════════════════ -->
+  <script>
+    /* ════ ألوان أفاتار ════ */
+    var AVC = ['#9a7440','#7a5828','#b8965e','#c0392b','#2d9e52','#4060c8','#8c6840','#5a3e20'];
+
+    /* ════ البيانات التجريبية — صيغة RASID-XXXXX ════ */
+    var reports = [
+      {id:'RASID-60841', missingName:'سالم الرشيدي',      phone:'0501234567', email:'ahmed.r@email.com',    priority:'uv', date:'٢٨ أبريل ٢٠٢٥', status:'pending',  location:'صحراء الدهناء',    desc:'مفقود آخر مرة شوهد عند إحداثيات 24.8°N، كان في رحلة مشي منفرداً في الصحراء.'},
+      {id:'RASID-60842', missingName:'ناصر المطيري',       phone:'0559876543', email:'sara.m@gmail.com',      priority:'uv', date:'٢٨ أبريل ٢٠٢٥', status:'pending',  location:'الربع الخالي',      desc:'إشارة استغاثة نشطة، عطل في المركبة على بعد ٨٠ كم جنوب نقطة التفتيش.'},
+      {id:'RASID-60843', missingName:'فيصل بن محمد',       phone:'0504567890', email:'omar.bm@work.sa',       priority:'uh', date:'٢٧ أبريل ٢٠٢٥', status:'accepted', location:'صحراء النفود',      desc:'مركبة متروكة تسد طريق الطوارئ بالقرب من القطاع ٧-B.'},
+      {id:'RASID-60844', missingName:'ليلى الزهراني',      phone:'0541112233', email:'f.zahrani@rasid.sa',    priority:'uv', date:'٢٧ أبريل ٢٠٢٥', status:'accepted', location:'جبال الحجاز',       desc:'طفلان مفقودان أبلغ عنهما مرشد محلي، آخر مرة شوهدا يتجهان نحو وادٍ جاف.'},
+      {id:'RASID-60845', missingName:'حامد العتيبي',       phone:'0563345566', email:'khalid.o@hotmail.com',  priority:'um', date:'٢٦ أبريل ٢٠٢٥', status:'rejected', location:'المنطقة الشرقية',   desc:'نار مشبوهة قرب محمية طبيعية. دوريات المنطقة أكدت السلامة وأغلقت القضية.'},
+      {id:'RASID-60846', missingName:'عبدالله الشمراني',   phone:'0507788899', email:'n.shamrani@mail.com',   priority:'uh', date:'٢٦ أبريل ٢٠٢٥', status:'pending',  location:'منطقة تبوك',        desc:'رجل مسن (٧٨ عاماً) ابتعد عن رحلة عائلية عند غروب الشمس، يعاني من قصور بصري.'},
+      {id:'RASID-60847', missingName:'راشد القحطاني',      phone:'0592223344', email:'y.qahtani@sa.net',      priority:'uv', date:'٢٥ أبريل ٢٠٢٥', status:'rejected', location:'جبال عسير',         desc:'مضيء استغاثة رُصد من قِبل الحراس. تبيّن لاحقاً أنه تدريب خاطئ لمجموعة مشي.'},
+      {id:'RASID-60848', missingName:'ريم الحربي',         phone:'0536677788', email:'mona.h@webmail.sa',     priority:'uh', date:'٢٥ أبريل ٢٠٢٥', status:'accepted', location:'وادي العلا',        desc:'مجموعة سياحية من ٤ أشخاص ضلت في ممر التراث. عُثر عليهم بسلامة.'},
+      {id:'RASID-60849', missingName:'طارق بن محمد',       phone:'0509900011', email:'smbm@saudinet.sa',      priority:'um', date:'٢٤ أبريل ٢٠٢٥', status:'pending',  location:'منطقة القصيم',      desc:'رصد وهج حراري غير اعتيادي واحتمال تسرب غاز قرب محطة مسح. يستدعي تفتيشاً.'},
+      {id:'RASID-60850', missingName:'وليد الدوسري',       phone:'0554432211', email:'r.dosari@rasid.net',    priority:'uv', date:'٢٤ أبريل ٢٠٢٥', status:'accepted', location:'الربع الخالي',      desc:'راكب جمل ضاع في عاصفة رملية، منارة التحديد نشطت وأُرسل فريق الإنقاذ بنجاح.'},
+    ];
+
+    var TAB = 'all';
+    var pendingAction = null;
+
+    function toAr(n){ return String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[+d];}); }
+
+    /* ════ تصفية وترتيب ════ */
+    function getFiltered(){
+      var q   = (document.getElementById('searchInput').value||'').trim().toLowerCase();
+      var srt = document.getElementById('sortSel').value;
+      var po  = {uv:0, uh:1, um:2};
+      var list = reports.filter(function(r){
+        var match = !q ||
+          r.missingName.toLowerCase().indexOf(q) > -1 ||
+          r.id.toLowerCase().indexOf(q) > -1 ||
+          r.phone.indexOf(q) > -1 ||
+          r.email.toLowerCase().indexOf(q) > -1 ||
+          r.location.indexOf(q) > -1;
+        if (!match) return false;
+        return TAB === 'all' || r.status === TAB;
+      });
+      if (srt === 'oldest')        list.sort(function(a,b){ return a.date.localeCompare(b.date); });
+      else if (srt === 'priority') list.sort(function(a,b){ return po[a.priority] - po[b.priority]; });
+      else                          list.sort(function(a,b){ return b.date.localeCompare(a.date); });
+      return list;
+    }
+
+    /* ════ رندر ════ */
+    function renderAll(){
+      var list  = getFiltered();
+      var tbody = document.getElementById('tbody');
+      var empty = document.getElementById('emptyState');
+
+      var all  = reports.length;
+      var pend = reports.filter(function(r){ return r.status==='pending';  }).length;
+      var acc  = reports.filter(function(r){ return r.status==='accepted'; }).length;
+      var rej  = reports.filter(function(r){ return r.status==='rejected'; }).length;
+
+      document.getElementById('statAll').textContent  = toAr(all);
+      document.getElementById('statPend').textContent = toAr(pend);
+      document.getElementById('statAcc').textContent  = toAr(acc);
+      document.getElementById('statRej').textContent  = toAr(rej);
+      document.getElementById('tcAll').textContent    = toAr(all);
+      document.getElementById('tcPend').textContent   = toAr(pend);
+      document.getElementById('tcAcc').textContent    = toAr(acc);
+      document.getElementById('tcRej').textContent    = toAr(rej);
+      document.getElementById('secCnt').textContent   = toAr(list.length) + ' بلاغ';
+
+      if (!list.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+      empty.style.display = 'none';
+
+      tbody.innerHTML = list.map(function(r, i){
+        return '<tr style="animation-delay:'+(i*.04)+'s">' +
+          '<td>' + missingCell(r, i) + '</td>' +
+          '<td>' + contactCell(r)    + '</td>' +
+          '<td>' + urgTag(r.priority)+ '</td>' +
+          '<td><div class="date-cell">' + r.date + '</div></td>' +
+          '<td>' + statusBadge(r.status) + '</td>' +
+          '<td>' + actCell(r) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    /* ════ خلايا الجدول ════ */
+    function missingCell(r, i){
+      return '<div class="missing-cell">' +
+        '<div class="miss-av" style="background:'+AVC[i%AVC.length]+'">'+r.missingName.charAt(0)+'</div>' +
+        '<div>' +
+          '<div class="miss-name">'+r.missingName+'</div>' +
+          '<div class="miss-id">'+r.id+'</div>' +
+        '</div></div>';
+    }
+
+    function contactCell(r){
+      return '<div class="contact-cell">' +
+        '<div class="contact-row"><i class="fas fa-phone"></i>'+r.phone+'</div>' +
+        '<div class="contact-row"><i class="fas fa-envelope"></i>'+r.email+'</div>' +
+      '</div>';
+    }
+
+    function urgTag(p){
+      var m = {
+        uv: ['urg-tag urg-uv', 'طارئ جداً'],
+        uh: ['urg-tag urg-uh', 'طارئ'],
+        um: ['urg-tag urg-um', 'متوسط']
+      };
+      var d = m[p] || m.um;
+      return '<span class="'+d[0]+'">'+d[1]+'</span>';
+    }
+
+    function statusBadge(s){
+      var m = {
+        pending:  ['status-badge sb-pend', 'fa-clock',        'قيد المراجعة'],
+        accepted: ['status-badge sb-acc',  'fa-circle-check', 'مقبول'],
+        rejected: ['status-badge sb-rej',  'fa-circle-xmark', 'مرفوض']
+      };
+      var d = m[s] || m.pending;
+      return '<span class="'+d[0]+'"><i class="fas '+d[1]+'"></i>'+d[2]+'</span>';
+    }
+
+    /* ════ خلية التفاصيل / الأزرار
+         - زر التفاصيل: دائماً
+         - قبول + رفض: فقط عند "pending"
+         - مقبول / مرفوض: لا أزرار إضافية
+    ════ */
+    function actCell(r){
+      var html = '<div class="act-cell">' +
+        '<button class="abtn abtn-view" onclick="openView(\''+r.id+'\')" title="عرض التفاصيل" type="button">' +
+        '<i class="fas fa-eye"></i> التفاصيل</button>';
+
+      if (r.status === 'pending'){
+        html +=
+          '<button class="abtn abtn-acc" onclick="doAction(\''+r.id+'\',\'accept\')" type="button">' +
+          '<i class="fas fa-check"></i> قبول</button>' +
+          '<button class="abtn abtn-rej" onclick="doAction(\''+r.id+'\',\'reject\')" type="button">' +
+          '<i class="fas fa-xmark"></i> رفض</button>';
+      }
+      return html + '</div>';
+    }
+
+    /* ════ تبديل التابات ════ */
+    function switchTab(btn){
+      document.querySelectorAll('.atab').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      TAB = btn.getAttribute('data-tab');
+      renderAll();
+    }
+
+    /* ════ نافذة التأكيد ════ */
+    function doAction(id, action){
+      var r = find(id); if (!r) return;
+      pendingAction = {id: id, action: action};
+      var icon = document.getElementById('mIcon');
+      var title= document.getElementById('mTitle');
+      var sub  = document.getElementById('mSub');
+      var det  = document.getElementById('mDetails');
+      var btn  = document.getElementById('mConfirmBtn');
+
+      if (action === 'accept'){
+        icon.className   = 'mhead-icon mhi-acc';
+        icon.innerHTML   = '<i class="fas fa-circle-check"></i>';
+        title.textContent= 'قبول البلاغ';
+        sub.textContent  = 'هل تريد قبول بلاغ المفقود "'+r.missingName+'"؟ سيُنقل إلى قائمة البلاغات المقبولة.';
+        btn.className    = 'mbtn mbtn-acc';
+        btn.textContent  = 'تأكيد القبول';
+      } else {
+        icon.className   = 'mhead-icon mhi-rej';
+        icon.innerHTML   = '<i class="fas fa-circle-xmark"></i>';
+        title.textContent= 'رفض البلاغ';
+        sub.textContent  = 'هل تريد رفض بلاغ المفقود "'+r.missingName+'"؟ سيُنقل إلى قائمة البلاغات المرفوضة.';
+        btn.className    = 'mbtn mbtn-rej';
+        btn.textContent  = 'تأكيد الرفض';
+      }
+      det.innerHTML =
+        di('رقم البلاغ', r.id) +
+        di('اسم المفقود', r.missingName) +
+        di('الموقع', r.location) +
+        di('الأولوية', urgLbl(r.priority));
+
+      btn.onclick = function(){ execAction(); };
+      document.getElementById('confirmOvr').classList.add('on');
+    }
+
+    function execAction(){
+      if (!pendingAction) return;
+      var r = find(pendingAction.id);
+      if (r){
+        r.status = pendingAction.action === 'accept' ? 'accepted' : 'rejected';
+        var msg  = pendingAction.action === 'accept'
+          ? '✓ تم قبول بلاغ ' + r.missingName + ' بنجاح'
+          : '✗ تم رفض بلاغ ' + r.missingName;
+        notify(msg, pendingAction.action === 'accept' ? 's' : 'ne');
+        renderAll();
+      }
+      closeConfirm();
+      pendingAction = null;
+    }
+    function closeConfirm(){ document.getElementById('confirmOvr').classList.remove('on'); }
+
+    /* ════ نافذة التفاصيل ════ */
+    function openView(id){
+      var r = find(id); if (!r) return;
+      document.getElementById('vTitle').textContent = r.id;
+      document.getElementById('vSub').textContent   = r.missingName + ' · ' + r.location;
+      document.getElementById('vDetails').innerHTML =
+        di('رقم البلاغ',    r.id) +
+        di('اسم المفقود',   r.missingName) +
+        di('رقم الهاتف',    r.phone) +
+        di('البريد الإلكتروني', r.email) +
+        di('الموقع',        r.location) +
+        di('الأولوية',      urgLbl(r.priority)) +
+        di('التاريخ',       r.date) +
+        di('الحالة',        statLbl(r.status));
+      document.getElementById('vDesc').textContent = r.desc;
+      document.getElementById('viewOvr').classList.add('on');
+    }
+    function closeView(){ document.getElementById('viewOvr').classList.remove('on'); }
+
+    /* ════ مساعدات ════ */
+    function find(id){ for (var i=0;i<reports.length;i++) if(reports[i].id===id) return reports[i]; return null; }
+    function di(l, v){ return '<div class="di"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>'; }
+    function urgLbl(p){ return {uv:'طارئ جداً', uh:'طارئ', um:'متوسط'}[p] || p; }
+    function statLbl(s){ return {pending:'قيد المراجعة', accepted:'مقبول', rejected:'مرفوض'}[s] || s; }
+
+    function notify(msg, type){
+      var w = document.getElementById('nwrap');
+      var d = document.createElement('div');
+      d.className = 'nnotif n' + (type||'i');
+      d.textContent = msg;
+      w.appendChild(d);
+      setTimeout(function(){ if (d.parentNode) d.parentNode.removeChild(d); }, 4200);
+    }
+
+    /* ════ إغلاق النوافذ ════ */
+    document.getElementById('confirmOvr').addEventListener('click', function(e){ if(e.target===this) closeConfirm(); });
+    document.getElementById('viewOvr').addEventListener('click',    function(e){ if(e.target===this) closeView(); });
+    document.addEventListener('keydown', function(e){
+      if (e.key==='Escape'){ closeConfirm(); closeView(); }
+    });
+
+    /* ════ البحث والترتيب ════ */
+    document.getElementById('searchInput').addEventListener('input', renderAll);
+    document.getElementById('sortSel').addEventListener('change', renderAll);
+
+    /* ════ تهيئة ════ */
+    renderAll();
+  </script>
+</body>
+</html>
