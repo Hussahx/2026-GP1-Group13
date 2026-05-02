@@ -936,77 +936,87 @@ if (!rFile || !rFile.files.length) {
         return;
       }
 
-      // ── تعطيل الزر لمنع الإرسال المتكرر ─────────────────
-      if (submitBtn) submitBtn.disabled = true;
+      // ── submission lock ───────────────────────────────────
+      if (reportForm._submitting) return;
+      reportForm._submitting = true;
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الإرسال...';
+      }
 
       try {
-        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-        const { getFirestore, collection, addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const { initializeApp, getApps } =
+          await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getFirestore, collection, addDoc, serverTimestamp } =
+          await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
 
         const firebaseConfig = {
-          apiKey:            "AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0",
-          authDomain:        "rasid-1bb06.firebaseapp.com",
-          projectId:         "rasid-1bb06",
-          storageBucket:     "rasid-1bb06.firebasestorage.app",
-          messagingSenderId: "668525115587",
-          appId:             "1:668525115587:web:e017be3b5cbf4ac3b30a76",
-          measurementId:     "G-MZ3KB7WBK4"
+          apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+          authDomain:        'rasid-1bb06.firebaseapp.com',
+          projectId:         'rasid-1bb06',
+          storageBucket:     'rasid-1bb06.firebasestorage.app',
+          messagingSenderId: '668525115587',
+          appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+          measurementId:     'G-MZ3KB7WBK4'
         };
 
         const app      = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
         const db       = getFirestore(app);
         const reportId = 'RASID-' + Math.floor(10000 + Math.random() * 90000);
 
-        // ── ADDED: رفع ملف الدليل إلى Cloudinary ────────────────────
-        // يرفع الصورة/PDF/فيديو ثم يحفظ رابطه في Firestore
-        let evidenceFileURL  = '';   // الرابط الدائم من Cloudinary
-        let evidenceFileType = '';   // 'image' | 'video' | 'pdf'
+        // ── Cloudinary upload ─────────────────────────────────
+        let evidenceFileURL  = '';
+        let evidenceFileType = '';
 
         if (rFile && rFile.files.length) {
           const file = rFile.files[0];
-
-          // تحديد نوع الملف
           if (file.type.startsWith('video/'))       evidenceFileType = 'video';
           else if (file.type === 'application/pdf') evidenceFileType = 'pdf';
           else                                       evidenceFileType = 'image';
 
-          // إعداد بيانات الرفع
           const formData = new FormData();
-          formData.append('file',           file);
-          formData.append('upload_preset',  'x1kwhu9q');   // ← Cloudinary unsigned preset
-          formData.append('folder',         'evidence');    // ← مجلد evidence في Cloudinary
-          formData.append('public_id',      reportId);      // ← اسم الملف = reportId
+          formData.append('file',          file);
+          formData.append('upload_preset', 'x1kwhu9q');
+          formData.append('folder',        'evidence');
+          formData.append('public_id',     reportId);
 
-          // رفع الملف (resource_type=auto يكتشف النوع تلقائياً)
           const cloudRes = await fetch(
-            'https://api.cloudinary.com/v1_1/dtihhz1l4/auto/upload',  // ← cloud name
+            'https://api.cloudinary.com/v1_1/dtihhz1l4/auto/upload',
             { method: 'POST', body: formData }
           );
           if (!cloudRes.ok) throw new Error('فشل رفع الملف');
           const cloudData = await cloudRes.json();
-          evidenceFileURL = cloudData.secure_url;  // ← الرابط الكامل https://
+          evidenceFileURL = cloudData.secure_url;
         }
-        // ── END ADDED ────────────────────────────────────────────────
 
+        // ── Save to Firestore ─────────────────────────────────
         await addDoc(collection(db, 'Report'), {
-          reportId,
-          missingPersonName: nameVal,
-          age:               ageVal,
-          healthStatus:      healthVal,
-          vehicle:           vehicleVal,
-          location:          locVal,
-          region:            regionVal,
-          lostDate:          lostDateVal,
-          description:       descVal,
-          contact:           contactVal,
-          reportTime:        new Date(),
-          status:            'new',
-          teamMembers:       [],
-          currentVolunteers: 0,
-          closedAt:          null,
-          durationHours:     0,
-          evidenceFile:      evidenceFileURL,   // ← ADDED: رابط الملف
-          evidenceFileType:  evidenceFileType,  // ← ADDED: نوع الملف
+          reportId:            reportId,
+          MissingPersonName:   nameVal,
+          Age:                 parseInt(ageVal, 10) || 0,
+          HealthStatus:        healthVal || 'لا يوجد',
+          Vehicle:             vehicleVal,
+          LostDate:            lostDateVal,
+          Region:              regionVal,
+          ReporterEmail:       contactVal,
+          Phone:               (document.getElementById('rPhone')?.value || '').trim(),
+          LastSeenLocation:    locVal,
+          LocationDescription: (document.getElementById('rLocationDesc')?.value || '').trim(),
+          Details:             descVal,
+          Priority:            document.getElementById('rPriority')?.value || 'متوسط',
+          Status:              'Report Received',
+          ApprovalStutes:      'pending',
+          ReportDate:          new Date().toLocaleDateString('en-SA'),
+          LoggedAt:            serverTimestamp(),
+          EvidanceFile:        evidenceFileURL,
+          EvidenceFileType:    evidenceFileType,
+          Outcome:             '',
+          OutcomeNote:         '',
+          RejectionReason:     '',
+          VolunteerID:         '',
+          AdminID:             '',
+          CurrentVolunteers:   0
         });
 
         // ── إرسال EmailJS بعد نجاح Firebase ─────────────────
