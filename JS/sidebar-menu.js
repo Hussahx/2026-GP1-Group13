@@ -53,6 +53,12 @@ const ROLE_MENUS = {
       key   : 'Reports',
     },
     {
+      label : 'البلاغات المسندة',
+      href  : 'MyReports.html',
+      icon  : 'fas fa-bookmark',
+      key   : 'MyReports',
+    },
+    {
       label : 'السجل',
       href  : 'History.html',
       icon  : 'fas fa-clock-rotate-left',

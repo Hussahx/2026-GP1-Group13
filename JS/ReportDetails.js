@@ -226,6 +226,42 @@
     const contactEl = $("#reportContact");
     if (contactEl) contactEl.textContent = r.contact || '—';
 
+    // ADDED: عرض ملف الدليل المرفوع من المُبلّغ ─────────────────────────
+    const evidenceBox = $("#evidenceContainer");
+    if (evidenceBox) {
+      if (r.evidenceFile) {
+        if (r.evidenceFileType === 'image') {
+          // صورة — تعرض مصغّرة وتفتح كاملة بضغطة
+          evidenceBox.innerHTML = `
+            <a href="${r.evidenceFile}" target="_blank" title="فتح الصورة بالحجم الكامل">
+              <img src="${r.evidenceFile}" alt="صورة الدليل"
+                style="max-width:100%;max-height:280px;border-radius:10px;
+                       object-fit:contain;cursor:pointer;border:1.5px solid rgba(166,124,82,0.3);" />
+            </a>
+            <div style="font-size:12px;color:#999;margin-top:6px;">اضغط على الصورة لعرضها كاملة</div>`;
+        } else if (r.evidenceFileType === 'video') {
+          // فيديو — مشغّل مباشر
+          evidenceBox.innerHTML = `
+            <video controls style="max-width:100%;max-height:280px;border-radius:10px;border:1.5px solid rgba(166,124,82,0.3);">
+              <source src="${r.evidenceFile}">
+              متصفحك لا يدعم تشغيل الفيديو.
+            </video>`;
+        } else if (r.evidenceFileType === 'pdf') {
+          // PDF — رابط تحميل
+          evidenceBox.innerHTML = `
+            <a href="${r.evidenceFile}" target="_blank"
+              style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;
+                     background:#f5f5f5;border:1.5px solid rgba(166,124,82,0.3);
+                     border-radius:8px;color:#333;text-decoration:none;font-weight:600;">
+              📄 فتح ملف PDF
+            </a>`;
+        }
+      } else {
+        evidenceBox.innerHTML = `<span style="color:#aaa;font-size:13px;">لا يوجد ملف مرفق</span>`;
+      }
+    }
+    // END ADDED ────────────────────────────────────────────────────────
+
     const leaderEl = $("#reportLeader");
     if (leaderEl) leaderEl.textContent = r.leader || '—';
 
@@ -646,6 +682,9 @@
         vehicle:      d.vehicle || '—',
         contact:      d.contact || '—',
         teamCount:    Array.isArray(d.teamMembers) ? d.teamMembers.length : 0,
+        // ADDED: بيانات ملف الدليل من Cloudinary
+        evidenceFile:     d.evidenceFile     || '',
+        evidenceFileType: d.evidenceFileType || 'image',
       };
     } catch (err) {
       console.error('loadFromFirestore error:', err);
@@ -679,6 +718,9 @@
           state.report.contact      = reportData.contact;
           state.report.leader       = reportData.leader;
           state.report.teamCount    = reportData.teamCount;
+          // ADDED: تمرير بيانات ملف الدليل إلى الـ state
+          state.report.evidenceFile     = reportData.evidenceFile;
+          state.report.evidenceFileType = reportData.evidenceFileType;
 
           // نخزن معلومات إضافية للاستخدام لاحقاً
           window._reportLeader      = reportData.leader;

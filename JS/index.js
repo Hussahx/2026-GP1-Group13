@@ -739,8 +739,11 @@ if (!healthVal || healthVal.length < 4) {
 
     const descVal = String(rDesc?.value || '').trim();
     const ageVal     = String(document.getElementById('rAge')?.value    || '').trim();
-const healthVal  = String(document.getElementById('rHealth')?.value || '').trim();
-const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
+    const rHealthRadio = document.querySelector('input[name="rHealthRadio"]:checked');
+    const healthVal  = rHealthRadio?.value === 'yes'
+      ? String(document.getElementById('rHealth')?.value || '').trim()
+      : (rHealthRadio?.value === 'no' ? null : undefined);
+    const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
     if (!descVal || descVal.length < 10) {
       ok = false;
       setFieldError(rDesc, document.getElementById('rDescErr'), 'الرجاء إدخال وصف البلاغ (10 أحرف على الأقل).');
@@ -845,8 +848,13 @@ if (!rFile || !rFile.files.length) {
       const locVal     = String(rLocation?.value || '').trim();
       const descVal    = String(rDesc?.value    || '').trim();
       const ageVal     = String(document.getElementById('rAge')?.value    || '').trim();
-      const healthVal  = String(document.getElementById('rHealth')?.value || '').trim();
+      const rHealthRadio = document.querySelector('input[name="rHealthRadio"]:checked');
+      const healthVal  = rHealthRadio?.value === 'yes'
+        ? String(document.getElementById('rHealth')?.value || '').trim()
+        : (rHealthRadio?.value === 'no' ? null : undefined);
       const vehicleVal = String(document.getElementById('rVehicle')?.value|| '').trim();
+      const lostDateVal  = String(rLostDate?.value || '').trim();
+      const regionVal    = String(rRegion?.value   || '').trim();
 
       let ok = true;
 
@@ -889,13 +897,16 @@ if (!rFile || !rFile.files.length) {
       } else { setFieldError(rRegion, document.getElementById('rRegionErr'), ''); }
 
       // ── التحقق من الحالة الصحية ───────────────────────────
-      if (!healthVal || healthVal.length < 4) {
-        setFieldError(
-          document.getElementById('rHealth'),
-          document.getElementById('rHealthErr'),
-          'الرجاء وصف الحالة الصحية (4 أحرف على الأقل).'
-        ); ok = false;
-      } else { setFieldError(document.getElementById('rHealth'), document.getElementById('rHealthErr'), ''); }
+            if (!rHealthRadio) {
+              document.getElementById('rHealthErr').textContent = 'الرجاء تحديد ما إذا كان المفقود يعاني من أمراض.';
+              ok = false;
+            } else if (rHealthRadio.value === 'yes' && (!healthVal || healthVal.length < 4)) {
+              setFieldError(
+                document.getElementById('rHealth'),
+                document.getElementById('rHealthErr'),
+                'الرجاء وصف الحالة الصحية (4 أحرف على الأقل).'
+              ); ok = false;
+            } else { document.getElementById('rHealthErr').textContent = ''; }
 
       // ── التحقق من الوصف ───────────────────────────────────
       if (!descVal || descVal.length < 10) {
@@ -942,9 +953,40 @@ if (!rFile || !rFile.files.length) {
           measurementId:     "G-MZ3KB7WBK4"
         };
 
-        const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-        const db  = getFirestore(app);
+        const app      = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+        const db       = getFirestore(app);
         const reportId = 'RASID-' + Math.floor(10000 + Math.random() * 90000);
+
+        // ── ADDED: رفع ملف الدليل إلى Cloudinary ────────────────────
+        // يرفع الصورة/PDF/فيديو ثم يحفظ رابطه في Firestore
+        let evidenceFileURL  = '';   // الرابط الدائم من Cloudinary
+        let evidenceFileType = '';   // 'image' | 'video' | 'pdf'
+
+        if (rFile && rFile.files.length) {
+          const file = rFile.files[0];
+
+          // تحديد نوع الملف
+          if (file.type.startsWith('video/'))       evidenceFileType = 'video';
+          else if (file.type === 'application/pdf') evidenceFileType = 'pdf';
+          else                                       evidenceFileType = 'image';
+
+          // إعداد بيانات الرفع
+          const formData = new FormData();
+          formData.append('file',           file);
+          formData.append('upload_preset',  'x1kwhu9q');   // ← Cloudinary unsigned preset
+          formData.append('folder',         'evidence');    // ← مجلد evidence في Cloudinary
+          formData.append('public_id',      reportId);      // ← اسم الملف = reportId
+
+          // رفع الملف (resource_type=auto يكتشف النوع تلقائياً)
+          const cloudRes = await fetch(
+            'https://api.cloudinary.com/v1_1/dtihhz1l4/auto/upload',  // ← cloud name
+            { method: 'POST', body: formData }
+          );
+          if (!cloudRes.ok) throw new Error('فشل رفع الملف');
+          const cloudData = await cloudRes.json();
+          evidenceFileURL = cloudData.secure_url;  // ← الرابط الكامل https://
+        }
+        // ── END ADDED ────────────────────────────────────────────────
 
         await addDoc(collection(db, 'Report'), {
           reportId,
@@ -962,7 +1004,9 @@ if (!rFile || !rFile.files.length) {
           teamMembers:       [],
           currentVolunteers: 0,
           closedAt:          null,
-          durationHours:     0
+          durationHours:     0,
+          evidenceFile:      evidenceFileURL,   // ← ADDED: رابط الملف
+          evidenceFileType:  evidenceFileType,  // ← ADDED: نوع الملف
         });
 
         // ── إرسال EmailJS بعد نجاح Firebase ─────────────────
@@ -1497,22 +1541,41 @@ if (!rFile || !rFile.files.length) {
 
         // ── Security: silently check if email exists in our User collection ──
         // We NEVER tell the user whether the email was found or not (prevents enumeration).
+        // ✅ AFTER — checks BOTH collections, always attempts to send
         let emailExistsInDB = false;
         try {
-          const q        = query(collection(db, 'User'), where('email', '==', val));
-          const snapshot = await getDocs(q);
-          emailExistsInDB = !snapshot.empty;
+          // Check User collection (lowercase 'email')
+          const q1 = query(collection(db, 'User'), where('email', '==', val));
+          const s1 = await getDocs(q1);
+          if (!s1.empty) emailExistsInDB = true;
+
+          // Check User collection (uppercase 'Email')
+          if (!emailExistsInDB) {
+            const q2 = query(collection(db, 'User'), where('Email', '==', val));
+            const s2 = await getDocs(q2);
+            if (!s2.empty) emailExistsInDB = true;
+          }
+
+          // Check Volunteer collection (uppercase 'Email')
+          if (!emailExistsInDB) {
+            const q3 = query(collection(db, 'Volunteer'), where('Email', '==', val));
+            const s3 = await getDocs(q3);
+            if (!s3.empty) emailExistsInDB = true;
+          }
         } catch (_dbErr) {
-          // If Firestore check fails for any reason, silently fall through.
-          // We will NOT send an email but will still show the success UI.
+          // If Firestore is unreachable (e.g. localhost rules), send anyway
+          emailExistsInDB = true;
         }
 
-        // ── Only call Firebase if the email is in our system ──
+        // ── Send if email found (or Firestore was unreachable) ──
         if (emailExistsInDB) {
           try {
-            await sendPasswordResetEmail(auth, val);
+            const actionCodeSettings = {
+              url: 'https://database-b28a1.web.app/Pages/reset-password.html',
+              handleCodeInApp: false,
+            };
+            await sendPasswordResetEmail(auth, val, actionCodeSettings);
           } catch (sendErr) {
-            // Only surface rate-limit errors — everything else stays silent
             if (sendErr.code === 'auth/too-many-requests') {
               if (fgSendBtn) {
                 fgSendBtn.disabled = false;
@@ -1521,7 +1584,6 @@ if (!rFile || !rFile.files.length) {
               fgSetErr(fgEmail, fgEmailErr, 'تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.');
               return;
             }
-            // All other Firebase errors → fall through to show success anyway
           }
         }
 
