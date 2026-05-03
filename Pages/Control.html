@@ -966,15 +966,45 @@
         ? '✓ تم قبول بلاغ ' + r.missingName + ' — الحالة: قيد المراجعة'
         : '✗ تم رفض بلاغ ' + r.missingName;
 
-      /* ── Update Firestore ── */
+      /* ── Update Firestore with AdminID from Firebase Auth ── */
       if (db && r.docId) {
-        fsUpdateDoc(fsDoc(db, 'Report', r.docId), {
-          Status:         newDbStatus,
-          ApprovalStutes: pendingAction.action === 'accept' ? 'approved' : 'rejected'
-        }).catch(function(err) {
-          console.error('Update error:', err);
-          notify('حدث خطأ أثناء تحديث الحالة', 'ne');
-        });
+        // Get current admin UID from Firebase Auth
+        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
+          .then(function(authMod) {
+            var fbAuth = authMod.getAuth();
+            var currentAdmin = fbAuth.currentUser;
+            var adminUid = currentAdmin ? currentAdmin.uid : '';
+
+            var updatePayload;
+            if (pendingAction.action === 'accept') {
+              updatePayload = {
+                Status:         newDbStatus,
+                ApprovalStutes: 'approved',
+                AdminID:        adminUid       // FK → Admin who accepted
+              };
+            } else {
+              updatePayload = {
+                Status:         newDbStatus,
+                ApprovalStutes: 'rejected',
+                RejectionReason: ''            // Admin can fill later if needed
+              };
+            }
+
+            fsUpdateDoc(fsDoc(db, 'Report', r.docId), updatePayload)
+              .catch(function(err) {
+                console.error('Update error:', err);
+                notify('حدث خطأ أثناء تحديث الحالة', 'ne');
+              });
+          })
+          .catch(function(err) {
+            // Fallback: update without adminUid if auth module fails
+            console.error('Auth import error:', err);
+            var fallbackPayload = pendingAction.action === 'accept'
+              ? { Status: newDbStatus, ApprovalStutes: 'approved' }
+              : { Status: newDbStatus, ApprovalStutes: 'rejected' };
+            fsUpdateDoc(fsDoc(db, 'Report', r.docId), fallbackPayload)
+              .catch(function(e) { console.error('Fallback update error:', e); });
+          });
       }
 
       r.status = newIntStatus;

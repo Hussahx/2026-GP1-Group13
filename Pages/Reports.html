@@ -519,33 +519,45 @@ body.reports-page .bov{
     // ── Convert Firestore doc → object shape used by buildCards ─────
     function docToReport(data, docId, currentUid) {
       const rid        = data.reportId || docId;
-      const teamMembers = Array.isArray(data.teamMembers) ? data.teamMembers : [];
 
-      let ldDisplay = data.lastSeen || '';
+      // teamMembers can be array of UIDs (strings) OR { userId, name } objects
+      const rawTeam = Array.isArray(data.teamMembers) ? data.teamMembers : [];
+      const teamMembers = rawTeam.map(m =>
+        (typeof m === 'object' && m !== null) ? m.userId : m
+      ).filter(Boolean);
+
+      let ldDisplay = data.lastSeen || data.LostDate || data.ReportDate || '';
       if (!ldDisplay && data.reportTime?.toDate) {
         ldDisplay = formatArDate(data.reportTime.toDate());
+      } else if (!ldDisplay && data.LoggedAt?.toDate) {
+        ldDisplay = formatArDate(data.LoggedAt.toDate());
       }
 
       let daysText = '—';
-      if (data.reportTime?.toDate) {
-        const diff = Math.floor((Date.now() - data.reportTime.toDate().getTime()) / 86400000);
+      const tsDate = data.reportTime?.toDate ? data.reportTime.toDate()
+                   : data.LoggedAt?.toDate   ? data.LoggedAt.toDate() : null;
+      if (tsDate) {
+        const diff = Math.floor((Date.now() - tsDate.getTime()) / 86400000);
         if (diff === 0)      daysText = 'منذ اليوم';
         else if (diff === 1) daysText = 'منذ يوم';
         else if (diff <= 10) daysText = 'منذ ' + toArNum(diff) + ' أيام';
         else                 daysText = 'منذ ' + toArNum(diff) + ' يوماً';
       }
 
-      const age  = data.age          || '—';
-      const hlth = data.healthStatus || 'لا يوجد';
-      const veh  = data.vehicle      || '—';
-      const loc  = data.location     || '—';
-      const nm   = data.missingPersonName || '—';
-      const dt   = data.reportTime?.toDate ? data.reportTime.toDate().getTime() : 0;
+      // Map Firestore field names (capitalized) to display values
+      // Support both old lowercase and new capitalized field names
+      const age  = data.Age          || data.age          || '—';
+      const hlth = data.HealthStatus || data.healthStatus || 'لا يوجد';
+      const veh  = data.Vehicle      || data.vehicle      || '—';
+      const loc  = data.LastSeenLocation || data.location || data.Region || '—';
+      const nm   = data.MissingPersonName || data.missingPersonName || '—';
+      const dt   = data.reportTime?.toDate ? data.reportTime.toDate().getTime()
+                 : data.LoggedAt?.toDate   ? data.LoggedAt.toDate().getTime() : 0;
 
-      // Determine if current user is the creator or a team member
-      const isCreator  = currentUid && data.createdBy === currentUid;
+      // Determine if current user is the creator/leader or a team member
+      const isLeader   = currentUid && (data.createdBy === currentUid || data.LeaderID === currentUid);
       const isMember   = currentUid && teamMembers.includes(currentUid);
-      const userInTeam = isCreator || isMember;
+      const userInTeam = isLeader || isMember;
 
       return {
         _docId:      docId,
@@ -561,7 +573,7 @@ body.reports-page .bov{
         age,
         hlth,
         status:  data.status || 'new',
-        role:    isCreator ? 'leader' : 'member',
+        role:    isLeader ? 'leader' : 'member',
         userInTeam,
         ldr:  data.leader      || '',
         lph:  data.leaderPhone || '',
@@ -572,14 +584,14 @@ body.reports-page .bov{
           'الحالة الصحية':  hlth,
           'المركبة':         veh,
           'الموقع':          loc,
-          'جهة التواصل':    data.contact || '—'
+          'جهة التواصل':    data.ReporterEmail || data.contact || '—'
         },
-        desc: data.description || 'لا توجد تفاصيل إضافية.',
+        desc: data.Details || data.description || 'لا توجد تفاصيل إضافية.',
         teamCount: teamMembers.length,
         mbr:  [],   // visual avatars — kept empty (team shown via mTeam section)
-        // ADDED: بيانات ملف الدليل من Cloudinary
-        evidenceFile:     data.evidenceFile     || '',
-        evidenceFileType: data.evidenceFileType || 'image',
+        // بيانات ملف الدليل — EvidanceFile هو الاسم الفعلي في Firestore
+        evidenceFile:     data.EvidanceFile    || data.evidenceFile     || '',
+        evidenceFileType: data.EvidenceFileType || data.evidenceFileType || 'image',
       };
     }
 
@@ -659,48 +671,92 @@ body.reports-page .bov{
 
     // ── Firestore action: takeover ────────────────────────────────────
     // Called from classic script via window._fbTakeOver(docId, uid)
-  window._fbTakeOver = async function(docId, uid) {
-  if (!docId || !uid) return;
-
-  try {
-    const userSnap = await getDoc(doc(db, 'User', uid));
-
-    let leaderName = '';
-    let leaderPhone = '';
-
-    if (userSnap.exists()) {
-      const userData = userSnap.data();
-      const firstName = userData.FirstName || '';
-      const lastName = userData.LastName || '';
-
-      leaderName = `${firstName} ${lastName}`.trim();
-      leaderPhone = userData.Phone || '';
-    }
-
-    await updateDoc(doc(db, 'Report', docId), {
-      status: 'accepted',
-      createdBy: uid,
-      teamMembers: arrayUnion(uid),
-      leader: leaderName,
-      leaderPhone: leaderPhone
-    });
-
-  } catch (err) {
-    console.error('_fbTakeOver error:', err);
-  }
-};
-
-    // ── Firestore action: join ────────────────────────────────────────
-    // Called from classic script via window._fbJoin(docId, uid)
-    window._fbJoin = async function(docId, uid) {
-      if (!docId || !uid) return;
+    // ── assignLeader() — first volunteer becomes leader ──────────────
+    // Sets LeaderID (FK to User), leader name, phone, and adds UID to teamMembers
+    window._fbTakeOver = async function(docId, uid) {
+      if (!docId || !uid) {
+        console.warn('assignLeader: missing docId or uid');
+        return;
+      }
       try {
+        const userSnap = await getDoc(doc(db, 'User', uid));
+
+        let leaderName  = '';
+        let leaderPhone = '';
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          leaderName  = ((userData.FirstName || '') + ' ' + (userData.LastName || '')).trim();
+          leaderPhone = userData.Phone || '';
+        }
+
         await updateDoc(doc(db, 'Report', docId), {
-          status:      'org',
-          teamMembers: arrayUnion(uid)
+          LeaderID:          uid,               // FK → User (leader)
+          leader:            leaderName,
+          leaderPhone:       leaderPhone,
+          CurrentVolunteers: 1,
+          teamMembers:       arrayUnion(uid)
         });
+
+        console.log('✅ assignLeader: LeaderID set to', uid);
       } catch (err) {
-        console.error('_fbJoin error:', err);
+        console.error('assignLeader error:', err);
+      }
+    };
+
+    // ── addTeamMember() — subsequent volunteers join the team ────────
+    // Adds { userId, name } to teamMembers array — prevents duplicates
+    window._fbJoin = async function(docId, uid) {
+      if (!docId || !uid) {
+        console.warn('addTeamMember: missing docId or uid');
+        return;
+      }
+      try {
+        // Fetch current report to check for duplicates
+        const reportSnap = await getDoc(doc(db, 'Report', docId));
+        if (!reportSnap.exists()) {
+          console.warn('addTeamMember: report not found', docId);
+          return;
+        }
+
+        const reportData   = reportSnap.data();
+        const currentTeam  = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
+
+        // Duplicate check — prevent same user joining twice
+        const alreadyInTeam = currentTeam.some(member =>
+          (typeof member === 'object' && member !== null)
+            ? member.userId === uid
+            : member === uid
+        );
+
+        if (alreadyInTeam) {
+          console.warn('addTeamMember: user already in team', uid);
+          return;
+        }
+
+        // Fetch volunteer's name from User collection
+        let memberName = '';
+        try {
+          const userSnap = await getDoc(doc(db, 'User', uid));
+          if (userSnap.exists()) {
+            const ud = userSnap.data();
+            memberName = ((ud.FirstName || '') + ' ' + (ud.LastName || '')).trim();
+          }
+        } catch (_) {
+          // Name fetch failed — proceed with empty name
+        }
+
+        // Store teamMember as { userId, name } object
+        const newMember = { userId: uid, name: memberName };
+
+        await updateDoc(doc(db, 'Report', docId), {
+          teamMembers:       arrayUnion(newMember),
+          CurrentVolunteers: (reportData.CurrentVolunteers || 0) + 1
+        });
+
+        console.log('✅ addTeamMember: added', uid, 'as', memberName || '(no name)');
+      } catch (err) {
+        console.error('addTeamMember error:', err);
       }
     };
 

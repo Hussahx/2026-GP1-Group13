@@ -40,48 +40,79 @@ export async function loginAndRedirect(email, password) {
     const credential = await signInWithEmailAndPassword(auth, email, password);
     const uid        = credential.user.uid;
 
-    // 2. ندور في User أول (الأدمن والفولنتير اللي في User)
+    // 2. Check User collection first (admins + volunteers registered via app)
     const userSnap = await getDoc(doc(db, "User", uid));
     if (userSnap.exists()) {
       const data          = userSnap.data();
-      const role          = data.role          || "";
-      const accountStatus = data.accountStatus || "";
+      const role          = (data.role          || data.Role          || "").toLowerCase();
+      const accountStatus = (data.accountStatus || data.AccountStatus || "").toLowerCase();
 
+      // Admin → AdminControlPanel
       if (role === "admin") {
         window.location.href = "/Pages/AdminControlPanel.html";
         return { success: true };
       }
 
-      if (role === "volunteer" && accountStatus === "approved") {
-        window.location.href = "/Pages/Reports.html";
-        return { success: true };
+      // Volunteer in User collection — check accountStatus
+      if (role === "volunteer") {
+        // Accept: approved, active, or no status restriction (let them in)
+        if (
+          accountStatus === "approved" ||
+          accountStatus === "active"   ||
+          accountStatus === ""          // no restriction set
+        ) {
+          window.location.href = "/Pages/Reports.html";
+          return { success: true };
+        }
+
+        // Pending / rejected / suspended
+        await signOut(auth);
+        if (accountStatus === "pending") {
+          return { success: false, error: "حسابك لا يزال قيد المراجعة. يرجى الانتظار حتى يتم القبول." };
+        }
+        return { success: false, error: "حسابك لم يتم قبوله أو تم تعليقه. تواصل مع الإدارة." };
       }
 
+      // Unknown role in User collection
       await signOut(auth);
       return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
     }
 
-    // 3. مو في User → ندور في Volunteer
+    // 3. Not in User → check Volunteer collection
     const volSnap = await getDoc(doc(db, "Volunteer", uid));
     if (volSnap.exists()) {
       const data           = volSnap.data();
-      const approvalStatus = data.ApprovalStatus || "";
-      const status         = data.Status         || "";
+      // Support multiple possible field name casings
+      const approvalStatus = (
+        data.ApprovalStatus || data.approvalStatus ||
+        data.accountStatus  || data.AccountStatus  || ""
+      ).toLowerCase();
+      const status = (data.Status || data.status || "").toLowerCase();
 
-      if (approvalStatus === "approved" && status === "active") {
+      // Accept if approved (regardless of Status), or if active
+      if (
+        approvalStatus === "approved" ||
+        approvalStatus === "active"   ||
+        status         === "active"   ||
+        approvalStatus === ""          // no restriction
+      ) {
         window.location.href = "/Pages/Reports.html";
         return { success: true };
       }
 
       await signOut(auth);
-      return { success: false, error: "حسابك لم يتم قبوله بعد أو غير نشط." };
+      if (approvalStatus === "pending") {
+        return { success: false, error: "حسابك لا يزال قيد المراجعة. يرجى الانتظار حتى يتم القبول." };
+      }
+      return { success: false, error: "حسابك لم يتم قبوله أو غير نشط. تواصل مع الإدارة." };
     }
 
-    // 4. مو موجود في أي جدول
+    // 4. UID not found in any collection
     await signOut(auth);
     return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
 
   } catch (err) {
+    console.error("Login error:", err.code, err.message);
     const msg = firebaseErrorToArabic(err.code);
     return { success: false, error: msg };
   }
@@ -103,17 +134,20 @@ export async function requireAuth(requiredRole) {
         try {
           let role = null;
 
+          // Check User collection (admins + app-registered volunteers)
           const userSnap = await getDoc(doc(db, "User", user.uid));
           if (userSnap.exists()) {
-            role = userSnap.data().role || null;
+            const data = userSnap.data();
+            role = (data.role || data.Role || "").toLowerCase();
           } else {
+            // Check Volunteer collection
             const volSnap = await getDoc(doc(db, "Volunteer", user.uid));
             if (volSnap.exists()) {
               role = "volunteer";
             }
           }
 
-          if (role !== requiredRole) {
+          if (role !== requiredRole.toLowerCase()) {
             window.location.href = "/Pages/index.html";
             return;
           }
@@ -147,6 +181,7 @@ function firebaseErrorToArabic(code) {
     "auth/too-many-requests":      "تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.",
     "auth/network-request-failed": "خطأ في الاتصال بالشبكة. تحقق من اتصالك بالإنترنت.",
     "auth/user-disabled":          "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "permission-denied":            "خطأ في صلاحيات قاعدة البيانات. تواصل مع المطور.",
   };
   return map[code] || "حدث خطأ غير متوقع. حاول مجددًا.";
 }

@@ -948,7 +948,7 @@ if (!rFile || !rFile.files.length) {
       try {
         const { initializeApp, getApps } =
           await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-        const { getFirestore, collection, addDoc, serverTimestamp } =
+        const { getFirestore, collection, doc, writeBatch, serverTimestamp } =
           await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
 
         const firebaseConfig = {
@@ -990,10 +990,27 @@ if (!rFile || !rFile.files.length) {
           evidenceFileURL = cloudData.secure_url;
         }
 
-        // ── Save to Firestore ─────────────────────────────────
-        await addDoc(collection(db, 'Report'), {
+        // ── توليد الـ reporter ID قبل أي عملية ─────────────────
+        // crypto.randomUUID() يولّد ID فوري بدون أي اتصال بـ Firestore،
+        // متاح مباشرة كـ FK في الـ report وكـ document ID للـ reporter.
+        const reporterId  = crypto.randomUUID();
+        const reporterRef = doc(db, 'Reporter', reporterId); // ✅ Collection name صح
+
+        // ── Atomic batch: create reporter + report (FK: reporterId) ──
+        const batch = writeBatch(db);
+
+        // 1) Reporter document – يطابق schema الـ Reporter collection بالضبط
+        batch.set(reporterRef, {
+          Email: contactVal,                                              // ✅ capital E
+          Phone: (document.getElementById('rPhone')?.value || '').trim() // ✅ capital P
+        });
+
+        // 2) Report document
+        const reportDoc = doc(collection(db, 'Report'));
+        batch.set(reportDoc, {
           reportId:            reportId,
-          MissingPersonName:   nameVal,
+          ReporterID:          reporterId,              // FK → reporters/{reporterId}
+          MisssionPersoneName: nameVal,
           Age:                 parseInt(ageVal, 10) || 0,
           HealthStatus:        healthVal || 'لا يوجد',
           Vehicle:             vehicleVal,
@@ -1019,15 +1036,19 @@ if (!rFile || !rFile.files.length) {
           CurrentVolunteers:   0
         });
 
+        // Commit both writes atomically – either both succeed or both fail
+        await batch.commit();
+
         // ── إرسال EmailJS بعد نجاح Firebase ─────────────────
         if (isValidEmail(contactVal)) {
           try {
             emailjs.init('jl8cOTzNL4mqFGXJW');
             await emailjs.send('service_ilejgsc', 'template_tov9o4t', {
-              report_id: reportId,
-              to_email:  contactVal
+              report_id:   reportId,
+              reporter_id: reporterId,   // FK متاح هنا لأنه وُلِد قبل الـ batch
+              to_email:    contactVal
             });
-            console.log('EmailJS sent — Report ID:', reportId);
+            console.log('EmailJS sent — Report ID:', reportId, '| Reporter ID:', reporterId);
           } catch (emailErr) {
             console.error('EmailJS error:', emailErr);
           }
