@@ -550,7 +550,7 @@ body.reports-page .bov{
       const hlth = data.HealthStatus || data.healthStatus || 'لا يوجد';
       const veh  = data.Vehicle      || data.vehicle      || '—';
       const loc  = data.LastSeenLocation || data.location || data.Region || '—';
-      const nm   = data.MissingPersonName || data.missingPersonName || '—';
+      const nm   = data.MisssionPersoneName || data.MissingPersonName || data.missingPersonName || '—';
       const dt   = data.reportTime?.toDate ? data.reportTime.toDate().getTime()
                  : data.LoggedAt?.toDate   ? data.LoggedAt.toDate().getTime() : 0;
 

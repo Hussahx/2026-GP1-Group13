@@ -656,8 +656,8 @@
       /* ID bar */
       document.getElementById('idNumber').textContent = id;
       document.getElementById('idTitle').textContent  =
-        data.MissingPersonName || data.missingPersonName
-          ? 'بلاغ مفقود — ' + (data.MissingPersonName || data.missingPersonName)
+        data.MisssionPersoneName || data.MissingPersonName || data.missingPersonName
+          ? 'بلاغ مفقود — ' + (data.MisssionPersoneName || data.MissingPersonName || data.missingPersonName)
           : 'بلاغ مفقود';
 
       const pill = document.getElementById('statusPill');
@@ -677,7 +677,7 @@
       /* Info strip — map new DB field names */
       document.getElementById('icDate').textContent   = formatDate(data.LoggedAt || data.reportTime);
       document.getElementById('icLoc').textContent    = data.LastSeenLocation || data.location || '—';
-      document.getElementById('icName').textContent   = data.MissingPersonName || data.missingPersonName || '—';
+      document.getElementById('icName').textContent   = data.MisssionPersoneName || data.MissingPersonName || data.missingPersonName || '—';
       document.getElementById('icVol').textContent    =
         Array.isArray(data.teamMembers) && data.teamMembers.length
           ? data.teamMembers.length + ' عضو'
