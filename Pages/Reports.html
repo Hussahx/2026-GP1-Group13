@@ -163,14 +163,15 @@ body.reports-page .bov{
         <button class="mclose" id="mcloseBtn" type="button">✕</button>
       </div>
       <div class="mbody">
-        <div class="msec"><div class="mstitle">معلومات المفقود</div><div class="dgrid" id="mDetails"></div></div>
-        <div class="msec"><div class="mstitle">تفاصيل</div><div class="mdesc" id="mDesc"></div></div>
-        <!-- ADDED: قسم ملف الدليل -->
-        <div class="msec" id="mEvidenceSec">
-          <div class="mstitle">ملف الدليل المرفق</div>
-          <div id="mEvidence" style="margin-top:6px;"></div>
+        <!-- قسم معلومات المُبلغ -->
+        <div class="msec">
+          <div class="mstitle">معلومات المُبلغ</div>
+          <div class="dgrid" id="mReporterDetails"></div>
         </div>
-        <!-- END ADDED -->
+        <!-- قسم معلومات المفقود -->
+        <div class="msec"><div class="mstitle">معلومات المفقود</div><div class="dgrid" id="mDetails"></div></div>
+        <div class="msec"><div class="mstitle">وصف البلاغ</div><div class="mdesc" id="mDesc"></div></div>
+
         <div class="msec"><div class="mstitle">فريق البحث</div><div id="mTeam"></div></div>
       </div>
       <div class="mfoot" id="mFoot"></div>
@@ -549,7 +550,7 @@ body.reports-page .bov{
       const age  = data.Age          || data.age          || '—';
       const hlth = data.HealthStatus || data.healthStatus || 'لا يوجد';
       const veh  = data.Vehicle      || data.vehicle      || '—';
-      const loc  = data.LastSeenLocation || data.location || data.Region || '—';
+      const loc  = data.Region || data.region || data.LastSeenLocation || data.location || '—';
       const nm   = data.MisssionPersoneName || data.MissingPersonName || data.missingPersonName || '—';
       const dt   = data.reportTime?.toDate ? data.reportTime.toDate().getTime()
                  : data.LoggedAt?.toDate   ? data.LoggedAt.toDate().getTime() : 0;
@@ -558,6 +559,13 @@ body.reports-page .bov{
       const isLeader   = currentUid && (data.createdBy === currentUid || data.LeaderID === currentUid);
       const isMember   = currentUid && teamMembers.includes(currentUid);
       const userInTeam = isLeader || isMember;
+
+      // Reporter info
+      const reporterPhone = data.Phone        || data.phone        || '—';
+      const reporterEmail = data.ReporterEmail || data.reporterEmail || data.contact || '—';
+      // Missing person extra fields
+      const region        = data.Region               || data.region               || '—';
+      const locDesc       = data.LocationDescription  || data.locationDescription  || '—';
 
       return {
         _docId:      docId,
@@ -578,13 +586,20 @@ body.reports-page .bov{
         ldr:  data.leader      || '',
         lph:  data.leaderPhone || '',
         upd:  data.lastUpdate  || '—',
+        // Reporter fields
+        reporterPhone,
+        reporterEmail,
+        // Extra missing-person fields
+        region,
+        locDesc,
+        veh,
         det: {
           'العمر':           age + (age !== '—' ? ' سنة' : ''),
           'تاريخ الفقدان':  ldDisplay,
           'الحالة الصحية':  hlth,
           'المركبة':         veh,
           'الموقع':          loc,
-          'جهة التواصل':    data.ReporterEmail || data.contact || '—'
+          'جهة التواصل':    reporterEmail
         },
         desc: data.Details || data.description || 'لا توجد تفاصيل إضافية.',
         teamCount: teamMembers.length,
@@ -1044,47 +1059,27 @@ body.reports-page .bov{
       document.getElementById('mBadge').innerHTML=bh;
       document.getElementById('mName').textContent=r.nm;
       document.getElementById('mLoc').textContent='📍 '+r.loc;
-      var dh='', keys=Object.keys(r.det);
-      for(var k=0;k<keys.length;k++){
-        dh+='<div class="di"><div class="dl">'+keys[k]+'</div><div class="dv">'+r.det[keys[k]]+'</div></div>';
-      }
-      document.getElementById('mDetails').innerHTML=dh;
+
+      /* ── معلومات المُبلغ ── */
+      document.getElementById('mReporterDetails').innerHTML =
+        '<div class="di"><div class="dl">رقم الجوال</div><div class="dv">'+(r.reporterPhone||'—')+'</div></div>'+
+        '<div class="di"><div class="dl">الإيميل</div><div class="dv">'+(r.reporterEmail||'—')+'</div></div>';
+
+      /* ── معلومات المفقود — ١١ حقلاً بالترتيب المطلوب ── */
+      var ld = r.det['تاريخ الفقدان'] || r.ld || '—';
+      document.getElementById('mDetails').innerHTML =
+        '<div class="di"><div class="dl">اسم المفقود</div><div class="dv">'+(r.nm||'—')+'</div></div>'+
+        '<div class="di"><div class="dl">العمر</div><div class="dv">'+(r.det['العمر']||'—')+'</div></div>'+
+        '<div class="di"><div class="dl">الحالة الصحية</div><div class="dv">'+(r.hlth||'—')+'</div></div>'+
+        '<div class="di"><div class="dl">المركبة</div><div class="dv">'+(r.veh||r.det['المركبة']||'—')+'</div></div>'+
+        '<div class="di"><div class="dl">تاريخ الفقدان</div><div class="dv">'+ld+'</div></div>'+
+        '<div class="di"><div class="dl">المنطقة</div><div class="dv">'+(r.region||'—')+'</div></div>'+
+        '<div class="di" style="grid-column:span 2"><div class="dl">الموقع — آخر مكان شوهد فيه</div><div class="dv">'+(r.loc||'—')+'</div></div>'+
+        '<div class="di" style="grid-column:span 2"><div class="dl">وصف الموقع التفصيلي</div><div class="dv">'+(r.locDesc||'—')+'</div></div>';
+
       document.getElementById('mDesc').textContent=r.desc||'لا توجد تفاصيل إضافية.';
 
-      // ADDED: عرض ملف الدليل في المودال ─────────────────────────────
-      var mEvidence = document.getElementById('mEvidence');
-      var mEvidenceSec = document.getElementById('mEvidenceSec');
-      if (mEvidence && mEvidenceSec) {
-        if (r.evidenceFile) {
-          mEvidenceSec.style.display = '';
-          if (r.evidenceFileType === 'image') {
-            mEvidence.innerHTML =
-              '<a href="' + r.evidenceFile + '" target="_blank" title="فتح الصورة بالحجم الكامل">' +
-              '<img src="' + r.evidenceFile + '" alt="صورة الدليل" ' +
-              'style="max-width:100%;max-height:240px;border-radius:10px;object-fit:contain;' +
-              'cursor:pointer;border:1.5px solid rgba(166,124,82,0.3);display:block;" />' +
-              '</a>' +
-              '<div style="font-size:11px;color:#aaa;margin-top:5px;text-align:center;">اضغط على الصورة لعرضها كاملة</div>';
-          } else if (r.evidenceFileType === 'video') {
-            mEvidence.innerHTML =
-              '<video controls style="max-width:100%;max-height:240px;border-radius:10px;' +
-              'border:1.5px solid rgba(166,124,82,0.3);">' +
-              '<source src="' + r.evidenceFile + '">' +
-              'متصفحك لا يدعم تشغيل الفيديو.' +
-              '</video>';
-          } else if (r.evidenceFileType === 'pdf') {
-            mEvidence.innerHTML =
-              '<a href="' + r.evidenceFile + '" target="_blank" ' +
-              'style="display:inline-flex;align-items:center;gap:8px;padding:11px 18px;' +
-              'background:#f5f5f5;border:1.5px solid rgba(166,124,82,0.3);border-radius:9px;' +
-              'color:#333;text-decoration:none;font-weight:700;font-family:Tajawal,sans-serif;">📄 فتح ملف PDF</a>';
-          }
-        } else {
-          // لا يوجد ملف — أخفِ القسم كلياً
-          mEvidenceSec.style.display = 'none';
-        }
-      }
-      // END ADDED ────────────────────────────────────────────────────
+      // ────────────────────────────────────────────────────────────────
       var rows=[];
       if(type==='org'){
         if(r.role==='leader'){

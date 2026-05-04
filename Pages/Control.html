@@ -699,6 +699,7 @@
     ════════════════════════════════════════════════════════════ */
     /* — Firebase imports — */
     var db = null;
+    var fbAuthRef = null;  // ← holds Firebase Auth instance for AdminID capture
     var fsCollection, fsDocs, fsQuery, fsWhere, fsUpdateDoc, fsDoc;
 
     (async function initFirebase() {
@@ -718,6 +719,7 @@
 
       const app     = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
       const fbAuth  = auth.getAuth(app);
+      fbAuthRef     = fbAuth;   // ← expose globally for AdminID capture in execAction
       db            = fs.getFirestore(app);
       fsCollection  = fs.collection;
       fsDocs        = fs.getDocs;
@@ -753,22 +755,29 @@
              Priority mapping: Arabic text from DB → internal code */
           var priorityMap = { 'طارئ جداً':'uv', 'طارئ':'uh', 'متوسط':'um' };
           return {
-            docId:       d.id,                                        // Firestore document ID for updates
-            id:          data.reportId        || d.id,
-            missingName: data.MissingPersonName || data.missingPersonName || '—',
-            phone:       data.Phone           || data.phone           || '—',
-            email:       data.ReporterEmail   || data.email           || '—',
-            priority:    priorityMap[data.Priority] || 'um',
-            date:        data.ReportDate      || data.LostDate        || '—',
+            docId:               d.id,                                        // Firestore document ID for updates
+            id:                  data.reportId             || d.id,
+            missingName:         data.MissingPersonName    || data.missingPersonName || '—',
+            phone:               data.Phone                || data.phone             || '—',
+            email:               data.ReporterEmail        || data.email             || '—',
+            priority:            priorityMap[data.Priority] || 'um',
+            date:                data.ReportDate           || data.LostDate          || '—',
             /* IMPORTANT: Status values now match the new schema:
                "Report Received" → pending tab
                "Under Review"    → accepted tab
                "Rejected"        → rejected tab */
-            status:      mapStatusToInternal(data.Status || data.status || 'Report Received'),
-            location:     data.LastSeenLocation || data.Region  || '—',
-desc:         data.Details          || '—',
-evidenceUrl:  data.EvidanceFile     || '',
-evidenceType: data.EvidenceFileType || ''
+            status:              mapStatusToInternal(data.Status || data.status || 'Report Received'),
+            // Location fields
+            location:            data.LastSeenLocation     || data.lastSeenLocation  || '—',
+            region:              data.Region               || data.region             || '—',
+            locationDescription: data.LocationDescription  || data.locationDescription || '—',
+            // Report details
+            desc:                data.Details              || data.details            || '—',
+            // Health status of missing person
+            healthStatus:        data.HealthStatus         || data.healthStatus       || '—',
+            // Evidence
+            evidenceUrl:         data.EvidanceFile         || data.evidenceFile       || '',
+            evidenceType:        data.EvidenceFileType     || data.evidenceFileType   || ''
           };
         });
         renderAll();
@@ -970,13 +979,29 @@ evidenceType: data.EvidenceFileType || ''
         ? '✓ تم قبول بلاغ ' + r.missingName + ' — الحالة: قيد المراجعة'
         : '✗ تم رفض بلاغ ' + r.missingName;
 
-      /* ── Update Firestore ── */
+      /* ── Update Firestore — require authenticated user ── */
       if (db && r.docId) {
+        // Import auth reference is available via fbAuth set during initFirebase
+        var currentUser = (typeof fbAuthRef !== 'undefined') ? fbAuthRef.currentUser : null;
+
+        if (!currentUser) {
+          console.error('AdminID capture failed: no authenticated user found.');
+          notify('خطأ: لم يتم التحقق من هوية المشرف', 'ne');
+          return;
+        }
+
+        var adminUID = currentUser.uid;
+
+        /* Use updateDoc (not setDoc) to avoid overwriting any existing fields */
         fsUpdateDoc(fsDoc(db, 'Report', r.docId), {
           Status:         newDbStatus,
-          ApprovalStutes: pendingAction.action === 'accept' ? 'approved' : 'rejected'
+          ApprovalStutes: pendingAction.action === 'accept' ? 'approved' : 'rejected',
+          AdminID:        adminUID          // ← record which admin acted on this report
+        }).then(function() {
+          // Reflect AdminID locally so subsequent opens show correct data
+          r.adminId = adminUID;
         }).catch(function(err) {
-          console.error('Update error:', err);
+          console.error('Firestore update error:', err);
           notify('حدث خطأ أثناء تحديث الحالة', 'ne');
         });
       }
@@ -989,21 +1014,22 @@ evidenceType: data.EvidenceFileType || ''
     }
     function closeConfirm(){ document.getElementById('confirmOvr').classList.remove('on'); }
 
-    /* ════ نافذة التفاصيل ════ */
+    /* ════ نافذة التفاصيل ════
+         Only the 5 permitted fields are displayed — no phone, email, or internal IDs.
+    ════ */
     function openView(id){
       var r = find(id); if (!r) return;
       document.getElementById('vTitle').textContent = r.id;
-      document.getElementById('vSub').textContent   = r.missingName + ' · ' + r.location;
+      document.getElementById('vSub').textContent   = r.missingName + ' · ' + (r.region !== '—' ? r.region : r.location);
+
+      /* ── 5 permitted fields only ── */
       document.getElementById('vDetails').innerHTML =
-        di('رقم البلاغ',    r.id) +
-        di('اسم المفقود',   r.missingName) +
-        di('رقم الهاتف',    r.phone) +
-        di('البريد الإلكتروني', r.email) +
-        di('الموقع',        r.location) +
-        di('الأولوية',      urgLbl(r.priority)) +
-        di('التاريخ',       r.date) +
-        di('الحالة',        statLbl(r.status));
-      document.getElementById('vDesc').textContent = r.desc;
+        di('المنطقة',                   r.region       !== '—' ? r.region       : '-') +
+        di('الموقع — آخر مكان شوهد فيه', r.location     !== '—' ? r.location     : '-') +
+        di('وصف الموقع التفصيلي',        r.locationDescription !== '—' ? r.locationDescription : '-') +
+        di('الحالة الصحية',              r.healthStatus !== '—' ? r.healthStatus : '-');
+
+      document.getElementById('vDesc').textContent = r.desc !== '—' ? r.desc : '-';
 
 // عرض ملف الإثبات
 var evEl   = document.getElementById('vEvidence');
