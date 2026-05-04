@@ -948,8 +948,9 @@ if (!rFile || !rFile.files.length) {
       try {
         const { initializeApp, getApps } =
           await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-        const { getFirestore, collection, addDoc, serverTimestamp } =
-          await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const { getFirestore, collection, doc, setDoc, getDoc,
+        updateDoc, arrayUnion, serverTimestamp } =
+  await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
 
         const firebaseConfig = {
           apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
@@ -991,7 +992,7 @@ if (!rFile || !rFile.files.length) {
         }
 
         // ── Save to Firestore ─────────────────────────────────
-        await addDoc(collection(db, 'Report'), {
+        await setDoc(doc(db, 'Report', reportId), {
           reportId:            reportId,
           MissingPersonName:   nameVal,
           Age:                 parseInt(ageVal, 10) || 0,
@@ -1018,6 +1019,28 @@ if (!rFile || !rFile.files.length) {
           AdminID:             '',
           CurrentVolunteers:   0
         });
+        // ── Link Reporter ─────────────────────────────────────
+try {
+  const { query, where, getDocs, addDoc: aDoc } =
+    await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+  const reporterQ  = query(collection(db, 'Reporter'), where('Email', '==', contactVal));
+  const reporterSS = await getDocs(reporterQ);
+
+  if (!reporterSS.empty) {
+    await updateDoc(reporterSS.docs[0].ref, {
+      reportIds: arrayUnion(reportId)
+    });
+  } else {
+    await aDoc(collection(db, 'Reporter'), {
+      Email:     contactVal,
+      Phone:     (document.getElementById('rPhone')?.value || '').trim(),
+      reportIds: [reportId]
+    });
+  }
+} catch (e) {
+  console.error('Reporter linking failed:', e);
+}
 
         // ── إرسال EmailJS بعد نجاح Firebase ─────────────────
         if (isValidEmail(contactVal)) {
@@ -1065,6 +1088,7 @@ if (!rFile || !rFile.files.length) {
 
     });
   }
+
 
   /* ============================================================
      14. Login Modal: validation + toast + forgot inline + password toggle
