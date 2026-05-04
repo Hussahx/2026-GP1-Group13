@@ -591,6 +591,8 @@
         <div class="dgrid" id="vDetails"></div>
         <div class="dl" style="margin-bottom:8px;">وصف البلاغ</div>
         <div class="mdesc" id="vDesc"></div>
+        <div class="dl" style="margin-bottom:8px;margin-top:14px;">ملف الإثبات</div>
+<div id="vEvidence"></div>
       </div>
       <div class="mfoot">
         <button class="mbtn mbtn-cancel" onclick="closeView()" type="button" style="flex:none;width:100%;">إغلاق</button>
@@ -697,8 +699,7 @@
     ════════════════════════════════════════════════════════════ */
     /* — Firebase imports — */
     var db = null;
-    var fsCollection, fsOnSnapshot, fsQuery, fsWhere, fsUpdateDoc, fsDoc;
-    var _unsubReports = null;  // real-time listener handle
+    var fsCollection, fsDocs, fsQuery, fsWhere, fsUpdateDoc, fsDoc;
 
     (async function initFirebase() {
       const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
@@ -719,7 +720,7 @@
       const fbAuth  = auth.getAuth(app);
       db            = fs.getFirestore(app);
       fsCollection  = fs.collection;
-      fsOnSnapshot  = fs.onSnapshot;
+      fsDocs        = fs.getDocs;
       fsQuery       = fs.query;
       fsWhere       = fs.where;
       fsUpdateDoc   = fs.updateDoc;
@@ -742,36 +743,37 @@
       });
     })();
 
-    /* — Real-time listener: onSnapshot بدل getDocs —
-       كل ما يُضاف بلاغ جديد أو تتغير حالة، الجدول يتحدث فوراً */
-    function loadReports() {
-      if (_unsubReports) _unsubReports(); // إلغاء أي listener سابق
+    /* — Load all reports from Firestore — */
+    async function loadReports() {
       try {
-        var q = fsQuery(fsCollection(db, 'Report'));
-        _unsubReports = fsOnSnapshot(q, function(snap) {
+        const snap = await fsDocs(fsCollection(db, 'Report'));
+        reports = snap.docs.map(function(d) {
+          var data = d.data();
+          /* Map DB fields → internal fields used by render functions.
+             Priority mapping: Arabic text from DB → internal code */
           var priorityMap = { 'طارئ جداً':'uv', 'طارئ':'uh', 'متوسط':'um' };
-          reports = snap.docs.map(function(d) {
-            var data = d.data();
-            return {
-              docId:       d.id,
-              id:          data.reportId         || d.id,
-              missingName: data.MisssionPersoneName || data.MissingPersonName || data.missingPersonName || '—',
-              phone:       data.Phone            || data.phone            || '—',
-              email:       data.ReporterEmail    || data.email            || '—',
-              priority:    priorityMap[data.Priority] || 'um',
-              date:        data.ReportDate       || data.LostDate         || '—',
-              status:      mapStatusToInternal(data.Status || data.status || 'Report Received'),
-              location:    data.LastSeenLocation || data.Region           || '—',
-              desc:        data.Details          || '—'
-            };
-          });
-          renderAll();
-        }, function(err) {
-          console.error('onSnapshot error:', err);
-          notify('تعذّر تحميل البلاغات. تحقق من اتصالك.', 'ne');
+          return {
+            docId:       d.id,                                        // Firestore document ID for updates
+            id:          data.reportId        || d.id,
+            missingName: data.MissingPersonName || data.missingPersonName || '—',
+            phone:       data.Phone           || data.phone           || '—',
+            email:       data.ReporterEmail   || data.email           || '—',
+            priority:    priorityMap[data.Priority] || 'um',
+            date:        data.ReportDate      || data.LostDate        || '—',
+            /* IMPORTANT: Status values now match the new schema:
+               "Report Received" → pending tab
+               "Under Review"    → accepted tab
+               "Rejected"        → rejected tab */
+            status:      mapStatusToInternal(data.Status || data.status || 'Report Received'),
+            location:     data.LastSeenLocation || data.Region  || '—',
+desc:         data.Details          || '—',
+evidenceUrl:  data.EvidanceFile     || '',
+evidenceType: data.EvidenceFileType || ''
+          };
         });
+        renderAll();
       } catch (err) {
-        console.error('loadReports error:', err);
+        console.error('Firestore load error:', err);
         notify('تعذّر تحميل البلاغات. تحقق من اتصالك.', 'ne');
       }
     }
@@ -968,45 +970,15 @@
         ? '✓ تم قبول بلاغ ' + r.missingName + ' — الحالة: قيد المراجعة'
         : '✗ تم رفض بلاغ ' + r.missingName;
 
-      /* ── Update Firestore with AdminID from Firebase Auth ── */
+      /* ── Update Firestore ── */
       if (db && r.docId) {
-        // Get current admin UID from Firebase Auth
-        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
-          .then(function(authMod) {
-            var fbAuth = authMod.getAuth();
-            var currentAdmin = fbAuth.currentUser;
-            var adminUid = currentAdmin ? currentAdmin.uid : '';
-
-            var updatePayload;
-            if (pendingAction.action === 'accept') {
-              updatePayload = {
-                Status:         newDbStatus,
-                ApprovalStutes: 'approved',
-                AdminID:        adminUid       // FK → Admin who accepted
-              };
-            } else {
-              updatePayload = {
-                Status:         newDbStatus,
-                ApprovalStutes: 'rejected',
-                RejectionReason: ''            // Admin can fill later if needed
-              };
-            }
-
-            fsUpdateDoc(fsDoc(db, 'Report', r.docId), updatePayload)
-              .catch(function(err) {
-                console.error('Update error:', err);
-                notify('حدث خطأ أثناء تحديث الحالة', 'ne');
-              });
-          })
-          .catch(function(err) {
-            // Fallback: update without adminUid if auth module fails
-            console.error('Auth import error:', err);
-            var fallbackPayload = pendingAction.action === 'accept'
-              ? { Status: newDbStatus, ApprovalStutes: 'approved' }
-              : { Status: newDbStatus, ApprovalStutes: 'rejected' };
-            fsUpdateDoc(fsDoc(db, 'Report', r.docId), fallbackPayload)
-              .catch(function(e) { console.error('Fallback update error:', e); });
-          });
+        fsUpdateDoc(fsDoc(db, 'Report', r.docId), {
+          Status:         newDbStatus,
+          ApprovalStutes: pendingAction.action === 'accept' ? 'approved' : 'rejected'
+        }).catch(function(err) {
+          console.error('Update error:', err);
+          notify('حدث خطأ أثناء تحديث الحالة', 'ne');
+        });
       }
 
       r.status = newIntStatus;
@@ -1032,7 +1004,32 @@
         di('التاريخ',       r.date) +
         di('الحالة',        statLbl(r.status));
       document.getElementById('vDesc').textContent = r.desc;
-      document.getElementById('viewOvr').classList.add('on');
+
+// عرض ملف الإثبات
+var evEl   = document.getElementById('vEvidence');
+var evUrl  = r.evidenceUrl  || '';
+var evType = r.evidenceType || '';
+
+if (!evUrl) {
+  evEl.innerHTML = '<span style="font-size:13px;color:var(--t300);">لا يوجد ملف مرفق</span>';
+} else if (evType === 'pdf') {
+  evEl.innerHTML =
+    '<a href="' + evUrl + '" target="_blank" rel="noopener" ' +
+    'style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;' +
+    'background:var(--s100);border:1.5px solid var(--s200);border-radius:10px;' +
+    'color:var(--t700);font-size:13px;font-weight:700;text-decoration:none;">' +
+    '<i class="fas fa-file-pdf" style="color:#c0392b;font-size:16px;"></i> عرض الملف</a>';
+} else {
+  evEl.innerHTML =
+    '<a href="' + evUrl + '" target="_blank" rel="noopener">' +
+    '<img src="' + evUrl + '" alt="ملف الإثبات" ' +
+    'style="max-width:100%;max-height:220px;border-radius:10px;' +
+    'border:1.5px solid var(--s200);object-fit:contain;cursor:zoom-in;" ' +
+    'onerror="this.parentElement.innerHTML=\'<span style=\\\'font-size:13px;color:var(--t300);\\\'>تعذّر تحميل الصورة</span>\'" />' +
+    '</a>';
+}
+
+document.getElementById('viewOvr').classList.add('on');
     }
     function closeView(){ document.getElementById('viewOvr').classList.remove('on'); }
 
