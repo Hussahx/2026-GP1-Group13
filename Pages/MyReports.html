@@ -290,7 +290,7 @@
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import {
       getFirestore, collection, onSnapshot,
-      doc, updateDoc, orderBy, query, getDoc
+      doc, updateDoc, query, getDoc
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -310,20 +310,24 @@
     function a2w(s){ return String(s).replace(/[٠١٢٣٤٥٦٧٨٩]/g,d=>d.charCodeAt(0)-0x0660); }
 
     const STATUS_LABELS = {
-      'new':      'جديد',
-      'accepted': 'مقبول',
-      'org':      'مقبول',
-      'active':   'جارٍ البحث',
-      'found':    'تم العثور',
-      'rescued':  'تم الإنقاذ'
+      'new':           'جديد',
+      'accepted':      'مقبول',
+      'org':           'مقبول',
+      'Under Review':  'قيد المراجعة',
+      'In Progress':   'جارٍ البحث',
+      'active':        'جارٍ البحث',
+      'found':         'تم العثور',
+      'rescued':       'تم الإنقاذ'
     };
     const STATUS_CLS = {
-      'new':      'sp-new',
-      'accepted': 'sp-accepted',
-      'org':      'sp-accepted',
-      'active':   'sp-active',
-      'found':    'sp-found',
-      'rescued':  'sp-rescued'
+      'new':           'sp-new',
+      'accepted':      'sp-accepted',
+      'org':           'sp-accepted',
+      'Under Review':  'sp-accepted',
+      'In Progress':   'sp-active',
+      'active':        'sp-active',
+      'found':         'sp-found',
+      'rescued':       'sp-rescued'
     };
 
     const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -368,11 +372,11 @@
 
       lbl.textContent = 'تعديل حالة البلاغ: ' + r.id;
       sel.innerHTML = '';
-      ['accepted','active','found','rescued'].forEach(opt=>{
+      ['Under Review','In Progress','found','rescued'].forEach(opt=>{
         const op = document.createElement('option');
         op.value = opt;
         op.textContent = STATUS_LABELS[opt];
-        if(opt === (r.status||'accepted')) op.selected = true;
+        if(opt === (r.status||'Under Review')) op.selected = true;
         sel.appendChild(op);
       });
 
@@ -531,21 +535,40 @@
       if(unsub){ unsub(); unsub=null; }
       if(!uid) return;
 
-      const q = query(collection(db,'Report'), orderBy('reportTime','desc'));
+      // نجيب كل البلاغات بدون orderBy لأن الحقول قد تختلف
+      const q = query(collection(db,'Report'));
 
       unsub = onSnapshot(q, snap=>{
         MY_REPORTS = [];
         snap.forEach(docSnap=>{
           const data = docSnap.data();
-          const teamMembers = Array.isArray(data.teamMembers) ? data.teamMembers : [];
-          const isCreator = data.createdBy === uid;
-          const isMember  = teamMembers.includes(uid);
-          if(!isCreator && !isMember) return; // ليس في الفريق — تجاهل
+          // teamMembers قد يحتوي strings (UIDs) أو objects قديمة {userId,name}
+          const rawTeam = Array.isArray(data.teamMembers) ? data.teamMembers : [];
+          const teamUIDs = rawTeam.map(m =>
+            (typeof m === 'object' && m !== null) ? m.userId : m
+          );
+          const isLeader = data.LeaderID === uid;
+          const isMember = teamUIDs.includes(uid);
+          if(!isLeader && !isMember) return; // ليس في الفريق — تجاهل
 
           const rid = data.reportId || docSnap.id;
+
+          // حساب الأيام — يدعم ReportDate (string) و reportTime (Timestamp)
           let daysText = '—';
-          if(data.reportTime?.toDate){
-            const diff = Math.floor((Date.now()-data.reportTime.toDate().getTime())/86400000);
+          let dtMs = 0;
+          if(data.ReportDate){
+            const parsed = new Date(data.ReportDate);
+            if(!isNaN(parsed)){
+              dtMs = parsed.getTime();
+              const diff = Math.floor((Date.now()-dtMs)/86400000);
+              if(diff===0) daysText='منذ اليوم';
+              else if(diff===1) daysText='منذ يوم';
+              else if(diff<=10) daysText='منذ '+toAr(diff)+' أيام';
+              else daysText='منذ '+toAr(diff)+' يوماً';
+            }
+          } else if(data.reportTime?.toDate){
+            dtMs = data.reportTime.toDate().getTime();
+            const diff = Math.floor((Date.now()-dtMs)/86400000);
             if(diff===0) daysText='منذ اليوم';
             else if(diff===1) daysText='منذ يوم';
             else if(diff<=10) daysText='منذ '+toAr(diff)+' أيام';
@@ -553,27 +576,29 @@
           }
 
           // البلاغات المغلقة لا تظهر هنا — تروح للسجل
-          if(data.status === 'rescued' || data.status === 'found') return;
+          const currentStatus = data.Status || data.status || '';
+          const closedStatuses = ['rescued', 'found', 'Rescued', 'Found', 'closed', 'Closed'];
+          if(closedStatuses.includes(currentStatus)) return;
 
           MY_REPORTS.push({
             _docId:  docSnap.id,
             id:      rid,
-            nm:      data.missingPersonName || '—',
-            loc:     data.location || '—',
-            age:     data.age || '—',
-            hlth:    data.healthStatus || 'لا يوجد',
-            status:  data.status || 'accepted',
-            teamCount: teamMembers.length,
-            role:    isCreator ? 'leader' : 'member',
+            nm:      data.MissingPersonName || data.MisssionPersoneName || data.missingPersonName || '—',
+            loc:     data.Region || data.location || '—',
+            age:     data.Age || data.age || '—',
+            hlth:    data.HealthStatus || data.healthStatus || 'لا يوجد',
+            status:  currentStatus || 'accepted',
+            teamCount: teamUIDs.length,
+            role:    isLeader ? 'leader' : 'member',
             ldr:     data.leader || '—',
             lph:     data.leaderPhone || '—',
             upd:     data.lastUpdate || '—',
             days:    daysText,
-            dt:      data.reportTime?.toDate ? data.reportTime.toDate().getTime() : 0,
+            dt:      dtMs,
             det: {
-              'العمر':          (data.age||'—') + (data.age&&data.age!=='—'?' سنة':''),
-              'الحالة الصحية': data.healthStatus||'لا يوجد',
-              'الموقع':         data.location||'—',
+              'العمر':          (data.Age||data.age||'—') + ((data.Age||data.age)&&(data.Age||data.age)!=='—'?' سنة':''),
+              'الحالة الصحية': data.HealthStatus||data.healthStatus||'لا يوجد',
+              'الموقع':         data.Region||data.location||'—',
             }
           });
         });
@@ -588,7 +613,8 @@
       if(user){
         const nameEl    = document.getElementById('userName');
         const initialEl = document.getElementById('userInitial');
-        const snap = await getDoc(doc(db,'User',user.uid));
+        // نقرأ البيانات من Volunteer collection
+        const snap = await getDoc(doc(db,'Volunteer',user.uid));
         if(snap.exists()){
           const {FirstName,LastName} = snap.data();
           if(nameEl)    nameEl.textContent    = `${FirstName} ${LastName}`;

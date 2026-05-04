@@ -816,20 +816,23 @@
 <script type="module">
   import { auth, db } from '/JS/firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { doc, getDoc, updateDoc, arrayUnion, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { doc, getDoc, getDocs, updateDoc, arrayUnion, Timestamp, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
 
-    /* ── Update header name ── */
-    const userSnap = await getDoc(doc(db, "User", user.uid));
-    if (userSnap.exists()) {
-      const { FirstName, LastName } = userSnap.data();
-      const nameEl    = document.getElementById('userName');
-      const initialEl = document.getElementById('userInitial');
-      if (nameEl)    nameEl.textContent    = `${FirstName} ${LastName}`;
-      if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '?';
-    }
+    /* ── Update header name — نبحث بـ UserID لأن document ID مختلف ── */
+    try {
+      const vq = query(collection(db, 'Volunteer'), where('UserID', '==', user.uid));
+      const vSnap = await getDocs(vq);
+      if (!vSnap.empty) {
+        const { FirstName, LastName } = vSnap.docs[0].data();
+        const nameEl    = document.getElementById('userName');
+        const initialEl = document.getElementById('userInitial');
+        if (nameEl)    nameEl.textContent    = `${FirstName} ${LastName}`;
+        if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '?';
+      }
+    } catch(e) { console.error('volunteer header error', e); }
 
     /* ── Resolve docId ── */
     const getDocId = () => {
@@ -849,7 +852,8 @@
       if (!reportSnap.exists()) return;
 
       const reportData = reportSnap.data();
-      const isLeader   = reportData.createdBy === user.uid;
+      // القائد هو من تولى البلاغ (LeaderID) — وليس من أنشأه (createdBy)
+      const isLeader   = reportData.LeaderID === user.uid;
 
       /* Expose to status modal JS */
       window._leaderDocId      = docId;
@@ -876,17 +880,21 @@
       const teamList = document.getElementById('teamList');
       if (teamList) {
         const members = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
-        const creatorUid = reportData.createdBy || '';
+        const leaderUid = reportData.LeaderID || '';
 
         if (members.length === 0) {
           teamList.innerHTML = '<div style="color:var(--t300,#b89870);font-size:13px;">لا يوجد أعضاء بعد</div>';
         } else {
-          // نجيب أسماء كل الأعضاء من Firestore
-          const namePromises = members.map(uid =>
-            getDoc(doc(db, 'User', uid))
+          // نجيب أسماء كل الأعضاء من Volunteer collection بـ UserID
+          const resolvedMembers = members.map(m =>
+            typeof m === 'object' && m !== null ? m.userId : m
+          );
+
+          const namePromises = resolvedMembers.map(uid =>
+            getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', uid)))
               .then(s => {
-                if (!s.exists()) return { uid, name: uid };
-                const d = s.data();
+                if (s.empty) return { uid, name: uid };
+                const d = s.docs[0].data();
                 return { uid, name: (d.FirstName || '') + ' ' + (d.LastName || '') };
               })
               .catch(() => ({ uid, name: uid }))
@@ -895,7 +903,7 @@
           Promise.all(namePromises).then(resolved => {
             const total = resolved.length;
             const rows = resolved.map(m => {
-              const isLeaderMember = m.uid === creatorUid;
+              const isLeaderMember = m.uid === leaderUid;
               const badge = isLeaderMember
                 ? '<span style="font-size:9px;font-weight:800;background:#fef0d0;color:#9a6010;border:1px solid #e8c870;border-radius:6px;padding:1px 7px;margin-right:6px;">قائد</span>'
                 : '<span style="font-size:9px;font-weight:700;background:#f0f4ff;color:#3050a0;border:1px solid #b0c0f0;border-radius:6px;padding:1px 7px;margin-right:6px;">عضو</span>';
@@ -956,7 +964,6 @@
         <label style="display:block;font-size:.72rem;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:#8c6840;margin-bottom:.5rem;">الحالة الجديدة <span style="color:#c0392b;">*</span></label>
         <select id="usStatusSelect" onchange="onUsStatusChange()" style="width:100%;height:48px;padding:0 1rem;border-radius:12px;background:rgba(245,239,230,.9);border:1.5px solid rgba(166,124,82,.28);color:#2a1e0e;font-weight:800;font-family:'Tajawal',sans-serif;font-size:.92rem;outline:none;cursor:pointer;direction:rtl;">
           <option value="">— اختر الحالة —</option>
-          <option value="under_review">قيد المراجعة</option>
           <option value="search_in_progress">عملية البحث جارية</option>
           <option value="report_closed">تم إغلاق البلاغ بنجاح</option>
         </select>

@@ -2094,7 +2094,7 @@ body {
 
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, collection, query, where, orderBy, onSnapshot, updateDoc }
+import { getFirestore, doc, collection, query, where, orderBy, onSnapshot, updateDoc, getDocs }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -2158,23 +2158,35 @@ function bindProfileToDOM(data, user) {
   var cityInput      = document.getElementById('bioCityInput');
   var joinEl         = document.getElementById('bioJoin');
   var roleEl         = document.getElementById('bioRole');
+  var dobEl          = document.getElementById('bioDOB');
+  var nationalEl     = document.getElementById('bioNationalID');
+  var skillsEl       = document.getElementById('bioSkills');
+  var missionsEl     = document.getElementById('bioMissionsCount');
 
   if (nameDisplay)  nameDisplay.textContent  = fullName || '—';
   if (nameInput)    nameInput.value          = fullName || '';
   if (phoneDisplay) phoneDisplay.textContent = data.Phone || '—';
   if (phoneInput)   phoneInput.value         = data.Phone || '';
-  if (emailDisplay) emailDisplay.textContent = user.email || '—';
+  if (emailDisplay) emailDisplay.textContent = data.Email || user.email || '—';
   if (cityDisplay)  cityDisplay.textContent  = data.City  || '—';
   if (cityInput)    cityInput.value          = data.City  || '';
 
+  if (dobEl) dobEl.textContent = data.DOB || '—';
+  if (nationalEl) nationalEl.textContent = data.NationalID || '—';
+
+  if (skillsEl) {
+    var skills = Array.isArray(data.Skills) ? data.Skills : (data.Skills ? [data.Skills] : []);
+    skillsEl.textContent = skills.length ? skills.join('، ') : '—';
+  }
+
+  if (missionsEl) missionsEl.textContent = data.MissionsCount != null ? String(data.MissionsCount) : '0';
+
   if (roleEl) {
-    var roleLabel = data.Role === 'leader' ? 'قائد فريق' : (data.Role || 'متطوع');
-    var team      = data.Team ? ' — ' + data.Team : ' — منصة راصد';
-    roleEl.textContent = '⋆ ' + roleLabel + team + ' ⋆';
+    roleEl.textContent = '⋆ متطوع — منصة راصد ⋆';
   }
 
   if (joinEl) {
-    const joinStr = formatJoinDate(data.JoindAt);
+    const joinStr = formatJoinDate(data.JoinDate || data.JoindAt || data.JoinedAt);
     joinEl.textContent = joinStr || '—';
   }
 }
@@ -2213,8 +2225,8 @@ window.executeDeleteAccount = async function() {
   btn.textContent = 'جاري التنفيذ...';
 
   try {
-    await updateDoc(doc(db, 'User', currentUser.uid), {
-      accountStatus: 'invalid'
+    await updateDoc(doc(db, 'Volunteer', window._volunteerDocId || currentUser.uid), {
+      Status: 'inactive'
     });
 
     window.closeDeleteModal();
@@ -2439,7 +2451,7 @@ window.executeSaveEdit = async function() {
   var lastName  = nameParts.slice(1).join(' ') || '';
 
   try {
-    await updateDoc(doc(db, 'User', currentUser.uid), {
+    await updateDoc(doc(db, 'Volunteer', window._volunteerDocId || currentUser.uid), {
       FirstName: firstName,
       LastName:  lastName,
       Phone:     newPhone,
@@ -2493,9 +2505,14 @@ onAuthStateChanged(auth, function(user) {
 
   currentUser = user;
 
-  /* الاشتراك الحي في بيانات المستخدم */
-  unsubProfile = onSnapshot(doc(db, 'User', user.uid), function(snap) {
-    const data = snap.exists() ? snap.data() : {};
+  /* الاشتراك الحي في بيانات المتطوع — نبحث بـ UserID لأن document ID مختلف */
+  const volunteerQuery = query(
+    collection(db, 'Volunteer'),
+    where('UserID', '==', user.uid)
+  );
+  unsubProfile = onSnapshot(volunteerQuery, function(snap) {
+    const data = (!snap.empty) ? snap.docs[0].data() : {};
+    window._volunteerDocId = (!snap.empty) ? snap.docs[0].id : null;
     bindProfileToDOM(data, user);
   }, function(err) {
     console.error('onSnapshot user error:', err);
@@ -2513,32 +2530,37 @@ onAuthStateChanged(auth, function(user) {
     var _months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     snapshot.forEach(function(docSnap) {
       var d = docSnap.data();
-      var isLeader = d.createdBy === user.uid;
+      var isLeader = d.LeaderID === user.uid;
       var daysText = '—';
       var reportTimeStr = '—';
-      if (d.reportTime && d.reportTime.toDate) {
-        var _dt = d.reportTime.toDate();
-        var diff = Math.floor((Date.now() - _dt.getTime()) / 86400000);
+      var tsDate = null;
+      if (d.reportTime && d.reportTime.toDate) tsDate = d.reportTime.toDate();
+      else if (d.LoggedAt && d.LoggedAt.toDate) tsDate = d.LoggedAt.toDate();
+      else if (d.ReportDate) tsDate = new Date(d.ReportDate);
+      if (tsDate && !isNaN(tsDate)) {
+        var diff = Math.floor((Date.now() - tsDate.getTime()) / 86400000);
         daysText = diff === 0 ? 'منذ اليوم' : 'منذ ' + diff + ' يوم';
-        reportTimeStr = _dt.getDate() + ' ' + _months[_dt.getMonth()] + ' ' + _dt.getFullYear();
+        reportTimeStr = tsDate.getDate() + ' ' + _months[tsDate.getMonth()] + ' ' + tsDate.getFullYear();
       }
+      var currentStatus = d.Status || d.status || '';
+      var closedStatuses = ['rescued','found','Rescued','Found','closed','Closed'];
       ops.push({
         id:        docSnap.id,
         ar:        d.reportId          || docSnap.id,
-        nm:        d.missingPersonName || '—',
-        loc:       d.location          || '—',
+        nm:        d.MissingPersonName || d.MisssionPersoneName || d.missingPersonName || '—',
+        loc:       d.Region            || d.location            || '—',
         days:      daysText,
         ld:        reportTimeStr,
         role:      isLeader ? 'leader' : 'member',
         teamCount: Array.isArray(d.teamMembers) ? d.teamMembers.length : 0,
-        closed:    d.status === 'rescued' || d.status === 'found',
-        hlth:      d.healthStatus      || 'لا يوجد',
-        veh:       d.vehicle           || '—',
-        age:       d.age               || '—',
+        closed:    closedStatuses.includes(currentStatus),
+        hlth:      d.HealthStatus      || d.healthStatus        || 'لا يوجد',
+        veh:       d.Vehicle           || d.vehicle             || '—',
+        age:       d.Age               || d.age                 || '—',
         ldr:       d.leader            || '—',
         lph:       d.leaderPhone       || '—',
-        status:    d.status            || 'accepted',
-        desc:      d.description       || '',
+        status:    currentStatus       || 'Under Review',
+        desc:      d.Details           || d.description         || '',
         mbr:       [],
         foundAt:   '',
         startDate: reportTimeStr,
@@ -3086,6 +3108,7 @@ var navbar = document.getElementById('navbar');
 var lastScrollY = window.scrollY;
 
 window.addEventListener('scroll', function(){
+  if(!navbar) return;
   var currentY = window.scrollY;
 
   if(currentY > 20){
@@ -3112,7 +3135,7 @@ window.addEventListener('scroll', function(){
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
 
-    const snap = await getDoc(doc(db, "User", user.uid));
+    const snap = await getDoc(doc(db, "Volunteer", user.uid));
     if (!snap.exists()) return;
 
     const { FirstName, LastName } = snap.data();

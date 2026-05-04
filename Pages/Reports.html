@@ -535,9 +535,11 @@ body.reports-page .bov{
       }
 
       let daysText = '—';
-      const tsDate = data.reportTime?.toDate ? data.reportTime.toDate()
-                   : data.LoggedAt?.toDate   ? data.LoggedAt.toDate() : null;
-      if (tsDate) {
+      let tsDate = null;
+      if (data.reportTime?.toDate)   tsDate = data.reportTime.toDate();
+      else if (data.LoggedAt?.toDate) tsDate = data.LoggedAt.toDate();
+      else if (data.ReportDate)       tsDate = new Date(data.ReportDate);
+      if (tsDate && !isNaN(tsDate)) {
         const diff = Math.floor((Date.now() - tsDate.getTime()) / 86400000);
         if (diff === 0)      daysText = 'منذ اليوم';
         else if (diff === 1) daysText = 'منذ يوم';
@@ -551,7 +553,7 @@ body.reports-page .bov{
       const hlth = data.HealthStatus || data.healthStatus || 'لا يوجد';
       const veh  = data.Vehicle      || data.vehicle      || '—';
       const loc  = data.Region || data.region || data.LastSeenLocation || data.location || '—';
-      const nm   = data.MisssionPersoneName || data.MissingPersonName || data.missingPersonName || '—';
+      const nm   = data.MissingPersonName || data.MisssionPersoneName || data.missingPersonName || '—';
       const dt   = data.reportTime?.toDate ? data.reportTime.toDate().getTime()
                  : data.LoggedAt?.toDate   ? data.LoggedAt.toDate().getTime() : 0;
 
@@ -580,7 +582,7 @@ body.reports-page .bov{
         dt,
         age,
         hlth,
-        status:  data.status || 'new',
+        status:  data.Status || data.status || 'Under Review',
         role:    isLeader ? 'leader' : 'member',
         userInTeam,
         ldr:  data.leader      || '',
@@ -694,23 +696,24 @@ body.reports-page .bov{
         return;
       }
       try {
-        const userSnap = await getDoc(doc(db, 'User', uid));
+        // قراءة بيانات المتطوع من Volunteer collection
+        const volSnap = await getDoc(doc(db, 'Volunteer', uid));
 
         let leaderName  = '';
         let leaderPhone = '';
 
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          leaderName  = ((userData.FirstName || '') + ' ' + (userData.LastName || '')).trim();
-          leaderPhone = userData.Phone || '';
+        if (volSnap.exists()) {
+          const volData = volSnap.data();
+          leaderName  = ((volData.FirstName || '') + ' ' + (volData.LastName || '')).trim();
+          leaderPhone = volData.Phone || '';
         }
 
         await updateDoc(doc(db, 'Report', docId), {
-          LeaderID:          uid,               // FK → User (leader)
+          LeaderID:          uid,        // FK → Volunteer (leader)
           leader:            leaderName,
           leaderPhone:       leaderPhone,
           CurrentVolunteers: 1,
-          teamMembers:       arrayUnion(uid)
+          teamMembers:       arrayUnion(uid)   // نخزن UID فقط (string)
         });
 
         console.log('✅ assignLeader: LeaderID set to', uid);
@@ -720,7 +723,7 @@ body.reports-page .bov{
     };
 
     // ── addTeamMember() — subsequent volunteers join the team ────────
-    // Adds { userId, name } to teamMembers array — prevents duplicates
+    // Adds UID (string) to teamMembers array — prevents duplicates
     window._fbJoin = async function(docId, uid) {
       if (!docId || !uid) {
         console.warn('addTeamMember: missing docId or uid');
@@ -734,10 +737,10 @@ body.reports-page .bov{
           return;
         }
 
-        const reportData   = reportSnap.data();
-        const currentTeam  = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
+        const reportData  = reportSnap.data();
+        const currentTeam = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
 
-        // Duplicate check — prevent same user joining twice
+        // Duplicate check — نتحقق سواء كان string أو object قديم
         const alreadyInTeam = currentTeam.some(member =>
           (typeof member === 'object' && member !== null)
             ? member.userId === uid
@@ -749,27 +752,13 @@ body.reports-page .bov{
           return;
         }
 
-        // Fetch volunteer's name from User collection
-        let memberName = '';
-        try {
-          const userSnap = await getDoc(doc(db, 'User', uid));
-          if (userSnap.exists()) {
-            const ud = userSnap.data();
-            memberName = ((ud.FirstName || '') + ' ' + (ud.LastName || '')).trim();
-          }
-        } catch (_) {
-          // Name fetch failed — proceed with empty name
-        }
-
-        // Store teamMember as { userId, name } object
-        const newMember = { userId: uid, name: memberName };
-
+        // نخزن UID فقط (string) — متناسق مع _fbTakeOver
         await updateDoc(doc(db, 'Report', docId), {
-          teamMembers:       arrayUnion(newMember),
+          teamMembers:       arrayUnion(uid),
           CurrentVolunteers: (reportData.CurrentVolunteers || 0) + 1
         });
 
-        console.log('✅ addTeamMember: added', uid, 'as', memberName || '(no name)');
+        console.log('✅ addTeamMember: added uid', uid);
       } catch (err) {
         console.error('addTeamMember error:', err);
       }
@@ -1282,7 +1271,7 @@ body.reports-page .bov{
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
 
-    const snap = await getDoc(doc(db, "User", user.uid));
+    const snap = await getDoc(doc(db, "Volunteer", user.uid));
     if (!snap.exists()) return;
 
     const { FirstName, LastName } = snap.data();

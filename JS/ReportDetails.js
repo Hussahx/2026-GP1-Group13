@@ -668,23 +668,22 @@
 
       return {
         id:           d.reportId || docId,
-        missingName:  d.missingPersonName || '—',
-        missingAge:   d.age ? d.age + ' سنة' : '—',
-        missingArea:  d.location || '—',
+        missingName:  d.MissingPersonName || d.MisssionPersoneName || d.missingPersonName || '—',
+        missingAge:   d.Age ? d.Age + ' سنة' : (d.age ? d.age + ' سنة' : '—'),
+        missingArea:  d.Region || d.location || '—',
         reportTime:   reportTimeStr,
-        details:      d.description || 'لا توجد تفاصيل.',
-        status:       d.status || 'accepted',
+        details:      d.Details || d.description || 'لا توجد تفاصيل.',
+        status:       d.Status || d.status || 'Under Review',
         videoSource:  'Drone-01',
         leader:       d.leader || '—',
         leaderPhone:  d.leaderPhone || '—',
         lastUpdate:   d.lastUpdate || '—',
-        healthStatus: d.healthStatus || 'لا يوجد',
-        vehicle:      d.vehicle || '—',
-        contact:      d.contact || '—',
+        healthStatus: d.HealthStatus || d.healthStatus || 'لا يوجد',
+        vehicle:      d.Vehicle || d.vehicle || '—',
+        contact:      d.contact || d.ReporterEmail || '—',
         teamCount:    Array.isArray(d.teamMembers) ? d.teamMembers.length : 0,
-        // ADDED: بيانات ملف الدليل من Cloudinary
-        evidenceFile:     d.evidenceFile     || '',
-        evidenceFileType: d.evidenceFileType || 'image',
+        evidenceFile:     d.EvidanceFile || d.EvidenceFile || d.evidenceFile || '',
+        evidenceFileType: d.EvidenceFileType || d.evidenceFileType || 'image',
       };
     } catch (err) {
       console.error('loadFromFirestore error:', err);
