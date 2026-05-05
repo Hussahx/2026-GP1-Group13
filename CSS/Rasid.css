@@ -3,13 +3,13 @@
 ═══════════════════════════════════════════════ */
 :root {
   --sand-50:#FAF6EF;
-  --sand-100:#F5EFE6;
+--sand-100:#F5EFE6;
   --sand-200:#EDE4D3;
   --sand-300:#D9C9AE;
 
   --oak-400:#A67C52;
-  --oak-500:#8B6B47;
-  --oak-600:#7A5C38;
+  --oak-500:#C2A477;
+--oak-600:#A67C52;
   --oak-700:#5C4025;
 
   --olive-400:#7A9A6A;
@@ -44,20 +44,24 @@ html{
 
 body{
   font-family:var(--font);
-  background-color:var(--sand-100);
+  background:
+    radial-gradient(ellipse at 15% 25%, rgba(194,164,119,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 82% 68%, rgba(139,107,71,0.08) 0%, transparent 50%),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(166,124,82,0.04) 40px,
+      rgba(166,124,82,0.04) 41px
+    ),
+    linear-gradient(160deg, #F5EFE6 0%, #EDE4D3 55%, #E5D5BC 100%);
   color:var(--ink);
   direction:rtl;
   text-align:right;
   min-height:100vh;
   display:flex;
   flex-direction:column;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 10% 0%, rgba(166,124,82,0.10) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(122,154,106,0.07) 0%, transparent 55%),
-    repeating-linear-gradient(45deg, transparent 0px, transparent 40px,
-      rgba(166,124,82,0.025) 40px, rgba(166,124,82,0.025) 41px);
 }
-
 button,input{font-family:var(--font)}
 a{color:var(--oak-400);text-decoration:none}
 ul{list-style:none}
@@ -66,16 +70,18 @@ ul{list-style:none}
    HEADER
 ═══════════════════════════════════════════════ */
 .page-header{
-  position:relative;
-  width:100%;
-  background:linear-gradient(138deg,var(--oak-500),var(--oak-600));
-  padding:clamp(1rem,3vw,1.6rem) clamp(1.25rem,4vw,2rem);
+  background: rgba(245, 239, 230, 0.95); /* نفس index */
+  backdrop-filter: blur(20px);
+
+  padding:12px 20px; /* خليه نحيف */
+  
   display:flex;
   align-items:center;
-  gap:.875rem;
-  border-radius:0 0 clamp(22px,5vw,36px) clamp(22px,5vw,36px);
-  overflow:hidden;
-  z-index:10;
+  justify-content:space-between;
+
+  border-bottom:1px solid rgba(166,124,82,0.2);
+
+  border-radius:0; /* بدون انحناء */
 }
 
 .page-header::before{
@@ -92,8 +98,8 @@ ul{list-style:none}
 .header-logo-mark{
   position:relative;
   z-index:1;
-  width:clamp(40px,7vw,50px);
-  height:clamp(40px,7vw,50px);
+ width:clamp(60px,9vw,95px);
+   height:auto; 
   border-radius:12px;
   overflow:hidden;
   flex-shrink:0;
@@ -101,9 +107,8 @@ ul{list-style:none}
 
 .header-logo-mark img{
   width:100%;
-  height:100%;
-  object-fit:cover;
-  border-radius:12px;
+  height:auto;
+  object-fit:contain;
 }
 
 .header-brand{position:relative;z-index:1}

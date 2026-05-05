@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#c8a06a" />
   <title>راصد — بلاغات البحث والإنقاذ</title>
+  <link rel="icon" href="/assest/logoo.PNG" type="image/png">
 
   <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -22,8 +23,23 @@
     }
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
     html{scroll-behavior:smooth;}
-    body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--t900);min-height:100vh;overflow-x:hidden;}
-    .reports-scope, .page-body, .page-header { transform:none !important; }
+body{
+  font-family:'Tajawal',sans-serif;
+  background:
+    radial-gradient(ellipse at 15% 25%, rgba(194,164,119,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 82% 68%, rgba(139,107,71,0.08) 0%, transparent 50%),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(166,124,82,0.04) 40px,
+      rgba(166,124,82,0.04) 41px
+    ),
+    linear-gradient(160deg, #F5EFE6 0%, #EDE4D3 55%, #E5D5BC 100%);
+  color:var(--t900);
+  min-height:100vh;
+  overflow-x:hidden;
+}    .reports-scope, .page-body, .page-header { transform:none !important; }
     .nwrap{position:fixed !important;top:14px !important;left:50% !important;transform:translateX(-50%) !important;z-index:99999 !important;display:flex !important;flex-direction:column !important;gap:7px !important;pointer-events:none !important;align-items:center !important;width:88% !important;max-width:380px !important;}
     .notif{background:var(--white) !important;border-radius:12px !important;padding:11px 15px !important;box-shadow:0 6px 24px rgba(0,0,0,.13) !important;font-size:13px !important;color:var(--t900) !important;font-weight:500 !important;width:100% !important;border-right:4px solid !important;animation:nin .3s ease,nout .3s ease 3.5s forwards !important;}
     .ns{border-color:#2d9e52 !important;}.ni{border-color:#4060c8 !important;}.nw{border-color:#e07830 !important;}
@@ -45,7 +61,17 @@
     .sinput{flex:1;min-width:0;padding:9px 14px;background:var(--white);border:1.5px solid var(--bdr);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:13px;color:var(--t900);outline:none;direction:rtl;}
     .sinput:focus{border-color:var(--s300);}.sinput::placeholder{color:var(--t300);}
     .sselect{flex-shrink:0;padding:9px 11px;background:var(--white);border:1.5px solid var(--bdr);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:12px;color:var(--t700);outline:none;cursor:pointer;}
-    .main{max-width:1120px;margin:0 auto;padding:24px 20px 48px;}.sec{margin-bottom:32px;}
+    .main{
+  max-width:1120px;
+  margin:0 auto;
+  padding:24px 20px 48px;
+
+  background: transparent; /* 👈 هذا الحل */
+}.main,
+.sec,
+.sticky{
+  background: transparent;
+}.sec{margin-bottom:32px;}
     .sec-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
     .sec-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
     .sec-head h2{font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--t700);}
@@ -181,11 +207,10 @@ body.reports-page .bov{
   <div class="reports-scope">
     <header class="page-header">
       <div class="header-logo-mark" aria-hidden="true">
-        <img src="/assest/New-logo.JPG.jpeg" alt="شعار راصد" />
+        <img src="/assest/logoo.PNG" alt="شعار راصد" />
       </div>
       <div class="header-brand">
-        <h1>راصد</h1>
-        <p>عين الصحراء - ⟡ لوحة البلاغات الميدانية</p>
+       
       </div>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
       <i class="fas fa-bars"></i>

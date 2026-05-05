@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#c8a06a" />
   <title>راصد — البلاغات المسندة</title>
+    <link rel="icon" href="/assest/logoo.PNG" type="image/png">
+
   <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="/CSS/Rasid.css" />
@@ -21,7 +23,21 @@
     }
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
     html{scroll-behavior:smooth;}
-    body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--t900);min-height:100vh;overflow-x:hidden;}
+    body{
+  font-family:'Tajawal',sans-serif;
+  background:
+    radial-gradient(ellipse at 15% 25%, rgba(194,164,119,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 82% 68%, rgba(139,107,71,0.08) 0%, transparent 50%),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(166,124,82,0.04) 40px,
+      rgba(166,124,82,0.04) 41px
+    ),
+    linear-gradient(160deg, #F5EFE6 0%, #EDE4D3 55%, #E5D5BC 100%);
+  color:var(--t900);
+}
     .reports-scope,.page-body,.page-header{transform:none !important;}
 
     /* Notifications */
@@ -123,11 +139,10 @@
   <div class="reports-scope">
     <header class="page-header">
       <div class="header-logo-mark" aria-hidden="true">
-        <img src="/assest/New-logo.JPG.jpeg" alt="شعار راصد" />
+        <img src="/assest/logoo.PNG" alt="شعار راصد" />
       </div>
       <div class="header-brand">
-        <h1>راصد</h1>
-        <p>عين الصحراء — البلاغات المسندة</p>
+        
       </div>
       <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
         <i class="fas fa-bars"></i>

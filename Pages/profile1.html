@@ -16,12 +16,21 @@
 /* ══════════════════════════════════════════
    PAGE BACKGROUND
 ══════════════════════════════════════════ */
-html, body {
-  overflow-x: hidden;
-  margin: 0;
-  padding: 0;
-  /* FIX 1: الجسم بالكامل أبيض ناصع مثل صفحة "ما هو راصد" */
-  background-color: #F5EFE6; background-image: radial-gradient(ellipse 80% 50% at 10% 0%, rgba(166,124,82,0.10) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 90% 100%, rgba(122,154,106,0.07) 0%, transparent 55%), repeating-linear-gradient(45deg, transparent 0px, transparent 40px, rgba(166,124,82,0.025) 40px, rgba(166,124,82,0.025) 41px);
+html, body{
+  overflow-x:hidden;
+  margin:0;
+  padding:0;
+  background:
+    radial-gradient(ellipse at 15% 25%, rgba(194,164,119,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 82% 68%, rgba(139,107,71,0.08) 0%, transparent 50%),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(166,124,82,0.04) 40px,
+      rgba(166,124,82,0.04) 41px
+    ),
+    linear-gradient(160deg, #F5EFE6 0%, #EDE4D3 55%, #E5D5BC 100%);
 }
 
 body {
@@ -1601,11 +1610,10 @@ body {
 
 <header class="page-header">
   <div class="header-logo-mark" aria-hidden="true">
-    <img src="/assest/New-logo.JPG.jpeg" alt="شعار راصد">
+    <img src="/assest/logoo.PNG" alt="شعار راصد">
   </div>
   <div class="header-brand">
-    <h1>راصد</h1>
-    <p>عين الصحراء — الملف الشخصي</p>
+    
   </div>
   <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
       <i class="fas fa-bars"></i>
