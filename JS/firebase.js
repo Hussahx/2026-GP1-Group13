@@ -12,6 +12,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore,
+  collection,
   doc,
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -34,87 +35,87 @@ const auth      = getAuth(app);
 const db        = getFirestore(app);
 
 // ── Sign-in with role check ──────────────────────────────────
+// Strategy (no User collection):
+//   1. Sign in with Firebase Auth
+//   2. Check Admin collection by UID  → admin panel
+//   3. Check Volunteer collection by AuthUID field (set on approval)
+//      OR by document ID (legacy) → volunteer portal
 export async function loginAndRedirect(email, password) {
   try {
     // 1. Sign in with Firebase Auth
     const credential = await signInWithEmailAndPassword(auth, email, password);
     const uid        = credential.user.uid;
 
-    // 2. Check User collection first (admins + volunteers registered via app)
-    const userSnap = await getDoc(doc(db, "User", uid));
-    if (userSnap.exists()) {
-      const data          = userSnap.data();
-      const role          = (data.role          || data.Role          || "").toLowerCase();
-      const accountStatus = (data.accountStatus || data.AccountStatus || "").toLowerCase();
-
-      // Admin → AdminControlPanel
-      if (role === "admin") {
+    // 2. Check Admin collection
+    const adminSnap = await getDoc(doc(db, "Admin", uid));
+    if (adminSnap.exists()) {
+      const data          = adminSnap.data();
+      const accountStatus = (data.AccountStatus || data.accountStatus || "").toLowerCase();
+      if (accountStatus === "valid" || accountStatus === "active" || accountStatus === "") {
         window.location.href = "/Pages/AdminControlPanel.html";
         return { success: true };
       }
-
-      // Volunteer in User collection — check accountStatus
-      if (role === "volunteer") {
-        // Accept: approved, active, or no status restriction (let them in)
-        if (
-          accountStatus === "approved" ||
-          accountStatus === "active"   ||
-          accountStatus === ""          // no restriction set
-        ) {
-          window.location.href = "/Pages/Reports.html";
-          return { success: true };
-        }
-
-        // Pending / rejected / suspended
-        await signOut(auth);
-        if (accountStatus === "pending") {
-          return { success: false, error: "حسابك لا يزال قيد المراجعة. يرجى الانتظار حتى يتم القبول." };
-        }
-        return { success: false, error: "حسابك لم يتم قبوله أو تم تعليقه. تواصل مع الإدارة." };
-      }
-
-      // Unknown role in User collection
       await signOut(auth);
-      return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
+      return { success: false, error: "حسابك معلّق. تواصل مع الإدارة." };
     }
 
-    // 3. Not in User → check Volunteer collection
-    const volSnap = await getDoc(doc(db, "Volunteer", uid));
-    if (volSnap.exists()) {
-      const data           = volSnap.data();
-      // Support multiple possible field name casings
-      const approvalStatus = (
-        data.ApprovalStatus || data.approvalStatus ||
-        data.accountStatus  || data.AccountStatus  || ""
-      ).toLowerCase();
-      const status = (data.Status || data.status || "").toLowerCase();
+    // 3. Check Volunteer collection — match on AuthUID field (set during approval)
+    //    Fallback: also try doc ID = uid (for any legacy documents)
+    const { query, where, getDocs } = await import(
+      "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
+    );
 
-      // Accept if approved (regardless of Status), or if active
-      if (
+    let volData = null;
+
+    // 3a. Query by AuthUID field
+    const volQuery = query(
+      collection(db, "Volunteer"),
+      where("AuthUID", "==", uid)
+    );
+    const volQuerySnap = await getDocs(volQuery);
+    if (!volQuerySnap.empty) {
+      volData = volQuerySnap.docs[0].data();
+    }
+
+    // 3b. Fallback: doc ID matches uid
+    if (!volData) {
+      const volDocSnap = await getDoc(doc(db, "Volunteer", uid));
+      if (volDocSnap.exists()) volData = volDocSnap.data();
+    }
+
+    if (volData) {
+      const approvalStatus = (
+        volData.ApprovalStatus || volData.approvalStatus || ""
+      ).toLowerCase();
+      const accountStutes = (
+        volData.AccountStutes || volData.AccountStatus || volData.accountStatus || ""
+      ).toLowerCase();
+
+      const isApproved =
         approvalStatus === "approved" ||
         approvalStatus === "active"   ||
-        status         === "active"   ||
-        approvalStatus === ""          // no restriction
-      ) {
+        accountStutes  === "valid"    ||
+        accountStutes  === "active";
+
+      if (isApproved) {
         window.location.href = "/Pages/Reports.html";
         return { success: true };
       }
 
       await signOut(auth);
-      if (approvalStatus === "pending") {
+      if (approvalStatus === "pending" || approvalStatus === "") {
         return { success: false, error: "حسابك لا يزال قيد المراجعة. يرجى الانتظار حتى يتم القبول." };
       }
       return { success: false, error: "حسابك لم يتم قبوله أو غير نشط. تواصل مع الإدارة." };
     }
 
-    // 4. UID not found in any collection
+    // 4. UID not found in Admin or Volunteer
     await signOut(auth);
     return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
 
   } catch (err) {
     console.error("Login error:", err.code, err.message);
-    const msg = firebaseErrorToArabic(err.code);
-    return { success: false, error: msg };
+    return { success: false, error: firebaseErrorToArabic(err.code) };
   }
 }
 
@@ -134,16 +135,27 @@ export async function requireAuth(requiredRole) {
         try {
           let role = null;
 
-          // Check User collection (admins + app-registered volunteers)
-          const userSnap = await getDoc(doc(db, "User", user.uid));
-          if (userSnap.exists()) {
-            const data = userSnap.data();
-            role = (data.role || data.Role || "").toLowerCase();
+          // Check Admin collection
+          const adminSnap = await getDoc(doc(db, "Admin", user.uid));
+          if (adminSnap.exists()) {
+            role = "admin";
           } else {
-            // Check Volunteer collection
-            const volSnap = await getDoc(doc(db, "Volunteer", user.uid));
-            if (volSnap.exists()) {
+            // Check Volunteer collection by AuthUID field
+            const { query, where, getDocs } = await import(
+              "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
+            );
+            const volQuery = query(
+              collection(db, "Volunteer"),
+              where("AuthUID", "==", user.uid)
+            );
+            const volSnap = await getDocs(volQuery);
+
+            if (!volSnap.empty) {
               role = "volunteer";
+            } else {
+              // Fallback: doc ID = uid
+              const volDocSnap = await getDoc(doc(db, "Volunteer", user.uid));
+              if (volDocSnap.exists()) role = "volunteer";
             }
           }
 

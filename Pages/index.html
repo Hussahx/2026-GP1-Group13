@@ -524,14 +524,14 @@
               <div class="ci-icon"><i class="fas fa-envelope"></i></div>
               <div>
                 <strong>البريد الإلكتروني</strong>
-                <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0c7e6d7f65684c6b616d6560226f6361">[email&#160;protected]</a></span>
+                <span><a href="/cdn-cgi/l/rasidsupport@gmail.com" class="__cf_email__" data-cfemail="0c7e6d7f65684c6b616d6560226f6361">[email&#160;protected]</a></span>
               </div>
             </div>
             <div class="contact-item">
               <div class="ci-icon"><i class="fas fa-phone"></i></div>
               <div>
                 <strong>الهاتف</strong>
-                <span>+966 11 467 0000</span>
+                <span>+966 996 8999</span>
               </div>
             </div>
             <div class="contact-item">
@@ -881,12 +881,7 @@
           <img src="../assest/logoo.PNG" alt="شعار راصد" class="footer-logo" />
           <h3>راصد</h3>
           <p>نظام بحث وإنقاذ ذكي يعتمد الذكاء الاصطناعي والطائرات المسيّرة لإنقاذ الأرواح في البيئات الصحراوية.</p>
-          <div class="social-links">
-            <a href="#" aria-label="تويتر"><i class="fab fa-x-twitter"></i></a>
-            <a href="#" aria-label="لينكدإن"><i class="fab fa-linkedin-in"></i></a>
-            <a href="#" aria-label="يوتيوب"><i class="fab fa-youtube"></i></a>
-            <a href="#" aria-label="جيتهاب"><i class="fab fa-github"></i></a>
-          </div>
+          
         </div>
 
         <div class="footer-links">
@@ -999,20 +994,11 @@
     ────────────────────────────────────────────────────────── */
     
     /* ══════════════════════════════════════════════════════════
-       LOGIN FORM — Firebase Authentication
-       ══════════════════════════════════════════════════════════
-       المشكلة السابقة:
-         الكود القديم كان يبحث عن كلمة المرور مباشرة في Firestore
-         (Admin / Volunteer / Reporter) وهذا خطأ لأن كلمات المرور
-         مخزنة في Firebase Authentication وليس في Firestore.
-
-       الحل الصحيح (مطابق لـ firebase.js):
-         1. signInWithEmailAndPassword ← Firebase Auth يتحقق من الباسورد
-         2. بعد النجاح نقرأ الـ UID من Firebase Auth
-         3. نبحث في User (role: "admin" أو "volunteer")
-         4. إذا مو موجود في User نبحث في Volunteer
-         5. نوجّه حسب الـ role
-    ══════════════════════════════════════════════════════════ */
+       LOGIN FORM — delegates entirely to firebase.js
+       loginAndRedirect handles:
+         Admin/{uid}               → AdminControlPanel.html
+         Volunteer (AuthUID==uid)  → Reports.html
+       ══════════════════════════════════════════════════════════ */
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
       loginForm.addEventListener('submit', async function(e) {
@@ -1033,95 +1019,19 @@
         if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ التحقق...'; }
 
         try {
-          /* ── الخطوة 1: تسجيل الدخول عبر Firebase Auth ─────────
-             كلمة المرور تتحقق هنا — لا نحتاج نخزنها في Firestore */
-          const { getAuth, signInWithEmailAndPassword, signOut } =
-            await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+          const { loginAndRedirect } = await import('/JS/firebase.js');
+          const result = await loginAndRedirect(emailVal, passVal);
 
-          const auth       = getAuth(app);
-          const credential = await signInWithEmailAndPassword(auth, emailVal, passVal);
-          const uid        = credential.user.uid;
-
-          /* ── الخطوة 2: نحدد الـ role بالبحث في Collections ────────
-             الهيكل الفعلي في Firestore (من الصور):
-             - Admin/{uid}     → role: "admin",     AccountStutes: "valid"
-             - Volunteer/{uid} → ApprovalStatus: "approved", AccountStutes: "valid"
-             - User/{uid}      → role: "admin"/"volunteer" (بعض الأنظمة)
-             نبدأ بـ Admin لأن document ID = uid مباشرة */
-          const { doc, getDoc } =
-            await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-
-          /* ── 2a: ابحث في Admin/{uid} أولاً ── */
-          const adminSnap = await getDoc(doc(db, 'Admin', uid));
-          if (adminSnap.exists()) {
-            const data = adminSnap.data();
-            /* role في Firestore: "admin" أو "Admin" — نتحقق من الاثنين */
-            const role   = (data.role || '').toLowerCase();
-            const status = data.AccountStutes || data.accountStatus || '';
-            if (role === 'admin' || status === 'valid') {
-              window.location.href = 'Control.html';
-              return;
-            }
+          if (!result.success) {
+            const errEl = document.getElementById('lEmailErr');
+            if (errEl) errEl.textContent = result.error || 'حدث خطأ غير متوقع. حاول مجدداً.';
           }
-
-          /* ── 2b: ابحث في User/{uid} ── */
-          const userSnap = await getDoc(doc(db, 'User', uid));
-          if (userSnap.exists()) {
-            const data   = userSnap.data();
-            const role   = (data.role || '').toLowerCase();
-            const status = data.accountStatus || data.AccountStutes || '';
-
-            if (role === 'admin') {
-              window.location.href = 'Control.html';
-              return;
-            }
-            if (role === 'volunteer' && status === 'approved') {
-              window.location.href = 'Reports.html';
-              return;
-            }
-
-            await signOut(auth);
-            if (emailErr) emailErr.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
-            return;
-          }
-
-          /* ── 2c: ابحث في Volunteer/{uid} ── */
-          const volSnap = await getDoc(doc(db, 'Volunteer', uid));
-          if (volSnap.exists()) {
-            const data           = volSnap.data();
-            const approvalStatus = data.ApprovalStatus || '';
-            const accountStutes  = data.AccountStutes  || '';
-
-            if (approvalStatus === 'approved' && accountStutes === 'valid') {
-              window.location.href = 'Reports.html';
-              return;
-            }
-
-            await signOut(auth);
-            if (emailErr) emailErr.textContent = 'حسابك لم يتم قبوله بعد.';
-            return;
-          }
-
-          /* ── 2d: مو موجود في أي collection ── */
-          await signOut(auth);
-          if (emailErr) emailErr.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+          // On success, loginAndRedirect already redirected the page — nothing else to do.
 
         } catch (err) {
           console.error('Login error:', err.code, err.message);
-
-          /* ترجمة أكواد Firebase Auth للعربية */
-          const arabicErrors = {
-            'auth/invalid-email':          'البريد الإلكتروني غير صالح.',
-            'auth/user-not-found':         'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
-            'auth/wrong-password':         'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
-            'auth/invalid-credential':     'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
-            'auth/too-many-requests':      'تم تجاوز عدد المحاولات. حاول مجدداً لاحقاً.',
-            'auth/network-request-failed': 'خطأ في الاتصال. تحقق من الإنترنت.',
-            'auth/user-disabled':          'هذا الحساب موقوف.',
-          };
-          const msg = arabicErrors[err.code] || 'حدث خطأ غير متوقع. حاول مجدداً.';
-          const emailErr2 = document.getElementById('lEmailErr');
-          if (emailErr2) emailErr2.textContent = msg;
+          const errEl = document.getElementById('lEmailErr');
+          if (errEl) errEl.textContent = 'حدث خطأ غير متوقع. حاول مجدداً.';
 
         } finally {
           if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-unlock-keyhole"></i> دخول'; }
