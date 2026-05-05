@@ -230,7 +230,7 @@
     .tl-step.live:hover .tl-node { animation-play-state:paused; }
     .tl-label { margin-top:1rem; text-align:center; display:flex; flex-direction:column; align-items:center; gap:.22rem; }
     .tl-title { font-size:clamp(.7rem,1.05vw,.8rem); font-weight:800; color:var(--ink-muted); line-height:1.25; transition:color .35s ease; }
-    .tl-date  { font-size:clamp(.58rem,.82vw,.66rem); color:rgba(122,98,69,.4); font-weight:500; min-height:1em; transition:color .35s ease; }
+    .tl-date  { font-size:clamp(.52rem,.72vw,.6rem); color:rgba(122,98,69,.4); font-weight:500; min-height:1em; transition:color .35s ease; text-align:center; line-height:1.4; }
     .tl-step.done .tl-title { color:var(--olive-500); }
     .tl-step.live .tl-title { color:var(--oak-500); }
     .tl-step.done .tl-date  { color:rgba(62,92,50,.55); }
@@ -540,6 +540,16 @@
       } catch { return '—'; }
     }
 
+    function formatDateTime(ts) {
+      if (!ts) return '—';
+      try {
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        const date = d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+        const time = d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+        return date + ' — ' + time;
+      } catch { return '—'; }
+    }
+
     function mapStatus(status) {
       /* ══════════════════════════════════════════════════════════
          WHAT CHANGED & WHY:
@@ -816,13 +826,14 @@
     /* ── Build step dates ── */
     function buildStepDates(data) {
       const status   = data.status || 'new';
-      const t        = data.reportTime ? formatTime(data.reportTime) : null;
-      const c        = data.closedAt   ? formatTime(data.closedAt)   : null;
+      const src      = data.reportTime || data.LoggedAt || null;
+      const t        = src ? formatDateTime(src) : null;
+      const c        = data.closedAt ? formatDateTime(data.closedAt) : null;
       const isClosed = ['rescued', 'found', 'closed'].includes(status);
       return [
         t,                                                                    /* step 1: report time */
-        ['org','active','rescued','found','closed'].includes(status) ? t : null, /* step 2 */
-        ['active','rescued','found','closed'].includes(status) ? null : null, /* step 3 */
+        ['org','active','rescued','found','closed','Under Review','In Progress'].includes(status) ? t : null, /* step 2 */
+        ['active','rescued','found','closed','In Progress'].includes(status) ? t : null, /* step 3 */
         isClosed ? c : null                                                   /* step 4 */
       ];
     }
