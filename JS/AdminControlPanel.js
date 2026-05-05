@@ -190,8 +190,9 @@ await emailjs.default.send("service_7c6tubl", "template_bb87v3a", {
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
   ]);
 
-  const { doc, getDoc, setDoc, updateDoc, serverTimestamp } = fsMod;
-const { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } = authMod;
+  const { doc, getDoc, updateDoc, serverTimestamp } = fsMod;
+  const { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } = authMod;
+
   const volunteerRef = doc(db, "Volunteer", id);
   const volunteerSnap = await getDoc(volunteerRef);
 
@@ -200,7 +201,6 @@ const { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } = auth
   }
 
   const volunteer = volunteerSnap.data();
-
   const email = volunteer.Email || "";
   const fullName = `${volunteer.FirstName || ""} ${volunteer.LastName || ""}`.trim() || "المتطوع";
 
@@ -208,72 +208,42 @@ const { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } = auth
     throw new Error("لا يوجد إيميل للمتطوع");
   }
 
-  const temporaryPassword = generateTemporaryPassword();
   const auth = getAuth();
 
-  let uid = id;
+  // ── Step 1: Create Firebase Auth account with a random temp password ──
+  // The volunteer will set their real password via the password-reset email.
+  let uid = id; // fallback to Firestore doc id (shouldn't be needed)
 
-try {
-  const userCredential = await createUserWithEmailAndPassword(
-    auth,
-    email,
-    generateTemporaryPassword()
-  );
-
-  uid = userCredential.user.uid;
-
-} catch (error) {
-  if (error.code === "auth/email-already-in-use") {
-    console.log("المستخدم موجود مسبقًا");
-  } else {
-    throw error;
+  try {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      generateTemporaryPassword()   // random temp — volunteer never sees it
+    );
+    uid = userCredential.user.uid;
+  } catch (error) {
+    if (error.code === "auth/email-already-in-use") {
+      // Auth account already exists — still continue to update Volunteer doc
+      console.log("Firebase Auth account already exists for:", email);
+    } else {
+      throw error;
+    }
   }
-}
 
-await setDoc(doc(db, "User", uid), {
-  FirstName: volunteer.FirstName || "",
-  LastName: volunteer.LastName || "",
-  Email: email,
-  email: email,
-  Phone: volunteer.Phone || "",
-
-  Role: "volunteer",
-  role: "volunteer",
-
-  AccountStatus: "active",
-  accountStatus: "valid",
-
-  CreatedAt: serverTimestamp()
-}, { merge: true });
-
-await sendPasswordResetEmail(auth, email);
-
- await setDoc(doc(db, "User", uid), {
-  FirstName: volunteer.FirstName || "",
-  LastName: volunteer.LastName || "",
-  Email: email,
-  email: email,
-  Phone: volunteer.Phone || "",
-  CreatedAt: serverTimestamp(),
-
-  Role: "volunteer",
-  role: "volunteer",
-
-  
-  accountStatus: "approved"
-});
+  // ── Step 2: Update the Volunteer document with the Auth UID and approval ──
+  // No User collection is written — Volunteer is the single source of truth.
   await updateDoc(volunteerRef, {
     ApprovalStatus: "approved",
-    Status: "active",
-    UserID: uid,
-    approvedAt: serverTimestamp()
+    AccountStutes:  "valid",      // keep existing casing in your DB
+    Status:         "active",
+    AuthUID:        uid,          // link Firestore doc → Auth UID
+    approvedAt:     serverTimestamp()
   });
 
- return {
-  email,
-  fullName,
-  password: temporaryPassword
-};
+  // ── Step 3: Send password-reset email so volunteer can set their password ──
+  await sendPasswordResetEmail(auth, email);
+
+  return { email, fullName };
 }
 
 
@@ -511,8 +481,8 @@ try {
   await sendVolunteerEmail({
     type: "accepted",
     name: result.fullName,
-    email: result.email,
-    password: result.password
+    email: result.email
+    // No password — volunteer sets their own via the reset-password link
   });
 
   showToast(`تم قبول ${name} وإرسال الإيميل`);
