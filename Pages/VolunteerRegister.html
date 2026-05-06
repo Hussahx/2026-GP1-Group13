@@ -2687,14 +2687,12 @@ console.log('A-start');
 
 
   try {
-    const [{ db }, fsMod, storageMod] = await Promise.all([
-      import('/JS/firebase.js'),
-      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'),
-      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js')
-    ]);console.log('B-imports-loaded');
+  const [{ db }, fsMod] = await Promise.all([
+    import('/JS/firebase.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+  ]);console.log('B-imports-loaded');
 
-const { collection, addDoc, serverTimestamp, query, where, getDocs } = fsMod;
-    const { getStorage, ref, uploadBytes, getDownloadURL } = storageMod;
+  const { collection, addDoc, serverTimestamp, query, where, getDocs } = fsMod;
 
     const firstName  = document.getElementById('firstName')?.value.trim() || '';
     const lastName   = document.getElementById('lastName')?.value.trim() || '';
@@ -2776,16 +2774,19 @@ let nationalFileURL = '';
 let nationalFileName = '';
 
 if (idFile) {
-  const storage = getStorage();
+  const formData = new FormData();
+  formData.append('file',          idFile);
+  formData.append('upload_preset', 'x1kwhu9q');
+  formData.append('folder',        'volunteer-ids');
 
-  const fileRef = ref(
-    storage,
-    `volunteer-ids/${Date.now()}-${idFile.name}`
+  const cloudRes = await fetch(
+    'https://api.cloudinary.com/v1_1/dtihhz1l4/auto/upload',
+    { method: 'POST', body: formData }
   );
+  if (!cloudRes.ok) throw new Error('فشل رفع صورة الهوية');
+  const cloudData = await cloudRes.json();
 
-  await uploadBytes(fileRef, idFile);
-
-  nationalFileURL = await getDownloadURL(fileRef);
+  nationalFileURL  = cloudData.secure_url;
   nationalFileName = idFile.name;
 }
 
