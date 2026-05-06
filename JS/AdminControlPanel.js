@@ -251,7 +251,7 @@ function render() {
     return `
   <article class="card request-card" data-id="${escapeHtml(r.id)}">
     <div class="req-main" data-toggle="details">
-      <div class="req-avatar" aria-hidden="true">${escapeHtml(initials(r.name))}</div>
+      <div class="req-avatar av-${r.status}" aria-hidden="true">${escapeHtml(r.name.trim().charAt(0))}</div>
       <div class="req-meta">
         <div class="req-title">
           <span>${escapeHtml(r.name)}</span>
@@ -266,13 +266,13 @@ function render() {
       <div class="req-actions">${actionBtns}</div>
     </div>
     <div class="req-details" style="display:none;">
-      <span><strong>المدينة:</strong> ${escapeHtml(r.city)}</span>
-      <span><strong>رقم الهوية:</strong> ${escapeHtml(r.nationalId)}</span>
-      <span><strong>تاريخ الميلاد:</strong> ${escapeHtml(r.dob)}</span>
-      <span><strong>المهارات:</strong> ${escapeHtml(skillsText)}</span>
-      <span><strong>الأيام المتاحة:</strong> ${escapeHtml(daysText)}</span>
-      <span><strong>الفترة:</strong> ${escapeHtml(schedText)}</span>
-      <span><strong>ملف الهوية:</strong> ${fileLink}</span>
+      <span>المدينة: ${escapeHtml(r.city)}</span>
+      <span>رقم الهوية: ${escapeHtml(r.nationalId)}</span>
+      <span>تاريخ الميلاد: ${escapeHtml(r.dob)}</span>
+      <span>المهارات: ${escapeHtml(skillsText)}</span>
+      <span>الأيام المتاحة: ${escapeHtml(daysText)}</span>
+      <span>الفترة: ${escapeHtml(schedText)}</span>
+      <span>ملف الهوية: ${fileLink}</span>
     </div>
   </article>`;
   }).join('');

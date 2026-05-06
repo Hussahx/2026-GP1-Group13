@@ -1287,8 +1287,14 @@
 
     /* ════ خلايا الجدول ════ */
     function missingCell(r, i){
+      var avColors = {
+        pending:  'linear-gradient(135deg,#e07830,#c05820)',
+        accepted: 'linear-gradient(135deg,#3e9a5a,#2d7a44)',
+        rejected: 'linear-gradient(135deg,#c0392b,#962d22)'
+      };
+      var bg = avColors[r.status] || avColors.pending;
       return '<div class="missing-cell">' +
-        '<div class="miss-av" style="background:'+AVC[i%AVC.length]+'">'+r.missingName.charAt(0)+'</div>' +
+        '<div class="miss-av" style="background:'+bg+'">'+r.missingName.charAt(0)+'</div>' +
         '<div>' +
           '<div class="miss-name">'+r.missingName+'</div>' +
           '<div class="miss-id">'+r.id+'</div>' +
