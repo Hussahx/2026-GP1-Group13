@@ -256,12 +256,13 @@
       background: rgba(255,255,255,.70);
       border: 1px dashed rgba(166,124,82,0.32);
       border-radius: var(--radius-card);
-      padding: 1.2rem 1.25rem;
-      color: var(--ink-muted);
-      font-weight: 800;
+      padding: 56px 24px;
       text-align:center;
       animation: fadeUp .7s var(--ease-out) both;
     }
+    .empty-icon  { font-size: 40px; margin-bottom: 12px; color: #c4a882; }
+    .empty-title { font-size: 15px; font-weight: 800; color: var(--t700,#5a3e20); margin-bottom: 5px; }
+    .empty-sub   { font-size: 13px; color: var(--t300,#b89870); }
 
     .modal-backdrop{
       position:fixed;
@@ -617,7 +618,11 @@
 
     <section>
       <div id="list" class="admin-grid" aria-live="polite"></div>
-      <div id="empty" class="empty-state" style="display:none;">لا توجد طلبات تطابق التصفية الحالية.</div>
+      <div id="empty" class="empty-state" style="display:none;">
+        <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+        <div class="empty-title">لا توجد طلبات</div>
+        <div class="empty-sub">لا يوجد طلبات معلّقة حالياً.</div>
+      </div>
       <div id="pgWrap" class="pg-wrap" style="display:none;"></div>
     </section>
 
