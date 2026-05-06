@@ -1,540 +1,467 @@
-const API = {};
+/* ════════════════════════════════════════════════════
+   AdminControlPanel.js — طلبات تسجيل المتطوعين
+   Tabs: الكل | معلّقة | مقبول | مرفوض
+   Pagination + Control.html-style modal
+════════════════════════════════════════════════════ */
 
-    const STORAGE_KEY = "admin_pending_requests_v1";
-    let requests = [];
-    let filtered = [];
-  let pendingAction = null;
-    const $ = (sel) => document.querySelector(sel);
+const $ = (sel) => document.querySelector(sel);
 
-    function formatDateTime(dt = new Date()){
-      const pad = (n) => String(n).padStart(2,"0");
-      return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-    }
+let requests    = [];
+let TAB         = 'all';
+let SRCH        = '';
+let SORT        = 'newest';
+let currentPage = 1;
+const PER_PAGE  = 10;
+let pendingAction = null;
 
-    function initials(name="؟"){
-      const parts = String(name).trim().split(/\s+/).filter(Boolean);
-      const a = parts[0]?.[0] ?? "؟";
-      const b = parts[1]?.[0] ?? "";
-      return (a + b).toUpperCase();
-    }
-
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    function showToast(msg){
-      const box = $("#toastBox");
-      $("#toastText").textContent = msg;
-      box.style.display = "inline-flex";
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(()=>{ box.style.display = "none"; }, 2200);
-    }
-
-    function updateHeader(){
-      $("#pendingCount").textContent = String(filtered.length);
-      $("#lastUpdated").textContent = formatDateTime(new Date());
-    }
-
-    function saveLocal(){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
-    }
-
-    function loadLocal(){
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw){
-        try { return JSON.parse(raw) || []; } catch { return []; }
-      }
-      return [];
-    }
-
-    function seedIfEmpty(){
-      const existing = loadLocal();
-      if(existing.length) return existing;
-
-      const demo = [
-        { id: crypto.randomUUID(), name:"سارة أحمد", email:"sara@example.com", phone:"+9665xxxxxxx", createdAt: Date.now() - 1000*60*25 },
-        { id: crypto.randomUUID(), name:"محمد علي", email:"mohammad@example.com", phone:"+9665xxxxxxx", createdAt: Date.now() - 1000*60*80 },
-        { id: crypto.randomUUID(), name:"نور فيصل", email:"noor@example.com", phone:"+9665xxxxxxx", createdAt: Date.now() - 1000*60*180 },
-      ];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
-      return demo;
-    }
-
-
-
-
-    function normalizeTimestamp(ts) {
+/* ── Helpers ── */
+function formatDateTime(dt = new Date()) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+function initials(name = '؟') {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? '؟') + (parts[1]?.[0] ?? '')).toUpperCase();
+}
+function escapeHtml(s) {
+  return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+}
+function showToast(msg) {
+  const box = $('#toastBox');
+  $('#toastText').textContent = msg;
+  box.style.display = 'inline-flex';
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => { box.style.display = 'none'; }, 2600);
+}
+function normalizeTimestamp(ts) {
   if (!ts) return Date.now();
-  if (typeof ts === "number") return ts;
-  if (typeof ts.toDate === "function") return ts.toDate().getTime();
+  if (typeof ts === 'number') return ts;
+  if (typeof ts.toDate === 'function') return ts.toDate().getTime();
   return Date.now();
 }
-
 function generateTemporaryPassword(length = 12) {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
-  let password = "";
-
-  for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-
-  return password;
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+  let pw = '';
+  for (let i = 0; i < length; i++) pw += chars.charAt(Math.floor(Math.random() * chars.length));
+  return pw;
 }
 
-async function sendVolunteerEmail({ type, name, email, password = "", reason = "" }) {
-  const emailjs = await import('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm');
-
- const websiteLink = "https://database-b28a1.web.app";
-
-const isAccepted = type === "accepted";
-
-const subject = isAccepted
-  ? "تهانينا بانضمامك إلى منصة راصد"
-  : "نتيجة طلب الانضمام إلى منصة راصد";
-
-const main_message = isAccepted
-  ? `
-
-يسعدنا إبلاغك بأنه تم قبول طلب انضمامك كمتطوع في منصة راصد.
-
-نرحب بك ضمن فريقنا، ونتطلع إلى مساهمتك معنا في دعم جهود البحث والإنقاذ، وإحداث أثر إيجابي في المجتمع.`
-  : `
-
-نشكر لك اهتمامك بالانضمام إلى منصة راصد.
-
-نأسف لإبلاغك بأنه تعذر قبول طلبك في الوقت الحالي، وذلك بعد مراجعة البيانات المقدمة.`;
-
-const details = isAccepted
-  ? `بيانات الدخول:
-
-البريد الإلكتروني: ${email}
-
-لإعداد كلمة المرور الخاصة بك، يرجى استخدام الرابط المرسل إلى بريدك الإلكتروني.
-
-(قد يظهر لك خيار "إعادة تعيين كلمة المرور"، وهو نفس الإجراء المستخدم لإنشاء كلمة المرور لأول مرة).`
-  : `سبب الرفض:
-${reason}`;
-
-const closing_message = isAccepted
-  ? `للدخول إلى المنصة:
-${websiteLink}
-
-نسعد بانضمامك إلينا.`
-  : `نتمنى لك التوفيق مستقبلًا.`;
-
-emailjs.default.init('EY2NhkcwxrvArGrdR');
-
-await emailjs.default.send("service_7c6tubl", "template_bb87v3a", {
-  to_email: email,
-  subject,
-  name,
-  main_message,
-  details,
-  closing_message
-});
+/* ── Status mapping ── */
+function mapStatus(raw) {
+  const m = {
+    'pending':  'pending',
+    'approved': 'accepted',
+    'accepted': 'accepted',
+    'rejected': 'rejected',
+    'valid':    'accepted',
+  };
+  return m[(raw||'').toLowerCase()] || 'pending';
+}
+function statusLabel(s) {
+  return { pending:'معلّق', accepted:'مقبول', rejected:'مرفوض' }[s] || s;
+}
+function statusClass(s) {
+  return { pending:'tag-pend', accepted:'tag-acc', rejected:'tag-rej' }[s] || '';
 }
 
-
-
-
-
-    async function fetchPendingRequests() {
+/* ── Firestore ── */
+async function fetchAllRequests() {
   const [{ db }, fsMod] = await Promise.all([
     import('/JS/firebase.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
   ]);
-
-  const { collection, query, where, getDocs } = fsMod;
-
-  const q = query(
-    collection(db, "Volunteer"),
-    where("ApprovalStatus", "==", "pending")
-  );
-
-  const volunteerSnap = await getDocs(q);
-
-  const rows = volunteerSnap.docs.map((vDoc) => {
-    const volunteer = vDoc.data();
-
-    const fullName = `${volunteer.FirstName || ""} ${volunteer.LastName || ""}`.trim();
-
+  const { collection, getDocs } = fsMod;
+  const snap = await getDocs(collection(db, 'Volunteer'));
+  return snap.docs.map(vDoc => {
+    const d = vDoc.data();
+    const fullName = `${d.FirstName||''} ${d.LastName||''}`.trim();
+    const rawStatus = d.ApprovalStatus || d.approvalStatus || 'pending';
     return {
-      id: vDoc.id,
-      name: fullName || "بدون اسم",
-      email: volunteer.Email || "—",
-      phone: volunteer.Phone || "—",
-      city: volunteer.City || "—",
-      nationalId: volunteer.NationalID || "—",
-      dob: volunteer.DOB || "—",
-      skills: Array.isArray(volunteer.Skills) ? volunteer.Skills : [],
-      availableDays: Array.isArray(volunteer.AvailableDays) ? volunteer.AvailableDays : [],
-      availablePeriod: volunteer.AvailablePeriods || "—",
-      availableSchedule: volunteer.AvailableSchedule || {},
-      nationalFile: volunteer.NationalFile || "",
-      createdAt: normalizeTimestamp(volunteer.JoinDate)
+      id:        vDoc.id,
+      name:      fullName || 'بدون اسم',
+      email:     d.Email || '—',
+      phone:     d.Phone || '—',
+      city:      d.City  || '—',
+      nationalId: d.NationalID || '—',
+      dob:       d.DOB   || '—',
+      skills:    Array.isArray(d.Skills) ? d.Skills : [],
+      availableDays: Array.isArray(d.AvailableDays) ? d.AvailableDays : [],
+      availableSchedule: d.AvailableSchedule || {},
+      nationalFile: d.NationalFile || '',
+      status:    mapStatus(rawStatus),
+      rawStatus,
+      createdAt: normalizeTimestamp(d.JoinDate),
     };
   });
-
-  return rows.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 }
 
-
-   async function acceptRequest(id) {
+async function acceptRequest(id) {
   const [{ db }, fsMod, authMod] = await Promise.all([
     import('/JS/firebase.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
   ]);
-
   const { doc, getDoc, updateDoc, serverTimestamp } = fsMod;
   const { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } = authMod;
 
-  const volunteerRef = doc(db, "Volunteer", id);
-  const volunteerSnap = await getDoc(volunteerRef);
+  const volRef  = doc(db, 'Volunteer', id);
+  const volSnap = await getDoc(volRef);
+  if (!volSnap.exists()) throw new Error('الطلب غير موجود');
 
-  if (!volunteerSnap.exists()) {
-    throw new Error("الطلب غير موجود");
-  }
-
-  const volunteer = volunteerSnap.data();
-  const email = volunteer.Email || "";
-  const fullName = `${volunteer.FirstName || ""} ${volunteer.LastName || ""}`.trim() || "المتطوع";
-
-  if (!email) {
-    throw new Error("لا يوجد إيميل للمتطوع");
-  }
+  const volunteer = volSnap.data();
+  const email     = volunteer.Email || '';
+  const fullName  = `${volunteer.FirstName||''} ${volunteer.LastName||''}`.trim() || 'المتطوع';
+  if (!email) throw new Error('لا يوجد إيميل للمتطوع');
 
   const auth = getAuth();
-
-  // ── Step 1: Create Firebase Auth account with a random temp password ──
-  // The volunteer will set their real password via the password-reset email.
-  let uid = id; // fallback to Firestore doc id (shouldn't be needed)
-
+  let uid = id;
   try {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      generateTemporaryPassword()   // random temp — volunteer never sees it
-    );
-    uid = userCredential.user.uid;
-  } catch (error) {
-    if (error.code === "auth/email-already-in-use") {
-      // Auth account already exists — still continue to update Volunteer doc
-      console.log("Firebase Auth account already exists for:", email);
-    } else {
-      throw error;
-    }
+    const cred = await createUserWithEmailAndPassword(auth, email, generateTemporaryPassword());
+    uid = cred.user.uid;
+  } catch (err) {
+    if (err.code !== 'auth/email-already-in-use') throw err;
   }
 
-  // ── Step 2: Update the Volunteer document with the Auth UID and approval ──
-  // No User collection is written — Volunteer is the single source of truth.
-  await updateDoc(volunteerRef, {
-    ApprovalStatus: "approved",
-    AccountStutes:  "valid",      // keep existing casing in your DB
-    Status:         "active",
-    AuthUID:        uid,          // link Firestore doc → Auth UID
+  await updateDoc(volRef, {
+    ApprovalStatus: 'approved',
+    AccountStutes:  'valid',
+    Status:         'active',
+    AuthUID:        uid,
+    role:           'volunteer',
     approvedAt:     serverTimestamp()
   });
 
-  // ── Step 3: Send password-reset email so volunteer can set their password ──
   await sendPasswordResetEmail(auth, email);
-
   return { email, fullName };
 }
 
-
-  async function rejectRequest(id, reason) {
+async function rejectRequest(id, reason) {
   const [{ db }, fsMod] = await Promise.all([
     import('/JS/firebase.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
   ]);
-
   const { doc, getDoc, updateDoc, serverTimestamp } = fsMod;
-
-  const volunteerRef = doc(db, "Volunteer", id);
-  const volunteerSnap = await getDoc(volunteerRef);
-
-  if (!volunteerSnap.exists()) {
-    throw new Error("الطلب غير موجود");
-  }
-
-  const volunteer = volunteerSnap.data();
-
-  const email = volunteer.Email || "";
-  const fullName = `${volunteer.FirstName || ""} ${volunteer.LastName || ""}`.trim() || "المتطوع";
-
-  await updateDoc(volunteerRef, {
-    ApprovalStatus: "rejected",
-    Status: "rejected",
-    RejectionReason: reason || "",
-    rejectedAt: serverTimestamp()
+  const volRef  = doc(db, 'Volunteer', id);
+  const volSnap = await getDoc(volRef);
+  if (!volSnap.exists()) throw new Error('الطلب غير موجود');
+  const d = volSnap.data();
+  await updateDoc(volRef, {
+    ApprovalStatus:  'rejected',
+    Status:          'rejected',
+    RejectionReason: reason || '',
+    rejectedAt:      serverTimestamp()
   });
-
-  return {
-    email,
-    fullName,
-    reason
-  };
+  return { email: d.Email||'', fullName: `${d.FirstName||''} ${d.LastName||''}`.trim()||'المتطوع', reason };
 }
 
+async function sendVolunteerEmail({ type, name, email, reason = '' }) {
+  const emailjs = await import('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm');
+  const isAccepted = type === 'accepted';
+  emailjs.default.init('EY2NhkcwxrvArGrdR');
+  await emailjs.default.send('service_7c6tubl', 'template_bb87v3a', {
+    to_email: email,
+    subject:  isAccepted ? 'تهانينا بانضمامك إلى منصة راصد' : 'نتيجة طلب الانضمام إلى منصة راصد',
+    name,
+    main_message: isAccepted
+      ? 'يسعدنا إبلاغك بأنه تم قبول طلب انضمامك كمتطوع في منصة راصد.'
+      : 'نأسف لإبلاغك بأنه تعذر قبول طلبك في الوقت الحالي.',
+    details: isAccepted
+      ? `البريد الإلكتروني: ${email}\nيرجى استخدام رابط إعادة تعيين كلمة المرور المرسل إلى بريدك.`
+      : `سبب الرفض:\n${reason}`,
+    closing_message: isAccepted ? 'نسعد بانضمامك إلينا.' : 'نتمنى لك التوفيق مستقبلًا.'
+  });
+}
+
+/* ── Filter + sort ── */
+function getFiltered() {
+  let list = [...requests];
+  if (TAB !== 'all') list = list.filter(r => r.status === TAB);
+  if (SRCH) {
+    const q = SRCH.toLowerCase();
+    list = list.filter(r =>
+      `${r.name} ${r.email} ${r.phone}`.toLowerCase().includes(q)
+    );
+  }
+  list.sort((a, b) => SORT === 'oldest'
+    ? (a.createdAt||0) - (b.createdAt||0)
+    : (b.createdAt||0) - (a.createdAt||0)
+  );
+  return list;
+}
+
+/* ── Render ── */
+function updateCounters() {
+  const all  = requests.length;
+  const pend = requests.filter(r => r.status === 'pending').length;
+  const acc  = requests.filter(r => r.status === 'accepted').length;
+  const rej  = requests.filter(r => r.status === 'rejected').length;
+  const tcAll = $('#tcAll');       if (tcAll) tcAll.textContent = String(all);
+  const tcP   = $('#tcPending');   if (tcP)   tcP.textContent   = String(pend);
+  const tcA   = $('#tcAccepted'); if (tcA)   tcA.textContent   = String(acc);
+  const tcR   = $('#tcRejected'); if (tcR)   tcR.textContent   = String(rej);
+  $('#lastUpdated').textContent = formatDateTime(new Date());
+}
 
 function render() {
-  const list = $("#list");
-  list.innerHTML = "";
+  const list  = getFiltered();
+  const total = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  if (currentPage > totalPages) currentPage = totalPages;
 
-  if (filtered.length === 0) {
-    $("#empty").style.display = "block";
-  } else {
-    $("#empty").style.display = "none";
+  const start    = (currentPage - 1) * PER_PAGE;
+  const pageList = list.slice(start, start + PER_PAGE);
+
+  const listEl  = $('#list');
+  const emptyEl = $('#empty');
+  const pgWrap  = $('#pgWrap');
+
+  updateCounters();
+
+  if (!pageList.length) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    if (pgWrap) pgWrap.style.display = 'none';
+    return;
   }
+  emptyEl.style.display = 'none';
 
-  for (const r of filtered) {
-    const created = new Date(r.createdAt || Date.now());
-    const skillsText = r.skills.length ? r.skills.join("، ") : "—";
-    const daysText = r.availableDays.length ? r.availableDays.join("، ") : "—";
-
- const scheduleText = Object.keys(r.availableSchedule || {}).length
-  ? Object.entries(r.availableSchedule)
-      .map(([day, time]) => `${day}: ${time}`)
-      .join(" | ")
-  : "—";
+  listEl.innerHTML = pageList.map(r => {
+    const created    = new Date(r.createdAt || Date.now());
+    const skillsText = r.skills.length ? r.skills.join('، ') : '—';
+    const daysText   = r.availableDays.length ? r.availableDays.join('، ') : '—';
+    const schedText  = Object.keys(r.availableSchedule||{}).length
+      ? Object.entries(r.availableSchedule).map(([d,t]) => `${d}: ${t}`).join(' | ')
+      : '—';
     const fileLink = r.nationalFile
-      ? `<a href="${escapeHtml(r.nationalFile)}" target="_blank" rel="noopener noreferrer">عرض الملف</a>`
-      : "—";
+      ? `<a href="${escapeHtml(r.nationalFile)}" target="_blank" rel="noopener">عرض الملف</a>`
+      : '—';
 
-   const html = `
+    // Action buttons — show accept/reject only for pending
+    let actionBtns = '';
+    if (r.status === 'pending') {
+      actionBtns = `
+        <button class="btn" type="button" data-action="accept">
+          <i class="fa-solid fa-check"></i><span class="btn-label">قبول</span>
+        </button>
+        <button class="btn danger" type="button" data-action="reject">
+          <i class="fa-solid fa-xmark"></i><span class="btn-label">رفض</span>
+        </button>`;
+    }
+
+    return `
   <article class="card request-card" data-id="${escapeHtml(r.id)}">
-
     <div class="req-main" data-toggle="details">
       <div class="req-avatar" aria-hidden="true">${escapeHtml(initials(r.name))}</div>
-
       <div class="req-meta">
         <div class="req-title">
-          <span>${escapeHtml(r.name || "بدون اسم")}</span>
-          <span class="tag"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> معلّق</span>
-          <span class="tag"><i class="fa-regular fa-calendar" aria-hidden="true"></i>${escapeHtml(formatDateTime(created))}</span>
+          <span>${escapeHtml(r.name)}</span>
+          <span class="tag ${statusClass(r.status)}">${statusLabel(r.status)}</span>
+          <span class="tag"><i class="fa-regular fa-calendar"></i>${escapeHtml(formatDateTime(created))}</span>
         </div>
-
         <div class="req-sub">
-          <span><i class="fa-regular fa-envelope" aria-hidden="true"></i> ${escapeHtml(r.email || "—")}</span>
-          <span><i class="fa-solid fa-phone" aria-hidden="true"></i> ${escapeHtml(r.phone || "—")}</span>
+          <span><i class="fa-regular fa-envelope"></i> ${escapeHtml(r.email)}</span>
+          <span><i class="fa-solid fa-phone"></i> ${escapeHtml(r.phone)}</span>
         </div>
       </div>
-
-      <div class="req-actions">
-        <button class="btn" type="button" data-action="accept" title="قبول الطلب">
-          <i class="fa-solid fa-check" aria-hidden="true"></i>
-          <span class="btn-label">قبول</span>
-        </button>
-
-        <button class="btn danger" type="button" data-action="reject" title="رفض الطلب">
-  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-  <span class="btn-label">رفض</span>
-</button>
-      </div>
+      <div class="req-actions">${actionBtns}</div>
     </div>
-
-    <div class="req-details" style="display:${r.isOpen ? 'grid' : 'none'};">
+    <div class="req-details" style="display:none;">
       <span><strong>المدينة:</strong> ${escapeHtml(r.city)}</span>
       <span><strong>رقم الهوية:</strong> ${escapeHtml(r.nationalId)}</span>
       <span><strong>تاريخ الميلاد:</strong> ${escapeHtml(r.dob)}</span>
       <span><strong>المهارات:</strong> ${escapeHtml(skillsText)}</span>
       <span><strong>الأيام المتاحة:</strong> ${escapeHtml(daysText)}</span>
-<span><strong>الفترة:</strong> ${escapeHtml(scheduleText)}</span>
+      <span><strong>الفترة:</strong> ${escapeHtml(schedText)}</span>
       <span><strong>ملف الهوية:</strong> ${fileLink}</span>
     </div>
+  </article>`;
+  }).join('');
 
-  </article>
-`;
-    list.insertAdjacentHTML("beforeend", html);
-  }
+  // Pagination
+  if (!pgWrap) return;
+  if (totalPages <= 1) { pgWrap.style.display = 'none'; return; }
+  pgWrap.style.display = 'flex';
 
-  updateHeader();
-}
-    function applyFilter(){
-      const q = $("#searchInput").value.trim().toLowerCase();
-      if(!q){
-        filtered = [...requests].sort((a,b)=> (b.createdAt||0)-(a.createdAt||0));
-      }else{
-        filtered = requests.filter(r => {
-          const hay = `${r.name||""} ${r.email||""} ${r.phone||""}`.toLowerCase();
-          return hay.includes(q);
-        }).sort((a,b)=> (b.createdAt||0)-(a.createdAt||0));
-      }
-      render();
+  let pgHtml = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>&#8249;</button>`;
+
+  const pages = [];
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || (p >= currentPage-2 && p <= currentPage+2)) {
+      pages.push(p);
+    } else if (pages[pages.length-1] !== '…') {
+      pages.push('…');
     }
+  }
+  pages.forEach(p => {
+    if (p === '…') {
+      pgHtml += '<span class="pg-info">…</span>';
+    } else {
+      pgHtml += `<button class="pg-btn${p===currentPage?' active':''}" onclick="goPage(${p})">${p}</button>`;
+    }
+  });
+  pgHtml += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>&#8250;</button>`;
+  pgHtml += `<span class="pg-info">${currentPage} / ${totalPages}</span>`;
+  pgWrap.innerHTML = pgHtml;
+}
 
-    function openDecisionModal(type, id) {
+function goPage(p) {
+  const total = Math.max(1, Math.ceil(getFiltered().length / PER_PAGE));
+  if (p < 1 || p > total) return;
+  currentPage = p;
+  render();
+  listEl && listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Tab switch ── */
+function switchTab(btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  btn.classList.add('on');
+  TAB = btn.dataset.tab;
+  currentPage = 1;
+  render();
+}
+
+/* ── Modal (Control.html style) ── */
+function openDecisionModal(type, id) {
   const r = requests.find(x => x.id === id);
   if (!r) return;
+  pendingAction = { type, id, name: r.name, email: r.email };
 
-  pendingAction = {
-    type,
-    id,
-    name: r.name,
-    email: r.email
-  };
+  const icon  = $('#mIcon');
+  const title = $('#mTitle');
+  const sub   = $('#mSub');
+  const det   = $('#mDetails');
+  const btn   = $('#confirmActionBtn');
+  const rjWrap = $('#rejectReasonWrap');
+  if ($('#rejectReason')) $('#rejectReason').value = '';
 
-  $("#modalTitle").textContent = type === "accept" ? "تأكيد القبول" : "تأكيد الرفض";
-  $("#modalSubtitle").textContent =
-    type === "accept"
-      ? `هل أنت متأكد من قبول ${r.name}؟`
-      : `هل أنت متأكد من رفض ${r.name}؟`;
-
-  $("#confirmActionLabel").textContent =
-    type === "accept" ? "تأكيد القبول" : "تأكيد الرفض";
-
-  $("#rejectReason").value = "";
-  $("#rejectReasonWrap").style.display = type === "reject" ? "grid" : "none";
-
-  $("#modalBackdrop").style.display = "flex";
-  $("#modalBackdrop").setAttribute("aria-hidden", "false");
-
-  if (type === "reject") {
-    $("#rejectReason").focus();
+  if (type === 'accept') {
+    icon.className   = 'mhead-icon mhi-acc';
+    icon.innerHTML   = '<i class="fas fa-circle-check"></i>';
+    title.textContent = 'قبول الطلب';
+    sub.textContent  = `هل تريد قبول ${r.name}؟ سيتم إنشاء حساب وإرسال إيميل إليه.`;
+    btn.className    = 'mbtn mbtn-acc';
+    btn.textContent  = 'تأكيد القبول';
+    if (rjWrap) rjWrap.style.display = 'none';
   } else {
-    $("#confirmActionBtn").focus();
+    icon.className   = 'mhead-icon mhi-rej';
+    icon.innerHTML   = '<i class="fas fa-circle-xmark"></i>';
+    title.textContent = 'رفض الطلب';
+    sub.textContent  = `هل تريد رفض ${r.name}؟`;
+    btn.className    = 'mbtn mbtn-rej';
+    btn.textContent  = 'تأكيد الرفض';
+    if (rjWrap) rjWrap.style.display = 'block';
   }
+
+  if (det) det.innerHTML = di('الاسم', r.name) + di('البريد الإلكتروني', r.email) + di('الهاتف', r.phone);
+  btn.onclick = () => execAction();
+  $('#confirmOvr').classList.add('on');
 }
 
-function closeDecisionModal() {
+function closeConfirmModal() {
   pendingAction = null;
-  $("#rejectReason").value = "";
-  $("#modalBackdrop").style.display = "none";
-  $("#modalBackdrop").setAttribute("aria-hidden", "true");
+  $('#confirmOvr').classList.remove('on');
 }
 
-    $("#searchInput").addEventListener("input", applyFilter);
-
-    $("#refreshBtn").addEventListener("click", async ()=>{
-      await reload();
-      showToast("تم التحديث");
-    });
-
- $("#list").addEventListener("click", async (e) => {
-  const btn = e.target.closest("button[data-action]");
-  const card = e.target.closest("[data-id]");
-  const id = card?.getAttribute("data-id");
-  if (!id) return;
-
-  if (btn) {
-    const action = btn.getAttribute("data-action");
-
-    if (action === "accept") {
-  openDecisionModal("accept", id);
-  return;
-}
-
-if (action === "reject") {
-  openDecisionModal("reject", id);
-  return;
-}
-  }
-
-  const toggleArea = e.target.closest('[data-toggle="details"]');
-  if (toggleArea) {
-    requests = requests.map((r) =>
-      r.id === id ? { ...r, isOpen: !r.isOpen } : r
-    );
-    applyFilter();
-  }
-});
-
-   $("#closeModalBtn").addEventListener("click", closeDecisionModal);
-$("#cancelRejectBtn").addEventListener("click", closeDecisionModal);
-
-$("#modalBackdrop").addEventListener("click", (e) => {
-  if (e.target === $("#modalBackdrop")) closeDecisionModal();
-});
-
-$("#confirmActionBtn").addEventListener("click", async () => {
+async function execAction() {
   if (!pendingAction) return;
-
   const { type, id, name } = pendingAction;
-  const reason = $("#rejectReason").value.trim();
-  const confirmBtn = $("#confirmActionBtn");
+  const reason = ($('#rejectReason') || {}).value?.trim() || '';
+  const btn    = $('#confirmActionBtn');
 
-  if (type === "reject" && !reason) {
-    showToast("اكتب سبب الرفض أولًا");
-    $("#rejectReason").focus();
+  if (type === 'reject' && !reason) {
+    showToast('اكتب سبب الرفض أولًا');
+    $('#rejectReason')?.focus();
     return;
   }
 
-  confirmBtn.disabled = true;
-  confirmBtn.classList.add("loading");
-
+  btn.disabled = true;
   try {
-    if (type === "accept") {const result = await acceptRequest(id);
-
-try {
-  await sendVolunteerEmail({
-    type: "accepted",
-    name: result.fullName,
-    email: result.email
-    // No password — volunteer sets their own via the reset-password link
-  });
-
-  showToast(`تم قبول ${name} وإرسال الإيميل`);
-} catch (emailErr) {
-  console.error("Accept email error:", emailErr);
-  showToast(`تم قبول ${name} لكن فشل إرسال الإيميل`);
-}
-
-closeDecisionModal();
-await reload(false);
+    if (type === 'accept') {
+      const result = await acceptRequest(id);
+      try {
+        await sendVolunteerEmail({ type: 'accepted', name: result.fullName, email: result.email });
+        showToast(`✓ تم قبول ${name} وإرسال الإيميل`);
+      } catch {
+        showToast(`✓ تم قبول ${name} (فشل إرسال الإيميل)`);
+      }
+    } else {
+      const result = await rejectRequest(id, reason);
+      try {
+        await sendVolunteerEmail({ type: 'rejected', name: result.fullName, email: result.email, reason });
+        showToast(`✗ تم رفض ${name} وإرسال الإيميل`);
+      } catch {
+        showToast(`✗ تم رفض ${name} (فشل إرسال الإيميل)`);
+      }
     }
-
-    if (type === "reject") {const result = await rejectRequest(id, reason);
-
-try {
-  await sendVolunteerEmail({
-    type: "rejected",
-    name: result.fullName,
-    email: result.email,
-    reason: result.reason
-  });
-
-  showToast(`تم رفض ${name} وإرسال الإيميل`);
-} catch (emailErr) {
-  console.error("Reject email error:", emailErr);
-  showToast(`تم رفض ${name} لكن فشل إرسال الإيميل`);
-}
-
-closeDecisionModal();
-await reload(false);
-    }
+    closeConfirmModal();
+    await reload(false);
   } catch (err) {
     console.error(err);
-    showToast("حدث خطأ أثناء تنفيذ العملية");
+    showToast('حدث خطأ أثناء تنفيذ العملية');
   } finally {
-    confirmBtn.disabled = false;
-    confirmBtn.classList.remove("loading");
+    btn.disabled = false;
+  }
+}
+
+function di(l, v) {
+  return `<div class="di"><div class="dl">${escapeHtml(l)}</div><div class="dv">${escapeHtml(v)}</div></div>`;
+}
+
+/* ── Event listeners ── */
+$('#searchInput').addEventListener('input', function () {
+  SRCH = this.value.trim();
+  currentPage = 1;
+  render();
+});
+
+const srtEl = $('#srtSelect');
+if (srtEl) srtEl.addEventListener('change', function () {
+  SORT = this.value;
+  currentPage = 1;
+  render();
+});
+
+$('#refreshBtn').addEventListener('click', async () => {
+  await reload();
+  showToast('تم التحديث');
+});
+
+$('#list').addEventListener('click', async e => {
+  const btn  = e.target.closest('button[data-action]');
+  const card = e.target.closest('[data-id]');
+  const id   = card?.getAttribute('data-id');
+  if (!id) return;
+
+  if (btn) {
+    const action = btn.getAttribute('data-action');
+    openDecisionModal(action, id);
+    return;
+  }
+
+  const toggle = e.target.closest('[data-toggle="details"]');
+  if (toggle) {
+    const det = card.querySelector('.req-details');
+    if (det) det.style.display = det.style.display === 'none' ? 'grid' : 'none';
   }
 });
 
-    document.addEventListener("keydown", (e)=>{
-      if(e.key === "Escape" && $("#modalBackdrop").style.display === "flex"){
-        closeDecisionModal();
-      }
-    });
+$('#confirmOvr')?.addEventListener('click', e => { if (e.target === $('#confirmOvr')) closeConfirmModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirmModal(); });
 
-    async function reload(showLoadingToast = false){
-      try{
-        if(showLoadingToast) showToast("جاري التحميل...");
-        requests = await fetchPendingRequests();
-        applyFilter();
-      }catch(err){
-        console.error(err);
-        requests = [];
-        filtered = [];
-        render();
-        showToast("تعذر تحميل الطلبات");
-      }
-    }
+/* ── Load ── */
+async function reload(showMsg = true) {
+  try {
+    if (showMsg) showToast('جاري التحميل...');
+    requests = await fetchAllRequests();
+    currentPage = 1;
+    render();
+  } catch (err) {
+    console.error(err);
+    requests = [];
+    render();
+    showToast('تعذر تحميل الطلبات');
+  }
+}
 
-    reload(true);
+reload(true);

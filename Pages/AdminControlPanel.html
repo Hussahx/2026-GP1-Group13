@@ -384,6 +384,69 @@
       .req-actions{ justify-content:stretch; }
       .req-actions .btn{ width:100%; justify-content:center; }
     }
+  
+    /* ══ Modal (Control.html style) ══ */
+    .aoverlay{position:fixed!important;inset:0!important;background:rgba(42,31,18,.52)!important;backdrop-filter:blur(6px);z-index:99990!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:1.25rem!important;opacity:0;pointer-events:none;transition:opacity .25s ease;}
+    .aoverlay.on{opacity:1;pointer-events:all;}
+    .amodal{background:rgba(255,250,242,.96);border:1px solid rgba(166,124,82,.20);border-radius:18px;width:min(520px,100%);box-shadow:0 24px 70px rgba(42,31,18,.25);overflow:hidden;transform:translateY(14px);opacity:0;transition:transform .22s ease-out,opacity .22s ease-out;}
+    .aoverlay.on .amodal{transform:translateY(0);opacity:1;}
+    .mhead{display:flex;align-items:center;gap:.75rem;padding:1rem 1.1rem;border-bottom:1px solid rgba(166,124,82,.14);background:linear-gradient(135deg,rgba(194,164,119,.16),rgba(139,107,71,.10));}
+    .mhead-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;box-shadow:0 10px 24px rgba(139,107,71,.22);color:#fff;}
+    .mhi-acc{background:linear-gradient(135deg,#3e9a5a,#2d7a44);}
+    .mhi-rej{background:linear-gradient(135deg,#c0392b,#962d22);}
+    .mhead-title{font-size:1.1rem;font-weight:900;color:#3E2F1C;margin:0;}
+    .mhead-sub{font-size:.82rem;color:#7A6245;margin-top:3px;line-height:1.55;}
+    .mclose{margin-right:auto;width:44px;height:44px;border-radius:12px;border:1px solid rgba(166,124,82,.18);background:rgba(255,255,255,.55);color:#3E2F1C;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:background .22s,transform .18s;font-family:'Tajawal',sans-serif;}
+    .mclose:hover{background:rgba(166,124,82,.10);transform:translateY(-1px);}
+    .mbody{padding:1.1rem;max-height:55vh;overflow-y:auto;}
+    .mbody::-webkit-scrollbar{width:5px;}
+    .mbody::-webkit-scrollbar-thumb{background:rgba(166,124,82,.35);border-radius:4px;}
+    .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+    .di{background:rgba(245,239,230,.75);border:1px solid rgba(166,124,82,.12);border-radius:10px;padding:10px 12px;}
+    .dl{font-size:.72rem;font-weight:700;letter-spacing:.5px;color:#8B6B47;margin-bottom:3px;text-transform:uppercase;}
+    .dv{font-size:.92rem;font-weight:700;color:#3E2F1C;}
+    .mfoot{display:flex;gap:.65rem;padding:1rem 1.1rem;border-top:1px solid rgba(166,124,82,.12);background:rgba(245,239,230,.5);justify-content:flex-end;}
+    .mbtn{padding:.7rem 1.4rem;border-radius:12px;border:none;font-family:'Tajawal',sans-serif;font-size:.95rem;font-weight:800;cursor:pointer;transition:all .2s;}
+    .mbtn-cancel{background:rgba(245,239,230,.9);color:#5C4530;border:1.5px solid rgba(166,124,82,.25);}
+    .mbtn-acc{background:linear-gradient(135deg,#3e9a5a,#2d7a44);color:#fff;}
+    .mbtn-rej{background:linear-gradient(135deg,#c0392b,#962d22);color:#fff;}
+    .mtextarea{width:100%;min-height:80px;padding:.75rem;border:1.5px solid rgba(166,124,82,.25);border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.9rem;resize:vertical;direction:rtl;background:rgba(255,255,255,.8);color:#3E2F1C;outline:none;margin-top:8px;}
+    .mtextarea:focus{border-color:#8B6B47;}
+    /* ══ Pagination ══ */
+    .pg-wrap{display:flex;align-items:center;justify-content:center;gap:6px;padding:20px 0 8px;flex-wrap:wrap;}
+    .pg-btn{min-width:38px;height:38px;border-radius:50px;border:1.5px solid rgba(166,124,82,.25);background:rgba(245,239,230,.85);color:#5C4530;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0 10px;transition:all .2s;}
+    .pg-btn:hover:not(:disabled){border-color:rgba(166,124,82,.52);background:rgba(245,239,230,1);transform:translateY(-1px);}
+    .pg-btn.active{background:linear-gradient(135deg,#A67C52,#8B6B47);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(139,107,71,.35);}
+    .pg-btn:disabled{opacity:.4;cursor:not-allowed;}
+    .pg-info{font-size:12px;color:#8c6840;padding:0 4px;}
+    /* ══ New tabs style ══ */
+    .tc-pend{background:#fde8d0;color:#c05820;}
+    .tc-acc{background:#d4f0dc;color:#1a6830;}
+    .tc-rej{background:#fde0e0;color:#962d22;}
+    .tc-all{background:rgba(166,124,82,.18);color:#7a5828;}
+
+  
+    /* ── Tag status colors ── */
+    .tag-pend { background:#fde8d0; color:#c05820; }
+    .tag-acc  { background:#d4f0dc; color:#1a6830; }
+    .tag-rej  { background:#fde0e0; color:#962d22; }
+    /* ── Sticky + search ── */
+    .sticky{position:sticky;top:0;z-index:100;background:transparent;border-bottom:none;}
+    .s-inner{max-width:860px;margin:0 auto;padding:0 20px;}
+    .tabs{display:flex;overflow-x:auto;border-bottom:1px solid rgba(166,124,82,.2);}
+    .tabs::-webkit-scrollbar{display:none;}
+    .tab{flex-shrink:0;padding:13px 16px;font-size:13px;font-weight:600;color:#8c6840;cursor:pointer;border:none;border-bottom:2.5px solid transparent;background:none;font-family:'Tajawal',sans-serif;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:6px;}
+    .tab.on{color:#2a1f12;border-bottom-color:#8b6b47;font-weight:700;}
+    .tc{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;border-radius:9px;font-size:10px;font-weight:700;padding:0 3px;}
+    .tc-all{background:rgba(166,124,82,.18);color:#7a5828;}
+    .tc-pend{background:#fde8d0;color:#c05820;}
+    .tc-acc{background:#d4f0dc;color:#1a6830;}
+    .tc-rej{background:#fde0e0;color:#962d22;}
+    .frow{display:flex;gap:8px;padding:9px 0 7px;align-items:center;}
+    .sinput{flex:1;min-width:0;padding:9px 14px;background:#fff;border:1.5px solid rgba(166,124,82,.25);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:13px;color:#2a1f12;outline:none;direction:rtl;}
+    .sinput:focus{border-color:#8b6b47;}.sinput::placeholder{color:#b0957a;}
+    .sselect{padding:8px 12px;border:1.5px solid rgba(166,124,82,.25);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:13px;color:#2a1f12;background:#fff;cursor:pointer;outline:none;direction:rtl;}
+
   </style>
 
   <script src="/JS/AdminControlPanel.js" defer></script>
@@ -463,60 +526,70 @@
       <h2>طلبات تسجيل المتطوعين</h2>
     </div>
 
-    <section class="admin-toolbar" aria-label="شريط الأدوات">
-      <div style="display:flex; gap:.55rem; align-items:center; flex-wrap:wrap;">
-        <span class="pill">طلبات معلّقة: <span id="pendingCount">0</span></span>
-        <span class="pill">آخر تحديث: <span id="lastUpdated">—</span></span>
+    <div class="sticky">
+      <div class="s-inner">
+        <div class="tabs">
+          <button class="tab on" data-tab="all" onclick="switchTab(this)">
+            <span class="tc tc-all" id="tcAll">0</span>الكل
+          </button>
+          <button class="tab" data-tab="pending" onclick="switchTab(this)">
+            <span class="tc tc-pend" id="tcPending">0</span>معلّقة
+          </button>
+          <button class="tab" data-tab="accepted" onclick="switchTab(this)">
+            <span class="tc tc-acc" id="tcAccepted">0</span>مقبول
+          </button>
+          <button class="tab" data-tab="rejected" onclick="switchTab(this)">
+            <span class="tc tc-rej" id="tcRejected">0</span>مرفوض
+          </button>
+        </div>
+        <div class="frow">
+          <input class="sinput" id="searchInput" type="search" placeholder="🔍 ابحث بالاسم أو الإيميل أو الهاتف..." autocomplete="off" />
+          <select class="sselect" id="srtSelect">
+            <option value="newest">الأحدث</option>
+            <option value="oldest">الأقدم</option>
+          </select>
+          <button id="refreshBtn" class="btn secondary" type="button" title="تحديث">
+            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div style="padding:4px 0 6px;font-size:11px;color:#7a6245;text-align:left;">
+          آخر تحديث: <span id="lastUpdated">—</span>
+        </div>
       </div>
-
-      <div class="admin-search" title="بحث بالاسم أو الإيميل أو الهاتف">
-        <input id="searchInput" class="input" type="search" placeholder="ابحث هنا..." autocomplete="off" />
-        <button id="refreshBtn" class="btn secondary" type="button">
-          <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-          <span class="btn-label">تحديث</span>
-        </button>
-      </div>
-    </section>
+    </div>
 
     <section>
       <div id="list" class="admin-grid" aria-live="polite"></div>
-      <div id="empty" class="empty-state" style="display:none;">لا يوجد طلبات معلّقة حاليًا.</div>
+      <div id="empty" class="empty-state" style="display:none;">لا توجد طلبات تطابق التصفية الحالية.</div>
+      <div id="pgWrap" class="pg-wrap" style="display:none;"></div>
     </section>
 
   </main>
 
- <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true">
-  <div class="modal">
-    <div class="modal-head">
-      <h3 id="modalTitle">تأكيد الإجراء</h3>
-      <div style="margin-right:auto;"></div>
-
-      <button id="closeModalBtn" class="btn secondary" type="button" style="height:44px;padding:0 1rem;">
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-        <span class="btn-label">إغلاق</span>
-      </button>
-    </div>
-
-    <div class="modal-sub" id="modalSubtitle">
-      هل أنت متأكد من تنفيذ هذا الإجراء؟
-    </div>
-
-    <div class="modal-content" id="rejectReasonWrap" style="display:none;">
-      <label for="rejectReason">سبب الرفض</label>
-<textarea id="rejectReason" placeholder=""></textarea>    </div>
-
-<div class="modal-footer" style="justify-content:center; align-items:center;">
-        <button id="confirmActionBtn" class="btn" type="button">
-        <span class="btn-spinner" aria-hidden="true"></span>
-        <span class="btn-label" id="confirmActionLabel">تأكيد</span>
-      </button>
-
-      <button id="cancelRejectBtn" class="btn secondary" type="button">
-        <span class="btn-label">إلغاء</span>
-      </button>
+  <!-- ══ نافذة التأكيد (Control.html style) ══ -->
+  <div class="aoverlay" id="confirmOvr">
+    <div class="amodal">
+      <div class="mhead">
+        <div class="mhead-icon" id="mIcon"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="mhead-title" id="mTitle"></div>
+          <div class="mhead-sub"   id="mSub"></div>
+        </div>
+        <button class="mclose" onclick="closeConfirmModal()" type="button"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="mbody">
+        <div class="dgrid" id="mDetails"></div>
+        <div id="rejectReasonWrap" style="display:none;">
+          <div class="dl">سبب الرفض</div>
+          <textarea class="mtextarea" id="rejectReason" placeholder="اكتب سبب الرفض..."></textarea>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button class="mbtn mbtn-cancel" onclick="closeConfirmModal()" type="button"><i class="fas fa-arrow-right"></i> إلغاء</button>
+        <button class="mbtn" id="confirmActionBtn" type="button"></button>
+      </div>
     </div>
   </div>
-</div>
 
   <div class="toast" aria-live="polite" aria-atomic="true">
     <div id="toastBox" class="toast-box">
