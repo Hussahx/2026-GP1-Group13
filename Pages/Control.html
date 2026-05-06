@@ -36,13 +36,17 @@
 
     /* ══ شريط البحث والتابات الثابت ══ */
     .admin-sticky {
-      position: relative;
-      background: rgba(249,246,241,.97);
-      border-bottom: 1px solid var(--bdr);
-      z-index: 50;
-    }
-    .admin-sticky-inner { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
-
+  position: relative;
+  background: transparent;
+  border-bottom: 1px solid var(--bdr);
+  z-index: 50;
+}
+.admin-sticky-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+  background: transparent;
+}
     /* تابات */
     .atabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--bdr); }
     .atabs::-webkit-scrollbar { display: none; }
@@ -79,8 +83,8 @@
     .asinput {
       flex: 1; min-width: 0;
       padding: 9px 14px;
-      background: var(--white);
-      border: 1.5px solid var(--bdr);
+ background: #F5EFE6;
+border: 1.5px solid rgba(166,124,82,0.18);
       border-radius: 22px;
       font-family: 'Tajawal', sans-serif;
       font-size: 13px; color: var(--t900);
