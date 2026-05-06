@@ -2481,14 +2481,22 @@ console.log('A-start');
 
 
 
+let nationalFileURL = '';
+let nationalFileName = '';
 
-    let nationalFileURL = '';
-    let nationalFileName = '';
+if (idFile) {
+  const storage = getStorage();
 
-    nationalFileURL = '';
-nationalFileName = '';
+  const fileRef = ref(
+    storage,
+    `volunteer-ids/${Date.now()}-${idFile.name}`
+  );
 
+  await uploadBytes(fileRef, idFile);
 
+  nationalFileURL = await getDownloadURL(fileRef);
+  nationalFileName = idFile.name;
+}
 
 
 
