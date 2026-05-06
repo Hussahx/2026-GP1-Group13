@@ -242,6 +242,9 @@
       flex-shrink: 0; border: 2px solid var(--white);
       box-shadow: 0 2px 8px rgba(100,60,10,.15);
     }
+    .miss-av.av-pending  { border-color: #f4a97a; }
+    .miss-av.av-accepted { border-color: #7dd4a0; }
+    .miss-av.av-rejected { border-color: #e89090; }
     .miss-name { font-size: 14px; font-weight: 700; color: var(--t900); }
     .miss-id   { font-size: 10.5px; color: var(--t300); margin-top: 2px; font-family: 'Tajawal', monospace; letter-spacing: .3px; }
 
@@ -793,7 +796,7 @@
               <span class="tc" id="tcPend">٠</span>تم استلام البلاغ
             </button>
             <button class="atab t-acc" data-tab="accepted" onclick="switchTab(this)">
-              <span class="tc" id="tcAcc">٠</span>قيد المراجعة
+              <span class="tc" id="tcAcc">٠</span>مقبول
             </button>
             <button class="atab t-rej" data-tab="rejected" onclick="switchTab(this)">
               <span class="tc" id="tcRej">٠</span>المرفوضة
@@ -835,7 +838,7 @@
           <div class="stat-card sc-pend">
             <div class="stat-icon si-pend"><i class="fas fa-clock"></i></div>
             <div class="stat-val" id="statPend">٠</div>
-            <div class="stat-lbl">قيد المراجعة</div>
+            <div class="stat-lbl">مقبول</div>
           </div>
           <div class="stat-card sc-acc">
             <div class="stat-icon si-acc"><i class="fas fa-circle-check"></i></div>
@@ -1294,7 +1297,7 @@
       };
       var bg = avColors[r.status] || avColors.pending;
       return '<div class="missing-cell">' +
-        '<div class="miss-av" style="background:'+bg+'">'+r.missingName.charAt(0)+'</div>' +
+        '<div class="miss-av av-'+r.status+'" style="background:'+bg+'">'+r.missingName.charAt(0)+'</div>' +
         '<div>' +
           '<div class="miss-name">'+r.missingName+'</div>' +
           '<div class="miss-id">'+r.id+'</div>' +
@@ -1320,8 +1323,8 @@
 
     function statusBadge(s){
       var m = {
-        pending:  ['status-badge sb-pend', 'fa-clock',        'تم استلام البلاغ'],
-        accepted: ['status-badge sb-acc',  'fa-circle-check', 'قيد المراجعة'],
+        pending:  ['status-badge sb-pend', 'fa-clock',        'قيد المراجعة'],
+        accepted: ['status-badge sb-acc',  'fa-circle-check', 'مقبول'],
         rejected: ['status-badge sb-rej',  'fa-circle-xmark', 'مرفوض']
       };
       var d = m[s] || m.pending;
@@ -1402,7 +1405,7 @@
       var newDbStatus   = pendingAction.action === 'accept' ? 'Under Review' : 'Rejected';
       var newIntStatus  = pendingAction.action === 'accept' ? 'accepted'     : 'rejected';
       var msg           = pendingAction.action === 'accept'
-        ? '✓ تم قبول بلاغ ' + r.missingName + ' — الحالة: قيد المراجعة'
+        ? '✓ تم قبول بلاغ ' + r.missingName + ' — الحالة: مقبول'
         : '✗ تم رفض بلاغ ' + r.missingName;
 
       /* ── Update Firestore — require authenticated user ── */
@@ -1500,7 +1503,7 @@ document.getElementById('viewOvr').classList.add('on');
     function find(id){ for (var i=0;i<reports.length;i++) if(reports[i].id===id) return reports[i]; return null; }
     function di(l, v){ return '<div class="di"><div class="dl">'+l+'</div><div class="dv">'+v+'</div></div>'; }
     function urgLbl(p){ return {uv:'طارئ جداً', uh:'طارئ', um:'متوسط'}[p] || p; }
-    function statLbl(s){ return {pending:'تم استلام البلاغ', accepted:'قيد المراجعة', rejected:'مرفوض'}[s] || s; }
+    function statLbl(s){ return {pending:'تم استلام البلاغ', accepted:'مقبول', rejected:'مرفوض'}[s] || s; }
 
     function notify(msg, type){
       var w = document.getElementById('nwrap');
