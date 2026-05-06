@@ -300,63 +300,50 @@ function render() {
       ? `<a href="${escapeHtml(r.nationalFile)}" target="_blank" rel="noopener noreferrer">عرض الملف</a>`
       : "—";
 
-    const html = `
-      <article class="card request-card" data-id="${escapeHtml(r.id)}" style="padding: 0; overflow: hidden;">
-        
-        <div class="req-main" data-toggle="details"
-             style="display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem; cursor:pointer;">
+   const html = `
+  <article class="card request-card" data-id="${escapeHtml(r.id)}">
 
-          <!-- RIGHT: avatar -->
-          <div class="req-avatar" aria-hidden="true">${escapeHtml(initials(r.name))}</div>
+    <div class="req-main" data-toggle="details">
+      <div class="req-avatar" aria-hidden="true">${escapeHtml(initials(r.name))}</div>
 
-          <!-- CENTER: meta -->
-          <div class="req-meta" style="flex:1; min-width:0;">
-            <div class="req-title">
-              <span>${escapeHtml(r.name || "بدون اسم")}</span>
-              <span class="tag"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>معلّق</span>
-              <span class="tag"><i class="fa-regular fa-calendar" aria-hidden="true"></i>${escapeHtml(formatDateTime(created))}</span>
-            </div>
-            <div class="req-sub">
-              <span><i class="fa-regular fa-envelope" aria-hidden="true"></i> ${escapeHtml(r.email || "—")}</span>
-              <span><i class="fa-solid fa-phone" aria-hidden="true"></i> ${escapeHtml(r.phone || "—")}</span>
-            </div>
-          </div>
-
-          <!-- LEFT: actions -->
-          <div class="req-actions" style="display:flex; gap:.6rem; flex-shrink:0;">
-            <button class="btn" type="button" data-action="accept" title="قبول الطلب" style="height:44px;">
-              <i class="fa-solid fa-check" aria-hidden="true"></i>
-              <span class="btn-label">قبول</span>
-            </button>
-            <button class="btn danger" type="button" data-action="reject" title="رفض الطلب" style="height:44px;">
-              <i class="fa-solid fa-trash" aria-hidden="true"></i>
-              <span class="btn-label">رفض</span>
-            </button>
-          </div>
-
+      <div class="req-meta">
+        <div class="req-title">
+          <span>${escapeHtml(r.name || "بدون اسم")}</span>
+          <span class="tag"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> معلّق</span>
+          <span class="tag"><i class="fa-regular fa-calendar" aria-hidden="true"></i>${escapeHtml(formatDateTime(created))}</span>
         </div>
 
-        <div class="req-details"
-             style="display:${r.isOpen ? 'block' : 'none'}; padding:0 1rem 1rem; border-top:1px solid rgba(166,124,82,0.12); background:rgba(245,239,230,0.28);">
-          
-          <div class="req-sub" style="margin-top:12px; flex-wrap:wrap;">
-            <span><strong>المدينة:</strong> ${escapeHtml(r.city)}</span>
-            <span><strong>رقم الهوية:</strong> ${escapeHtml(r.nationalId)}</span>
-            <span><strong>تاريخ الميلاد:</strong> ${escapeHtml(r.dob)}</span>
-          </div>
-
-          <div class="req-sub" style="margin-top:12px; flex-wrap:wrap;">
-            <span><strong>المهارات:</strong> ${escapeHtml(skillsText)}</span>
-            <span><strong>الأيام المتاحة:</strong> ${escapeHtml(daysText)}</span>
-            <span><strong>الفترة:</strong> ${escapeHtml(r.availablePeriod)}</span>
-          </div>
-
-          <div class="req-sub" style="margin-top:12px; flex-wrap:wrap;">
-            <span><strong>ملف الهوية:</strong> ${fileLink}</span>
-          </div>
+        <div class="req-sub">
+          <span><i class="fa-regular fa-envelope" aria-hidden="true"></i> ${escapeHtml(r.email || "—")}</span>
+          <span><i class="fa-solid fa-phone" aria-hidden="true"></i> ${escapeHtml(r.phone || "—")}</span>
         </div>
-      </article>
-    `;
+      </div>
+
+      <div class="req-actions">
+        <button class="btn" type="button" data-action="accept" title="قبول الطلب">
+          <i class="fa-solid fa-check" aria-hidden="true"></i>
+          <span class="btn-label">قبول</span>
+        </button>
+
+        <button class="btn danger" type="button" data-action="reject" title="رفض الطلب">
+  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+  <span class="btn-label">رفض</span>
+</button>
+      </div>
+    </div>
+
+    <div class="req-details" style="display:${r.isOpen ? 'grid' : 'none'};">
+      <span><strong>المدينة:</strong> ${escapeHtml(r.city)}</span>
+      <span><strong>رقم الهوية:</strong> ${escapeHtml(r.nationalId)}</span>
+      <span><strong>تاريخ الميلاد:</strong> ${escapeHtml(r.dob)}</span>
+      <span><strong>المهارات:</strong> ${escapeHtml(skillsText)}</span>
+      <span><strong>الأيام المتاحة:</strong> ${escapeHtml(daysText)}</span>
+      <span><strong>الفترة:</strong> ${escapeHtml(r.availablePeriod)}</span>
+      <span><strong>ملف الهوية:</strong> ${fileLink}</span>
+    </div>
+
+  </article>
+`;
     list.insertAdjacentHTML("beforeend", html);
   }
 

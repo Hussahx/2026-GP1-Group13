@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#F5EFE6" />
   <title>راصد — لوحة التحكم (طلبات التسجيل)</title>
-  <link rel="icon" href="/assest/logo.PNG" type="image/png" />
+  <link rel="icon" href="/assest/logoo.PNG" type="image/png" />
 
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -67,13 +67,70 @@
     }
 
     .request-card{
-      width:100%;
-      max-width: unset;
-      padding: 1.1rem 1.1rem;
-      display:flex;
-      align-items:stretch;
-      gap: .9rem;
-    }
+  width:100%;
+  max-width: unset;
+  padding:0 !important;
+  display:block;
+  overflow:hidden;
+}
+
+.req-main{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  padding:1rem;
+  cursor:pointer;
+}
+
+.req-meta{
+  flex:1;
+  min-width:0;
+}
+
+.req-actions{
+  margin-right:auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:.55rem;
+  flex-shrink:0;
+}
+
+.req-details{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:12px 24px;
+  padding:1rem 1.25rem;
+  border-top:1px solid rgba(166,124,82,0.12);
+  background:rgba(245,239,230,0.28);
+}
+
+.req-details span{
+  font-size:.9rem;
+  color:var(--ink-muted);
+  font-weight:800;
+}
+
+@media (max-width:680px){
+  .req-main{
+    flex-wrap:wrap;
+  }
+
+  .req-actions{
+    width:100%;
+    margin-right:0;
+  }
+
+  .req-actions .btn{
+    flex:1;
+    justify-content:center;
+  }
+
+  .req-details{
+    grid-template-columns:1fr;
+  }
+}
 
     .req-avatar{
       width:46px;
@@ -139,6 +196,29 @@
       flex: 0 0 auto;
     }
 
+   .btn{
+  min-height:40px;
+  padding:.55rem 1.2rem;
+
+  background: linear-gradient(135deg, #B88A58, #9A744A);
+
+  color:#fff;
+  border:none;
+
+  border-radius:999px;
+
+  font-size:.95rem;
+  font-weight:800;
+
+  box-shadow: 0 4px 14px rgba(139,107,71,0.18);
+}
+
+.btn:hover{
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #9C7A4F, #7A5C38);
+  box-shadow: 0 8px 28px rgba(139,107,71,0.38);
+}
+
     .btn.secondary{
       background: rgba(245,239,230,0.9);
       color: var(--ink);
@@ -151,15 +231,21 @@
       box-shadow: 0 8px 22px rgba(62,47,28,0.10);
     }
 
-    .btn.danger{
-      background: linear-gradient(135deg, #C23B2E, #9B3A3A);
-      box-shadow: 0 4px 18px rgba(194,59,46,0.22);
-    }
+  .btn.danger{
+  background: rgba(245,239,230,0.95);
 
-    .btn.danger:hover{
-      box-shadow: 0 8px 28px rgba(194,59,46,0.30);
-    }
+  color:#C23B2E;
 
+  border:1.5px solid rgba(194,59,46,0.35);
+
+  box-shadow: 0 4px 14px rgba(194,59,46,0.10);
+}
+
+   .btn.danger:hover{
+  background: rgba(255,245,245,0.98);
+
+  box-shadow: 0 8px 22px rgba(194,59,46,0.16);
+}
     .empty-state{
       max-width: 860px;
       margin: 0 auto;
@@ -306,12 +392,11 @@
 
   <header class="page-header" id="pageHeader">
     <div class="header-logo-mark" aria-hidden="true">
-      <img src="/assest/New-logo.JPG.jpeg" alt="شعار راصد" />
+      <img src="/assest/logoo.PNG" alt="شعار راصد" />
     </div>
 
     <div class="header-brand">
-      <h1>راصد</h1>
-      <p>عين الصحراء - لوحة التحكم</p>
+     
     </div>
 
     <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
