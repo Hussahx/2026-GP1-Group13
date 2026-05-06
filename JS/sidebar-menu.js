@@ -24,6 +24,12 @@
 const ROLE_MENUS = {
 
   admin: [
+      {
+      label : 'إدارة البلاغات',
+      href  : 'Control.html',
+      icon  : 'fas fa-clipboard-list',
+      key   : 'Control',
+    },
     {
       label : 'طلبات تسجيل المتطوعين',
       href  : 'AdminControlPanel.html',
@@ -36,15 +42,12 @@ const ROLE_MENUS = {
       icon  : 'fas fa-clock-rotate-left',
       key   : 'History',
     },
+   
   ],
 
+ 
+
   volunteer: [
-    {
-      label : 'لوحة التحكم',
-      href  : '#',
-      icon  : 'fas fa-gauge-high',
-      key   : 'Dashboard',
-    },
   
     {
       label : 'البلاغات',
