@@ -53,30 +53,11 @@
       align-items:center;
     }
 
-   .admin-search .input{
-  direction: rtl;
-  text-align: right;
-  letter-spacing: .2px;
-
-  background:#fff;
-
-  border:1.5px solid rgba(166,124,82,0.18);
-
-  box-shadow: 0 6px 18px rgba(62,47,28,0.05);
-
-  transition:
-    border-color .22s ease,
-    box-shadow .22s ease;
-}
-.admin-search .input:focus{
-  border-color: rgba(184,138,88,0.55);
-
-  box-shadow:
-    0 0 0 4px rgba(184,138,88,0.10),
-    0 10px 24px rgba(139,107,71,0.08);
-
-  outline:none;
-}
+    .admin-search .input{
+      direction: rtl;
+      text-align: right;
+      letter-spacing: .2px;
+    }
 
     .admin-grid{
       max-width: 860px;
@@ -91,13 +72,6 @@
   padding:0 !important;
   display:block;
   overflow:hidden;
-  background:#fff;
-
-border:1px solid rgba(166,124,82,0.10);
-
-box-shadow: 0 10px 30px rgba(62,47,28,0.05);
-
-border-radius:28px;
 }
 
 .req-main{
@@ -135,7 +109,7 @@ border-radius:28px;
 .req-details span{
   font-size:.9rem;
   color:var(--ink-muted);
-  font-weight:800;
+  font-weight:400;
 }
 
 @media (max-width:680px){
@@ -161,15 +135,19 @@ border-radius:28px;
     .req-avatar{
       width:46px;
       height:46px;
-      border-radius: 14px;
+      border-radius: 50%;
       background: linear-gradient(135deg, rgba(166,124,82,0.22), rgba(122,154,106,0.12));
-      border: 1px solid rgba(166,124,82,0.22);
+      border: 2px solid rgba(255,255,255,0.8);
       display:grid;
       place-items:center;
       font-weight: 900;
-      color: var(--ink);
+      color: #fff;
       flex: 0 0 auto;
+      box-shadow: 0 2px 8px rgba(100,60,10,.15);
     }
+    .req-avatar.av-pending  { background: linear-gradient(135deg,#e07830,#c05820); border-color: #f4a97a; }
+    .req-avatar.av-accepted { background: linear-gradient(135deg,#3e9a5a,#2d7a44); border-color: #7dd4a0; }
+    .req-avatar.av-rejected { background: linear-gradient(135deg,#c0392b,#962d22); border-color: #e89090; }
 
     .req-meta{
       flex:1;
@@ -181,7 +159,7 @@ border-radius:28px;
 
     .req-title{
       display:flex;
-gap:.4rem;
+      gap:.6rem;
       align-items:center;
       flex-wrap:wrap;
       font-weight: 900;
@@ -223,27 +201,28 @@ gap:.4rem;
     }
 
    .btn{
-  min-height:32px;
-  padding:6px 14px;
+  min-height:40px;
+  padding:.55rem 1.2rem;
 
-  background: rgba(245,239,230,0.95);
-  color:#2F8B4F;
-  border:1.5px solid rgba(62,154,90,0.40);
+  background: linear-gradient(135deg, #B88A58, #9A744A);
+
+  color:#fff;
+  border:none;
 
   border-radius:999px;
-  font-size:12px;
-      font-weight: 700;
 
-  box-shadow: 0 4px 14px rgba(62,154,90,0.10);
+  font-size:.95rem;
+  font-weight:800;
+
+  box-shadow: 0 4px 14px rgba(139,107,71,0.18);
 }
 
 .btn:hover{
   transform: translateY(-2px);
-  background: rgba(255,255,255,0.98);
-  color:#23713D;
-  border-color: rgba(62,154,90,0.70);
-  box-shadow: 0 8px 22px rgba(62,154,90,0.16);
+  background: linear-gradient(135deg, #9C7A4F, #7A5C38);
+  box-shadow: 0 8px 28px rgba(139,107,71,0.38);
 }
+
     .btn.secondary{
       background: rgba(245,239,230,0.9);
       color: var(--ink);
@@ -271,37 +250,19 @@ gap:.4rem;
 
   box-shadow: 0 8px 22px rgba(194,59,46,0.16);
 }
-#confirmActionBtn{
-  background: rgba(245,239,230,0.95);
-
-  color:#2F8B4F;
-
-  border:1.5px solid rgba(62,154,90,0.40);
-
-  box-shadow: 0 4px 14px rgba(62,154,90,0.10);
-}
-
-#confirmActionBtn:hover{
-  background: rgba(255,255,255,0.98);
-
-  color:#23713D;
-
-  border-color: rgba(62,154,90,0.70);
-
-  box-shadow: 0 8px 22px rgba(62,154,90,0.16);
-}
     .empty-state{
       max-width: 860px;
       margin: 0 auto;
       background: rgba(255,255,255,.70);
       border: 1px dashed rgba(166,124,82,0.32);
       border-radius: var(--radius-card);
-      padding: 1.2rem 1.25rem;
-      color: var(--ink-muted);
-      font-weight: 800;
+      padding: 56px 24px;
       text-align:center;
       animation: fadeUp .7s var(--ease-out) both;
     }
+    .empty-icon  { font-size: 40px; margin-bottom: 12px; color: #c4a882; }
+    .empty-title { font-size: 15px; font-weight: 800; color: var(--t700,#5a3e20); margin-bottom: 5px; }
+    .empty-sub   { font-size: 13px; color: var(--t300,#b89870); }
 
     .modal-backdrop{
       position:fixed;
@@ -428,6 +389,112 @@ gap:.4rem;
       .req-actions{ justify-content:stretch; }
       .req-actions .btn{ width:100%; justify-content:center; }
     }
+  
+    /* ══ Modal (Control.html style) ══ */
+    .aoverlay{position:fixed!important;inset:0!important;background:rgba(42,31,18,.52)!important;backdrop-filter:blur(6px);z-index:99990!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:1.25rem!important;opacity:0;pointer-events:none;transition:opacity .25s ease;}
+    .aoverlay.on{opacity:1;pointer-events:all;}
+    .amodal{background:rgba(255,250,242,.96);border:1px solid rgba(166,124,82,.20);border-radius:18px;width:min(520px,100%);box-shadow:0 24px 70px rgba(42,31,18,.25);overflow:hidden;transform:translateY(14px);opacity:0;transition:transform .22s ease-out,opacity .22s ease-out;}
+    .aoverlay.on .amodal{transform:translateY(0);opacity:1;}
+    .mhead{display:flex;align-items:center;gap:.75rem;padding:1rem 1.1rem;border-bottom:1px solid rgba(166,124,82,.14);background:linear-gradient(135deg,rgba(194,164,119,.16),rgba(139,107,71,.10));}
+    .mhead-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;box-shadow:0 10px 24px rgba(139,107,71,.22);color:#fff;}
+    .mhi-acc{background:linear-gradient(135deg,#3e9a5a,#2d7a44);}
+    .mhi-rej{background:linear-gradient(135deg,#c0392b,#962d22);}
+    .mhead-title{font-size:1.1rem;font-weight:900;color:#3E2F1C;margin:0;}
+    .mhead-sub{font-size:.82rem;color:#7A6245;margin-top:3px;line-height:1.55;}
+    .mclose{margin-right:auto;width:44px;height:44px;border-radius:12px;border:1px solid rgba(166,124,82,.18);background:rgba(255,255,255,.55);color:#3E2F1C;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:background .22s,transform .18s;font-family:'Tajawal',sans-serif;}
+    .mclose:hover{background:rgba(166,124,82,.10);transform:translateY(-1px);}
+    .mbody{padding:1.1rem;max-height:55vh;overflow-y:auto;}
+    .mbody::-webkit-scrollbar{width:5px;}
+    .mbody::-webkit-scrollbar-thumb{background:rgba(166,124,82,.35);border-radius:4px;}
+    .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+    .di{background:rgba(245,239,230,.75);border:1px solid rgba(166,124,82,.12);border-radius:10px;padding:10px 12px;}
+    .dl{font-size:.72rem;font-weight:700;letter-spacing:.5px;color:#8B6B47;margin-bottom:3px;text-transform:uppercase;}
+    .dv{font-size:.92rem;font-weight:700;color:#3E2F1C;}
+    .mfoot{display:flex;gap:.65rem;padding:1rem 1.1rem;border-top:1px solid rgba(166,124,82,.12);background:rgba(245,239,230,.5);justify-content:flex-end;}
+    .mbtn{padding:.7rem 1.4rem;border-radius:12px;border:none;font-family:'Tajawal',sans-serif;font-size:.95rem;font-weight:800;cursor:pointer;transition:all .2s;}
+    .mbtn-cancel{background:rgba(245,239,230,.9);color:#5C4530;border:1.5px solid rgba(166,124,82,.25);}
+    .mbtn-acc{background:linear-gradient(135deg,#3e9a5a,#2d7a44);color:#fff;}
+    .mbtn-rej{background:linear-gradient(135deg,#c0392b,#962d22);color:#fff;}
+    .mtextarea{width:100%;min-height:80px;padding:.75rem;border:1.5px solid rgba(166,124,82,.25);border-radius:10px;font-family:'Tajawal',sans-serif;font-size:.9rem;resize:vertical;direction:rtl;background:rgba(255,255,255,.8);color:#3E2F1C;outline:none;margin-top:8px;}
+    .mtextarea:focus{border-color:#8B6B47;}
+    /* ══ Pagination ══ */
+    .pg-wrap{display:flex;align-items:center;justify-content:center;gap:6px;padding:20px 0 8px;flex-wrap:wrap;}
+    .pg-btn{min-width:38px;height:38px;border-radius:50px;border:1.5px solid rgba(166,124,82,.25);background:rgba(245,239,230,.85);color:#5C4530;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0 10px;transition:all .2s;}
+    .pg-btn:hover:not(:disabled){border-color:rgba(166,124,82,.52);background:rgba(245,239,230,1);transform:translateY(-1px);}
+    .pg-btn.active{background:linear-gradient(135deg,#A67C52,#8B6B47);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(139,107,71,.35);}
+    .pg-btn:disabled{opacity:.4;cursor:not-allowed;}
+    .pg-info{font-size:12px;color:#8c6840;padding:0 4px;}
+    /* ══ New tabs style ══ */
+    .tc-pend{background:#fde8d0;color:#c05820;}
+    .tc-acc{background:#d4f0dc;color:#1a6830;}
+    .tc-rej{background:#fde0e0;color:#962d22;}
+    .tc-all{background:rgba(166,124,82,.18);color:#7a5828;}
+
+  
+    /* ── Tag status colors ── */
+    .tag-pend { background:#fde8d0; color:#c05820; }
+    .tag-acc  { background:#d4f0dc; color:#1a6830; }
+    .tag-rej  { background:#fde0e0; color:#962d22; }
+    /* ── Sticky + search ── */
+    .sticky{position:relative;background:transparent;border-bottom:none;}
+    .s-inner{max-width:860px;margin:0 auto;padding:0 20px;}
+    .tabs{display:flex;overflow-x:auto;border-bottom:1px solid rgba(166,124,82,.2);}
+    .tabs::-webkit-scrollbar{display:none;}
+    .tab{flex-shrink:0;padding:13px 16px;font-size:13px;font-weight:600;color:#8c6840;cursor:pointer;border:none;border-bottom:2.5px solid transparent;background:none;font-family:'Tajawal',sans-serif;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:6px;}
+    .tab.on{color:#2a1f12;border-bottom-color:#8b6b47;font-weight:700;}
+    .tc{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;border-radius:9px;font-size:10px;font-weight:700;padding:0 3px;}
+    .tc-all{background:rgba(166,124,82,.18);color:#7a5828;}
+    .tc-pend{background:#fde8d0;color:#c05820;}
+    .tc-acc{background:#d4f0dc;color:#1a6830;}
+    .tc-rej{background:#fde0e0;color:#962d22;}
+    .frow{display:flex;gap:8px;padding:9px 0 7px;align-items:center;}
+    .sinput{flex:1;min-width:0;padding:9px 14px;background:#fff;border:1.5px solid rgba(166,124,82,.25);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:13px;color:#2a1f12;outline:none;direction:rtl;}
+    .sinput:focus{border-color:#8b6b47;}.sinput::placeholder{color:#b0957a;}
+    .sselect{
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #5C4530;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A67C52' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")
+        no-repeat left 0.85rem center / 12px 8px,
+        rgba(245, 239, 230, 0.85);
+      border: 1.5px solid rgba(166, 124, 82, 0.28);
+      border-radius: 22px;
+      padding: 9px 0.95rem 9px 2.2rem;
+      outline: none;
+      cursor: pointer;
+      direction: rtl;
+      text-align: right;
+      transition: border-color 0.22s ease, background-color 0.22s ease, box-shadow 0.22s ease;
+      box-shadow: 0 2px 8px rgba(62, 47, 28, 0.06);
+      min-width: 110px;
+    }
+    .sselect:hover { border-color: rgba(166,124,82,.52); background-color: rgba(245,239,230,1); }
+    .sselect:focus { border-color: rgba(166,124,82,.70); background-color: #fff; box-shadow: 0 0 0 3px rgba(166,124,82,.13), 0 2px 8px rgba(62,47,28,.08); }
+
+  
+    /* ══ Custom Sort Dropdown ══ */
+    #srtSelect { display: none !important; }
+    .sort-custom-dropdown { position:relative; font-family:'Tajawal',sans-serif; direction:rtl; flex-shrink:0; }
+    .sort-cd-trigger { display:flex; align-items:center; justify-content:space-between; height:40px; min-width:110px; padding:0 0.9rem; border:1.5px solid rgba(166,124,82,0.28); border-radius:22px; background:rgba(245,239,230,0.85); color:#5C4530; font-family:'Tajawal',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:border-color .22s,background .22s,box-shadow .22s; outline:none; user-select:none; white-space:nowrap; box-shadow:0 2px 8px rgba(62,47,28,.06); }
+    .sort-cd-trigger:hover { border-color:rgba(166,124,82,.52); background:rgba(245,239,230,1); }
+    .sort-cd-trigger.open, .sort-cd-trigger:focus { border-color:rgba(166,124,82,.70); background:#fff; box-shadow:0 0 0 3px rgba(166,124,82,.13); }
+    .sort-cd-trigger-text { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .sort-cd-arrow { flex-shrink:0; margin-right:0.5rem; color:#A67C52; font-size:0.72rem; transition:transform .22s; }
+    .sort-cd-trigger.open .sort-cd-arrow { transform:rotate(180deg); }
+    .sort-cd-panel { display:none; position:absolute; top:calc(100% + 5px); right:0; left:0; min-width:100%; z-index:9999; background:#fff; border:1.5px solid rgba(166,124,82,.45); border-radius:16px; box-shadow:0 12px 40px rgba(62,47,28,.14); overflow:hidden; animation:sortCdSlide .18s cubic-bezier(.22,1,.36,1) both; }
+    .sort-cd-panel.open { display:block; }
+    @keyframes sortCdSlide { from{opacity:0;transform:translateY(-6px) scaleY(.96);} to{opacity:1;transform:translateY(0) scaleY(1);} }
+    .sort-cd-list { padding:.3rem 0; }
+    .sort-cd-option { display:flex; align-items:center; justify-content:space-between; padding:.6rem .9rem; font-size:13px; font-family:'Tajawal',sans-serif; color:#5C4530; cursor:pointer; transition:background .13s,color .13s; direction:rtl; text-align:right; }
+    .sort-cd-option:hover, .sort-cd-option.focused { background:rgba(166,124,82,.09); color:#A67C52; }
+    .sort-cd-option.selected { background:rgba(166,124,82,.13); color:#8B6B47; font-weight:700; }
+    .sort-cd-option.selected::after { content:'\f00c'; font-family:'Font Awesome 6 Free'; font-weight:900; font-size:.72rem; color:#A67C52; }
+
   </style>
 
   <script src="/JS/AdminControlPanel.js" defer></script>
@@ -505,62 +572,86 @@ gap:.4rem;
         <span></span>
       </div>
       <h2>طلبات تسجيل المتطوعين</h2>
+      <p>مراجعة طلبات الانضمام واتخاذ قرار القبول أو الرفض لكل متطوع</p>
     </div>
 
-    <section class="admin-toolbar" aria-label="شريط الأدوات">
-      <div style="display:flex; gap:.55rem; align-items:center; flex-wrap:wrap;">
-        <span class="pill">طلبات معلّقة: <span id="pendingCount">0</span></span>
-        <span class="pill">آخر تحديث: <span id="lastUpdated">—</span></span>
+    <div class="sticky">
+      <div class="s-inner">
+        <div class="tabs">
+          <button class="tab on" data-tab="all" onclick="switchTab(this)">
+            <span class="tc tc-all" id="tcAll">0</span>الكل
+          </button>
+          <button class="tab" data-tab="pending" onclick="switchTab(this)">
+            <span class="tc tc-pend" id="tcPending">0</span>معلّقة
+          </button>
+          <button class="tab" data-tab="accepted" onclick="switchTab(this)">
+            <span class="tc tc-acc" id="tcAccepted">0</span>مقبول
+          </button>
+          <button class="tab" data-tab="rejected" onclick="switchTab(this)">
+            <span class="tc tc-rej" id="tcRejected">0</span>مرفوض
+          </button>
+        </div>
+        <div class="frow">
+          <input class="sinput" id="searchInput" type="search" placeholder="🔍 ابحث بالاسم أو الإيميل أو الهاتف..." autocomplete="off" />
+          <select class="sselect" id="srtSelect">
+            <option value="newest">الأحدث</option>
+            <option value="oldest">الأقدم</option>
+          </select>
+          <div class="sort-custom-dropdown" id="sortDropdown">
+            <button type="button" class="sort-cd-trigger" id="sortTrigger">
+              <span class="sort-cd-trigger-text" id="sortTriggerText">الأحدث</span>
+              <i class="fas fa-chevron-down sort-cd-arrow" aria-hidden="true"></i>
+            </button>
+            <div class="sort-cd-panel" id="sortPanel">
+              <div class="sort-cd-list" id="sortList"></div>
+            </div>
+          </div>
+          <button id="refreshBtn" class="btn secondary" type="button" title="تحديث">
+            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div style="padding:4px 0 6px;font-size:11px;color:#7a6245;text-align:left;">
+          آخر تحديث: <span id="lastUpdated">—</span>
+        </div>
       </div>
-
-      <div class="admin-search" title="بحث بالاسم أو الإيميل أو الهاتف">
-        <input id="searchInput" class="input" type="search" placeholder="ابحث هنا..." autocomplete="off" />
-        <button id="refreshBtn" class="btn secondary" type="button">
-          <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-          <span class="btn-label">تحديث</span>
-        </button>
-      </div>
-    </section>
+    </div>
 
     <section>
       <div id="list" class="admin-grid" aria-live="polite"></div>
-      <div id="empty" class="empty-state" style="display:none;">لا يوجد طلبات معلّقة حاليًا.</div>
+      <div id="empty" class="empty-state" style="display:none;">
+        <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+        <div class="empty-title">لا توجد طلبات</div>
+        <div class="empty-sub">لا يوجد طلبات معلّقة حالياً.</div>
+      </div>
+      <div id="pgWrap" class="pg-wrap" style="display:none;"></div>
     </section>
 
   </main>
 
- <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true">
-  <div class="modal">
-    <div class="modal-head">
-      <h3 id="modalTitle">تأكيد الإجراء</h3>
-      <div style="margin-right:auto;"></div>
-
-      <button id="closeModalBtn" class="btn secondary" type="button" style="height:44px;padding:0 1rem;">
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-        <span class="btn-label">إغلاق</span>
-      </button>
-    </div>
-
-    <div class="modal-sub" id="modalSubtitle">
-      هل أنت متأكد من تنفيذ هذا الإجراء؟
-    </div>
-
-    <div class="modal-content" id="rejectReasonWrap" style="display:none;">
-      <label for="rejectReason">سبب الرفض</label>
-<textarea id="rejectReason" placeholder=""></textarea>    </div>
-
-<div class="modal-footer" style="justify-content:center; align-items:center;">
-        <button id="confirmActionBtn" class="btn" type="button">
-        <span class="btn-spinner" aria-hidden="true"></span>
-        <span class="btn-label" id="confirmActionLabel">تأكيد</span>
-      </button>
-
-      <button id="cancelRejectBtn" class="btn secondary" type="button">
-        <span class="btn-label">إلغاء</span>
-      </button>
+  <!-- ══ نافذة التأكيد (Control.html style) ══ -->
+  <div class="aoverlay" id="confirmOvr">
+    <div class="amodal">
+      <div class="mhead">
+        <div class="mhead-icon" id="mIcon"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="mhead-title" id="mTitle"></div>
+          <div class="mhead-sub"   id="mSub"></div>
+        </div>
+        <button class="mclose" onclick="closeConfirmModal()" type="button"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="mbody">
+        <div class="dgrid" id="mDetails"></div>
+        <div id="rejectReasonWrap" style="display:none;">
+          <div class="dl">سبب الرفض</div>
+          <textarea class="mtextarea" id="rejectReason" placeholder="اكتب سبب الرفض..."></textarea>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button class="mbtn mbtn-cancel" onclick="closeConfirmModal()" type="button"><i class="fas fa-arrow-right"></i> إلغاء</button>
+        <button class="mbtn" id="confirmActionBtn" type="button"></button>
+      </div>
     </div>
   </div>
-</div>
 
   <div class="toast" aria-live="polite" aria-atomic="true">
     <div id="toastBox" class="toast-box">
@@ -790,5 +881,63 @@ gap:.4rem;
     }
   });
 </script>
+
+<script>
+  (function initSortDropdown() {
+    const sortSelect  = document.getElementById('srtSelect');
+    const trigger     = document.getElementById('sortTrigger');
+    const triggerText = document.getElementById('sortTriggerText');
+    const panel       = document.getElementById('sortPanel');
+    const listEl      = document.getElementById('sortList');
+    if (!sortSelect || !trigger) return;
+
+    const options = Array.from(sortSelect.options).map(o => ({ value: o.value, text: o.text }));
+    let isOpen = false;
+
+    function buildList() {
+      listEl.innerHTML = '';
+      options.forEach(opt => {
+        const div = document.createElement('div');
+        const isSel = opt.value === sortSelect.value;
+        div.className = 'sort-cd-option' + (isSel ? ' selected' : '');
+        div.textContent = opt.text;
+        div.setAttribute('data-value', opt.value);
+        div.addEventListener('mousedown', e => { e.preventDefault(); selectOpt(opt.value, opt.text); });
+        listEl.appendChild(div);
+      });
+    }
+
+    function selectOpt(val, text) {
+      sortSelect.value = val;
+      triggerText.textContent = text;
+      sortSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      closePanel();
+      trigger.focus();
+      buildList();
+    }
+
+    function openPanel() {
+      isOpen = true; buildList();
+      panel.classList.add('open');
+      trigger.classList.add('open');
+    }
+
+    function closePanel() {
+      isOpen = false;
+      panel.classList.remove('open');
+      trigger.classList.remove('open');
+    }
+
+    trigger.addEventListener('click', () => isOpen ? closePanel() : openPanel());
+    trigger.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); isOpen ? closePanel() : openPanel(); }
+      if (e.key === 'Escape') closePanel();
+    });
+    document.addEventListener('mousedown', e => {
+      if (!trigger.closest('.sort-custom-dropdown').contains(e.target)) closePanel();
+    });
+  })();
+</script>
+
 </body>
 </html>

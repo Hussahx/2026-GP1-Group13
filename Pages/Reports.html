@@ -457,6 +457,13 @@ body.reports-page .bov{
     .cd-full .cd-trigger { border-radius: 14px; height: 48px; font-size: 0.93rem; }
     .cd-full .cd-panel   { border-radius: 14px; }
 
+  
+    /* ══ Empty state ══ */
+    .empty { text-align:center; padding:56px 24px; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; grid-column: 1 / -1; }
+    .empty .ei { font-size:40px; margin-bottom:12px; color:#c4a882; }
+    .empty .empty-title { font-size:15px; font-weight:800; color:#5a3e20; margin-bottom:5px; }
+    .empty .empty-sub { font-size:13px; color:#b89870; }
+
   </style>
 </head>
 
@@ -858,6 +865,7 @@ body.reports-page .bov{
         _docId:      docId,
         _teamMembers: teamMembers,
         _createdBy:  data.createdBy || '',
+        _leaderId:   data.LeaderID  || data.createdBy || '',
         id:    rid,
         ar:    rid,
         nm,
@@ -931,6 +939,10 @@ body.reports-page .bov{
           if (dbStatus !== 'Under Review') return;
 
           const r = docToReport(data, docSnap.id, currentUid);
+          // Check leader deactivation asynchronously (won't block render)
+          if (data.LeaderID && window._fbHandleLeaderDeactivation) {
+            window._fbHandleLeaderDeactivation(docSnap.id, data).catch(e => console.warn('deactivation check:', e));
+          }
 
           // التصنيف بناءً على حالة الفريق
           if (r.userInTeam) {
@@ -1065,7 +1077,100 @@ body.reports-page .bov{
     onAuthStateChanged(auth, (user) => {
       window._fbCurrentUid = user ? user.uid : null;
     });
+    
+    // ── Helper: fetch volunteer data by UID ─────────────────────────
+    window._fbGetVolunteerByUid = async function(uid) {
+      if (!uid) return null;
+      try {
+        // Try 1: direct doc lookup (doc ID = Auth UID — works for some volunteers)
+        const directSnap = await getDoc(doc(db, 'Volunteer', uid));
+        if (directSnap.exists()) {
+          const data = directSnap.data();
+          if (data.Status && data.Status !== 'active') return null;
+          return data;
+        }
+      } catch(e) {}
+      try {
+        // Try 2: query by UserID field (doc ID ≠ Auth UID — works for others)
+        const { collection: col2, query: q2, where: w2, getDocs: gd2 } =
+          await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const snap = await gd2(q2(col2(db, 'Volunteer'), w2('UserID', '==', uid)));
+        if (!snap.empty) {
+          const data = snap.docs[0].data();
+          if (data.Status && data.Status !== 'active') return null;
+          return data;
+        }
+      } catch(e) {}
+      return null;
+    };
 
+    // ── Leader deactivation handler ──────────────────────────────────
+    window._fbHandleLeaderDeactivation = async function(docId, reportData) {
+      const leaderId = reportData.LeaderID;
+      if (!leaderId) return;
+
+      let leaderActive = true;
+      try {
+        const lSnap = await getDoc(doc(db, 'Volunteer', leaderId));
+        if (!lSnap.exists()) {
+          leaderActive = false;
+        } else {
+          const lData = lSnap.data();
+          if (lData.Status && lData.Status !== 'active') leaderActive = false;
+        }
+      } catch(e) { return; }
+
+      if (leaderActive) return;
+
+      // Leader is deactivated — find remaining active members
+      const rawTeam = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
+      const memberUids = rawTeam.map(m =>
+        (typeof m === 'object' && m !== null) ? m.userId : m
+      ).filter(uid => uid && uid !== leaderId);
+
+      if (memberUids.length === 0) {
+        // No members left → reset to new
+        await updateDoc(doc(db, 'Report', docId), {
+          LeaderID: '', leader: '', leaderPhone: '',
+          CurrentVolunteers: 0, teamMembers: []
+        });
+        return;
+      }
+
+      // Find first active member to promote
+      let newLeaderUid = null, newLeaderData = null;
+      for (const mUid of memberUids) {
+        try {
+          const mSnap = await getDoc(doc(db, 'Volunteer', mUid));
+          if (mSnap.exists()) {
+            const mData = mSnap.data();
+            if (!mData.Status || mData.Status === 'active') {
+              newLeaderUid = mUid; newLeaderData = mData; break;
+            }
+          }
+        } catch(e) { continue; }
+      }
+
+      if (!newLeaderUid) {
+        // All deactivated → reset to new
+        await updateDoc(doc(db, 'Report', docId), {
+          LeaderID: '', leader: '', leaderPhone: '',
+          CurrentVolunteers: 0, teamMembers: []
+        });
+        return;
+      }
+
+      // Promote to leader
+      const newLeaderName  = ((newLeaderData.FirstName||'') + ' ' + (newLeaderData.LastName||'')).trim();
+      const newLeaderPhone = newLeaderData.Phone || '';
+      await updateDoc(doc(db, 'Report', docId), {
+        LeaderID: newLeaderUid,
+        leader: newLeaderName,
+        leaderPhone: newLeaderPhone,
+        CurrentVolunteers: memberUids.length,
+        teamMembers: memberUids
+      });
+    };
   </script>
 
   <!-- ═══════════════════════════════════════════════════════════════
@@ -1183,9 +1288,13 @@ body.reports-page .bov{
 
     function buildCards(arr,type){
       if(!arr.length){
-        return '<div class="empty"><div class="ei">'+(type==='org'?'📋':'🔍')+'</div><p>'+
-          (type==='org'?'لم تنضم لأي بلاغ بعد.<br>تولّ بلاغاً جديداً أو انضم لبلاغ جارٍ.':'لا توجد نتائج تطابق بحثك.')+
-          '</p></div>';
+        return '<div class="empty">' +
+          '<div class="ei"><i class="fas fa-folder-open"></i></div>' +
+          '<div class="empty-title">لا توجد بلاغات</div>' +
+          '<div class="empty-sub">' +
+            (type==='org' ? 'لم تنضم لأي بلاغ بعد.' : 'لا يوجد بلاغات جديدة حالياً.') +
+          '</div>' +
+        '</div>';
       }
       var h='';
       for(var i=0;i<arr.length;i++){
@@ -1350,50 +1459,56 @@ body.reports-page .bov{
 
       document.getElementById('mDesc').textContent=r.desc||'لا توجد تفاصيل إضافية.';
 
-      // ────────────────────────────────────────────────────────────────
-      var rows=[];
-      if(type==='org'){
-        if(r.role==='leader'){
-          rows.push({n:'أنت',p:'0512345678',role:'قائد',c:'#9a7440'});
-          for(var a=0;a<r.mbr.length;a++){
-            if(r.mbr[a].i==='أن') continue;
-            var mm=gm(r.mbr[a].i);
-            rows.push({n:mm.n,p:mm.p,role:'عضو',c:r.mbr[a].c});
-          }
-        } else {
-          rows.push({n:r.ldr,p:r.lph||'—',role:'قائد',c:'#7a5828'});
-          for(var b=0;b<r.mbr.length;b++){
-            var isMe=r.mbr[b].i==='أن';
-            var mm2=gm(r.mbr[b].i);
-            rows.push({n:isMe?'أنت':mm2.n,p:isMe?'0512345678':mm2.p,role:'عضو',c:r.mbr[b].c});
-          }
-        }
-      } else {
-        if(r.ldr) rows.push({n:r.ldr,p:r.lph||'—',role:'قائد',c:'#7a5828'});
-        for(var c=0;c<r.mbr.length;c++){
-          var mm3=gm(r.mbr[c].i);
-          rows.push({n:mm3.n,p:mm3.p,role:'عضو',c:r.mbr[c].c});
+// ─── Build team section by fetching volunteer names from Firestore ───
+document.getElementById('mTeam').innerHTML='<p style="font-size:13px;color:var(--t300);">جارٍ التحميل...</p>';
+
+(async function() {
+  var teamEl = document.getElementById('mTeam');
+  if (!teamEl) return;
+
+  var members = r._teamMembers || [];
+  var leaderId = r._leaderId || '';
+
+  if (members.length === 0) {
+    teamEl.innerHTML = '<p style="font-size:13px;color:var(--t300);">لا يوجد متطوعون بعد.</p>';
+    return;
+  }
+
+  var colors = ['#9a7440','#4060c8','#2d9e52','#c05820','#7a5828','#6b4c2a'];
+  var rows = [];
+
+  for (var mi = 0; mi < members.length; mi++) {
+    var uid = members[mi];
+    var isLead = uid === leaderId;
+    var name = '—', phone = '—';
+    try {
+      if (window._fbGetVolunteerByUid) {
+        var vd = await window._fbGetVolunteerByUid(uid);
+        if (vd) {
+          name = ((vd.FirstName||'') + ' ' + (vd.LastName||'')).trim() || uid.slice(0,8);
+          phone = vd.Phone || '—';
         }
       }
-      var th='';
-      if(rows.length){
-        th='<div style="display:flex;flex-direction:column;gap:7px;">';
-        for(var z=0;z<rows.length;z++){
-          var rw=rows[z], rc=(rw.role==='قائد')?'#b8782a':'#6b4c2a';
-          th+='<div style="display:flex;align-items:center;gap:9px;background:var(--s100);border-radius:10px;padding:10px 12px;">'+
-              '<div class="av" style="background:'+rw.c+';width:32px;height:32px;font-size:10px;flex-shrink:0;">'+rw.n.slice(0,2)+'</div>'+
-              '<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">'+
-              '<span style="font-size:13px;color:var(--t900);font-weight:600;">'+rw.n+'</span>'+
-              '<span style="font-size:10px;padding:2px 6px;border-radius:5px;background:#fff;border:1px solid var(--s300);color:'+rc+';font-weight:700;">'+rw.role+'</span>'+
-              '</div><div style="font-size:11.5px;color:var(--t500);margin-top:1px;">'+rw.p+'</div></div>'+
-              //'<button class="call-btn" data-act="call" data-ph="'+rw.p+'" data-nm="'+rw.n+'" type="button">📞</button>'+
-              '</div>';
-        }
-        th+='</div>';
-      } else {
-        th='<p style="font-size:13px;color:var(--t300);">لا يوجد متطوعون بعد.</p>';
-      }
-      document.getElementById('mTeam').innerHTML=th;
+    } catch(e) { name = uid.slice(0,8); }
+    rows.push({ n: name, p: phone, role: isLead ? 'قائد' : 'عضو', c: colors[mi % colors.length] });
+  }
+
+  rows.sort(function(a,b){ return a.role === 'قائد' ? -1 : b.role === 'قائد' ? 1 : 0; });
+
+  var th = '<div style="display:flex;flex-direction:column;gap:7px;">';
+  for (var z = 0; z < rows.length; z++) {
+    var rw = rows[z], rc = (rw.role === 'قائد') ? '#b8782a' : '#6b4c2a';
+    th += '<div style="display:flex;align-items:center;gap:9px;background:var(--s100);border-radius:10px;padding:10px 12px;">' +
+          '<div class="av" style="background:'+rw.c+';width:32px;height:32px;font-size:10px;flex-shrink:0;">'+(rw.n&&rw.n.length>=2?rw.n.slice(0,2):rw.n)+'</div>' +
+          '<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">' +
+          '<span style="font-size:13px;color:var(--t900);font-weight:600;">'+rw.n+'</span>' +
+          '<span style="font-size:10px;padding:2px 6px;border-radius:5px;background:#fff;border:1px solid var(--s300);color:'+rc+';font-weight:700;">'+rw.role+'</span>' +
+          '</div><div style="font-size:11.5px;color:var(--t500);margin-top:1px;">'+rw.p+'</div></div>' +
+          '</div>';
+  }
+  th += '</div>';
+  if (teamEl) teamEl.innerHTML = th;
+})();
       var fh='';
       if(type==='new'){
         fh='<button class="btn bto" style="width:100%;padding:0.75rem 1.5rem;min-height:44px;" data-act="modal-takeover" data-id="'+id+'" type="button">تولّي البلاغ</button>';
