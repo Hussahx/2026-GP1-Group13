@@ -52,7 +52,7 @@ export async function loginAndRedirect(email, password) {
       const data          = adminSnap.data();
       const accountStatus = (data.AccountStatus || data.accountStatus || "").toLowerCase();
       if (accountStatus === "valid" || accountStatus === "active" || accountStatus === "") {
-        window.location.href = "/Pages/AdminControlPanel.html";
+window.location.href = "/Pages/Control.html";
         return { success: true };
       }
       await signOut(auth);
