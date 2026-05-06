@@ -851,30 +851,37 @@
   margin-bottom: 1.75rem;
 }
 
-    .btn-home {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      height: 48px;
-      padding: 0 1.75rem;
-      border-radius: 50px;
-      font-family: var(--font);
-      font-size: 0.96rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      box-shadow: var(--shadow-btn);
-      transition: var(--transition);
-    }
+   .btn-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 48px;
+  padding: 0 1.75rem;
+  border-radius: 50px;
+  font-family: var(--font);
+  font-size: 0.96rem;
+  font-weight: 700;
+
+  background: rgba(245,239,230,0.92);
+  color: #5C4025;
+
+  border: 1.5px solid rgba(166,124,82,0.22);
+
+  box-shadow: 0 4px 14px rgba(62,47,28,0.06);
+
+  transition: var(--transition);
+  text-decoration: none;
+}
 
     .btn-home:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-btn-hov);
-      color: #fff;
-    }
+  transform: translateY(-2px);
+
+  background: rgba(245,239,230,0.98);
+
+  color: #5C4025;
+
+  box-shadow: 0 8px 22px rgba(62,47,28,0.10);
+}
 
     /* ================================================================
        RESPONSIVE
@@ -1462,7 +1469,30 @@
     .footer-bar { position: relative; z-index: 3; text-align: center; padding: 12px 24px 14px; font-size: 10.5px; color: rgba(255,255,255,0.2); letter-spacing: 2px; border-top: 1px solid rgba(255,255,255,0.06); }
     .footer-dune { position: absolute; bottom: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #7a5028, #9a6838, #836030, #a87848, #7c5830); }
 
+.header-nav a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.45rem;
 
+  padding:.55rem 1.2rem;
+  border-radius:999px;
+
+  background:rgba(245,239,230,0.92);
+  color:#5C4025 !important;
+
+  border:1.5px solid rgba(166,124,82,0.28);
+  box-shadow:0 4px 14px rgba(62,47,28,0.06);
+
+  font-weight:800;
+}
+
+.header-nav a:hover{
+  background:rgba(245,239,230,0.98);
+  color:#5C4025 !important;
+  transform:translateY(-2px);
+  box-shadow:0 8px 22px rgba(62,47,28,0.10);
+}
  
   </style>
 

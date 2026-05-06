@@ -174,6 +174,7 @@ await emailjs.default.send("service_7c6tubl", "template_bb87v3a", {
       skills: Array.isArray(volunteer.Skills) ? volunteer.Skills : [],
       availableDays: Array.isArray(volunteer.AvailableDays) ? volunteer.AvailableDays : [],
       availablePeriod: volunteer.AvailablePeriods || "—",
+      availableSchedule: volunteer.AvailableSchedule || {},
       nationalFile: volunteer.NationalFile || "",
       createdAt: normalizeTimestamp(volunteer.JoinDate)
     };
@@ -296,6 +297,12 @@ function render() {
     const created = new Date(r.createdAt || Date.now());
     const skillsText = r.skills.length ? r.skills.join("، ") : "—";
     const daysText = r.availableDays.length ? r.availableDays.join("، ") : "—";
+
+ const scheduleText = Object.keys(r.availableSchedule || {}).length
+  ? Object.entries(r.availableSchedule)
+      .map(([day, time]) => `${day}: ${time}`)
+      .join(" | ")
+  : "—";
     const fileLink = r.nationalFile
       ? `<a href="${escapeHtml(r.nationalFile)}" target="_blank" rel="noopener noreferrer">عرض الملف</a>`
       : "—";
@@ -338,7 +345,7 @@ function render() {
       <span><strong>تاريخ الميلاد:</strong> ${escapeHtml(r.dob)}</span>
       <span><strong>المهارات:</strong> ${escapeHtml(skillsText)}</span>
       <span><strong>الأيام المتاحة:</strong> ${escapeHtml(daysText)}</span>
-      <span><strong>الفترة:</strong> ${escapeHtml(r.availablePeriod)}</span>
+<span><strong>الفترة:</strong> ${escapeHtml(scheduleText)}</span>
       <span><strong>ملف الهوية:</strong> ${fileLink}</span>
     </div>
 
