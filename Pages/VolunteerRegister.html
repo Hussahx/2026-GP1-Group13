@@ -1493,6 +1493,132 @@
   transform:translateY(-2px);
   box-shadow:0 8px 22px rgba(62,47,28,0.10);
 }
+
+
+.policy-trigger-box{
+  display:flex;
+  flex-direction:column;
+  gap:.75rem;
+}
+
+.policy-btn{
+  width:100%;
+  min-height:64px;
+
+  border-radius:28px;
+
+border:2px solid rgba(166,124,82,0.55);
+background:#fff;
+  color: var(--ink);
+
+  font-family:'Tajawal',sans-serif;
+  font-size:1rem;
+  font-weight:800;
+
+  cursor:pointer;
+
+  transition:.25s;
+  box-shadow:0 10px 26px rgba(62,47,28,0.06);
+}
+
+.policy-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 28px rgba(62,47,28,0.08);
+}
+
+.policy-status{
+  text-align:center;
+  font-weight:800;
+  color:#9A744A;
+  font-size:.92rem;
+}
+
+.policy-modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+
+  display:none;
+  align-items:center;
+  justify-content:center;
+
+  padding:20px;
+
+  z-index:3000;
+}
+
+.policy-modal{
+  width:min(760px,100%);
+  max-height:88vh;
+
+  overflow:hidden;
+
+  border-radius:34px;
+
+  background:rgba(255,255,255,.96);
+
+  border:1px solid rgba(255,255,255,.55);
+
+  box-shadow:0 30px 80px rgba(42,36,28,.18);
+
+  backdrop-filter:blur(18px);
+}
+
+.policy-modal-header{
+  padding:1.4rem 1.6rem .8rem;
+  text-align:center;
+}
+
+.policy-modal-header h3{
+  margin:0;
+
+  font-size:1.7rem;
+  font-weight:900;
+
+  color:var(--ink);
+}
+
+.policy-modal-body{
+  padding:0 1.6rem 1rem;
+}
+
+.policy-box{
+  background:#F5EFE6;
+
+  border:1.5px solid rgba(166,124,82,0.18);
+
+  border-radius:28px;
+
+  padding:1.3rem;
+
+  max-height:45vh;
+
+  overflow:auto;
+
+  line-height:2.1;
+
+  color:#5C4630;
+
+  font-weight:700;
+}
+
+.policy-modal-footer{
+  padding:1rem 1.6rem 1.5rem;
+
+  display:flex;
+  gap:.8rem;
+
+  justify-content:flex-end;
+}
+
+.policy-modal-footer .btn.secondary{
+  background:#F5EFE6;
+  color:#8B6B47;
+
+  border:2px solid rgba(166,124,82,0.45);
+
+  box-shadow:none;
+}
  
   </style>
 
@@ -1894,11 +2020,17 @@
               </div>
 
               <div class="form-group">
-                <label class="consent-item" id="c2wrap">
-                  <input type="checkbox" id="consent2" name="consent2"
-                    aria-required="true" aria-describedby="e-consent2" />
-                  <span>أوافق على سياسة الخصوصية واستخدام بياناتي لأغراض البحث والإنقاذ فقط.</span>
-                </label>
+                <div class="agree-box policy-trigger-box">
+  <button type="button" id="openPolicyBtn" class="policy-btn">
+    قراءة سياسة الخصوصية واستخدام البيانات
+  </button>
+
+  <div class="policy-status" id="policyStatus">
+    لم تتم الموافقة بعد
+  </div>
+
+  <input type="hidden" id="privacyAgree" value="false">
+</div>
                 <span class="field-error" id="e-consent2" role="alert"></span>
               </div>
             </div>
@@ -2145,7 +2277,14 @@
           setErr(phone, 'e-phone', 'رقم الجوال يجب أن يتكون من 10 أرقام بالضبط.'); ok = false;
         } else if (existingPhones.includes(pv)) {
           setErr(phone, 'e-phone', 'رقم الجوال مسجل مسبقاً'); ok = false;
-        } else { setErr(phone, 'e-phone', ''); }
+        } else {
+  if (phone.dataset.duplicate === 'true') {
+    setErr(phone, 'e-phone', 'رقم الجوال مسجل مسبقًا كمتطوع.');
+    ok = false;
+  } else {
+    setErr(phone, 'e-phone', '');
+  }
+}
 
         /* email */
         const ev = email.value.trim();
@@ -2153,8 +2292,22 @@
           setErr(email, 'e-email', 'الرجاء إدخال البريد الإلكتروني.'); ok = false;
         } else if (!RE_EMAIL.test(ev)) {
           setErr(email, 'e-email', 'الرجاء إدخال بريد إلكتروني صحيح.'); ok = false;
-        } else { setErr(email, 'e-email', ''); }
+        } else {
+  if (email.dataset.duplicate === 'true') {
+    setErr(email, 'e-email', 'هذا البريد الإلكتروني مسجل مسبقًا كمتطوع.');
+    ok = false;
+  } else {
+    setErr(email, 'e-email', '');
+  }
+}
 
+
+        if (
+  phone.dataset.duplicate === 'true' ||
+  email.dataset.duplicate === 'true'
+) {
+  ok = false;
+}
         /* city */
         if (!city.value) {
           setErr(city, 'e-city', 'الرجاء اختيار المدينة أو المنطقة.'); ok = false;
@@ -2166,6 +2319,9 @@
           if (t) t.classList.remove('is-invalid');
         }
 
+        if (phone.classList.contains('is-invalid') || email.classList.contains('is-invalid')) {
+  ok = false;
+}
         if (!ok) {
           const first = document.querySelector('#step1 .is-invalid');
           if (first) first.focus();
@@ -2187,8 +2343,19 @@
           setErr(natId, 'e-natId', 'رقم الهوية يجب أن يتكون من 10 أرقام بالضبط.'); ok = false;
         } else if (existingIDs.includes(nv)) {
           setErr(natId, 'e-natId', 'رقم الهوية مسجل مسبقاً'); ok = false;
-        } else { setErr(natId, 'e-natId', ''); }
+        } else {
+  if (natId.dataset.duplicate === 'true') {
+    setErr(natId, 'e-natId', 'رقم الهوية مسجل مسبقًا كمتطوع.');
+    ok = false;
+  } else {
+    setErr(natId, 'e-natId', '');
+  }
+}
 
+
+        if (natId.dataset.duplicate === 'true') {
+  ok = false;
+}
         /* تاريخ الميلاد – required + min age 18 */
         if (!dob.value) {
           setErr(dob, 'e-dob', 'الرجاء تحديد تاريخ الميلاد.'); ok = false;
@@ -2217,6 +2384,9 @@
           fileInput.closest('.file-wrap').querySelector('.file-label').style.borderColor = '';
         }
 
+        if (natId.classList.contains('is-invalid')) {
+  ok = false;
+}
         if (!ok) {
           const first = document.querySelector('#step2 .is-invalid');
           if (first) first.focus();
@@ -2227,15 +2397,26 @@
 
       else if (n === 4) {
         const c1 = document.getElementById('consent1');
-        const c2 = document.getElementById('consent2');
 
         if (!c1.checked) {
           setConsentErr('c1wrap', 'e-consent1', 'يجب الإقرار بصحة المعلومات للمتابعة.'); ok = false;
         } else { setConsentErr('c1wrap', 'e-consent1', ''); }
 
-        if (!c2.checked) {
-          setConsentErr('c2wrap', 'e-consent2', 'يجب الموافقة على سياسة الخصوصية للمتابعة.'); ok = false;
-        } else { setConsentErr('c2wrap', 'e-consent2', ''); }
+        const privacyAgree = document.getElementById('privacyAgree');
+
+if (privacyAgree?.value !== 'true') {
+
+  document.getElementById('policyStatus').textContent =
+    'يجب قراءة سياسة الخصوصية والموافقة عليها قبل الإرسال.';
+
+  ok = false;
+
+} else {
+
+  document.getElementById('policyStatus').textContent =
+    'تمت الموافقة على سياسة الخصوصية';
+
+}
 
         if (!ok) document.getElementById('consent1').focus();
       }
@@ -2252,7 +2433,13 @@
                          .map(el => el.value).join('، ') || 'لم تُحدَّد';
       const days   = Array.from(document.querySelectorAll('input[name="days"]:checked'))
                          .map(el => el.value).join('، ') || 'لم تُحدَّد';
-      const period = document.querySelector('input[name="period"]:checked')?.value || 'لم تُحدَّد';
+      const selectedSchedules = Array.from(document.querySelectorAll('input[name="days"]:checked'))
+  .map(cb => {
+    const day = cb.value;
+    const time = document.querySelector(`select[name="time-${day}"]`)?.value || 'غير محدد';
+    return `${day}: ${time}`;
+  })
+  .join('، ') || 'لم تُحدَّد';
 
       const rows = [
         { k: 'الاسم الكامل', v: ((g('firstName') + ' ' + g('lastName')).trim()) || '—' },
@@ -2261,7 +2448,7 @@
         { k: 'المدينة',              v: g('city')     || '—' },
         { k: 'المهارات',             v: skills },
         { k: 'الأيام المتاحة',       v: days },
-        { k: 'الفترة',               v: period },
+        { k: 'الفترة', v: selectedSchedules },
       ];
 
       document.getElementById('summaryContent').innerHTML =
@@ -2423,7 +2610,72 @@
 
 
 
+async function liveDuplicateCheck(field, value, inputId, errorId, message) {
+  if (!value) return;
 
+  const [{ db }, fsMod] = await Promise.all([
+    import('/JS/firebase.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+  ]);
+
+  const { collection, query, where, getDocs } = fsMod;
+
+  const q = query(
+    collection(db, 'Volunteer'),
+    where(field, '==', value),
+    where('ApprovalStatus', '==', 'approved')
+  );
+
+  const snap = await getDocs(q);
+
+  const input = document.getElementById(inputId);
+  const error = document.getElementById(errorId);
+
+  if (!input || !error) return;
+
+  if (!snap.empty) {
+    input.classList.add('is-invalid');
+    error.textContent = message;
+
+    input.dataset.duplicate = 'true';
+  } else {
+    input.classList.remove('is-invalid');
+    error.textContent = '';
+    delete input.dataset.duplicate;
+  }
+}
+
+
+
+document.getElementById('email')?.addEventListener('blur', async e => {
+  await liveDuplicateCheck(
+    'Email',
+    e.target.value.trim(),
+    'email',
+    'e-email',
+    'هذا البريد الإلكتروني مسجل مسبقًا كمتطوع.'
+  );
+});
+
+document.getElementById('phone')?.addEventListener('blur', async e => {
+  await liveDuplicateCheck(
+    'Phone',
+    e.target.value.trim(),
+    'phone',
+    'e-phone',
+    'رقم الجوال مسجل مسبقًا كمتطوع.'
+  );
+});
+
+document.getElementById('natId')?.addEventListener('blur', async e => {
+  await liveDuplicateCheck(
+    'NationalID',
+    e.target.value.trim(),
+    'natId',
+    'e-natId',
+    'رقم الهوية مسجل مسبقًا كمتطوع.'
+  );
+});
 
        async function handleSubmit() {
   const originalBtnHtml = btnNext.innerHTML;
@@ -2441,7 +2693,7 @@ console.log('A-start');
       import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js')
     ]);console.log('B-imports-loaded');
 
-    const { collection, addDoc, serverTimestamp } = fsMod;
+const { collection, addDoc, serverTimestamp, query, where, getDocs } = fsMod;
     const { getStorage, ref, uploadBytes, getDownloadURL } = storageMod;
 
     const firstName  = document.getElementById('firstName')?.value.trim() || '';
@@ -2478,7 +2730,46 @@ console.log('A-start');
 });
 
 
+async function isApprovedDuplicate(field, value) {
+  const q = query(
+    collection(db, 'Volunteer'),
+    where(field, '==', value),
+    where('ApprovalStatus', '==', 'approved')
+  );
 
+  const snap = await getDocs(q);
+  return !snap.empty;
+}
+
+if (await isApprovedDuplicate('Email', email)) {
+  document.getElementById('email')?.classList.add('is-invalid');
+  document.getElementById('e-email').textContent = 'هذا البريد الإلكتروني مسجل مسبقًا كمتطوع.';
+currentStep = 1;
+showStep(1);
+  btnNext.disabled = false;
+  btnNext.innerHTML = originalBtnHtml;
+  return;
+}
+
+if (await isApprovedDuplicate('Phone', phone)) {
+  document.getElementById('phone')?.classList.add('is-invalid');
+  document.getElementById('e-phone').textContent = 'رقم الجوال مسجل مسبقًا كمتطوع.';
+currentStep = 1;
+showStep(1);
+  btnNext.disabled = false;
+  btnNext.innerHTML = originalBtnHtml;
+  return;
+}
+
+if (await isApprovedDuplicate('NationalID', nationalId)) {
+  document.getElementById('natId')?.classList.add('is-invalid');
+  document.getElementById('e-natId').textContent = 'رقم الهوية مسجل مسبقًا كمتطوع.';
+currentStep = 2;
+showStep(2);
+  btnNext.disabled = false;
+  btnNext.innerHTML = originalBtnHtml;
+  return;
+}
 
 
 let nationalFileURL = '';
@@ -2500,33 +2791,7 @@ if (idFile) {
 
 
 
-    // ── التحقق: هل الإيميل مسجّل مسبقاً؟ ──────────────────
-    try {
-      const { getFirestore, collection, query, where, getDocs: getDocsCheck } =
-        await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-      const dbCheck = getFirestore(app);
-      const emailQ  = query(collection(dbCheck, 'Volunteer'), where('Email', '==', email));
-      const emailSnap = await getDocsCheck(emailQ);
-      if (!emailSnap.empty) {
-        // إيميل موجود — أظهر رسالة خطأ وأوقف التسجيل
-        const emailEl  = document.getElementById('email');
-        const emailErr = document.getElementById('e-email');
-        if (emailEl)  emailEl.classList.add('is-invalid');
-        if (emailErr) emailErr.textContent = 'تعذّر إنشاء الحساب، يرجى التحقق من البيانات المُدخلة.';
-        // ارجع للـ step الأول
-        goToStep(1);
-        if (emailEl) emailEl.focus();
-        // أعد تفعيل زر الإرسال
-        const sb = document.getElementById('submitBtn');
-        if (sb) { sb.disabled = false; sb.textContent = 'إرسال الطلب'; }
-        return;
-      }
-    } catch (_emailCheckErr) {
-      // فشل التحقق — كمّل الإرسال بدون توقف
-    }
-
-    console.log('D-before-addDoc');
-
+    
 
 
     await addDoc(collection(db, 'Volunteer'), {
@@ -2737,6 +3002,80 @@ alert(error.message || 'حدث خطأ أثناء إرسال الطلب. حاول
        ───────────────────────────────────────────────────── */
     showStep(1);
   </script>
+<div class="policy-modal-backdrop" id="policyModal">
 
+  <div class="policy-modal">
+
+    <div class="policy-modal-header">
+      <h3>سياسة الخصوصية</h3>
+    </div>
+
+    <div class="policy-modal-body">
+
+      <div class="policy-box">
+
+        <p>
+          أي معلومات شخصية يتم إدخالها في هذا النموذج تعتبر معلومات خاصة وسرية،
+          وتشمل الاسم، رقم الجوال، البريد الإلكتروني، رقم الهوية الوطنية،
+          تاريخ الميلاد، والملفات المرفوعة.
+        </p>
+
+        <p>
+          تُستخدم هذه البيانات فقط لأغراض تنظيم عمليات البحث والإنقاذ،
+          والتواصل مع المتطوعين، والتحقق من الهوية،
+          ولن يتم مشاركة البيانات مع أي جهة غير مخولة.
+        </p>
+
+        <p>
+          يحق لإدارة المنصة الاحتفاظ بالبيانات ضمن قواعد البيانات الداخلية
+          بما يخدم سلامة العمليات وتنظيم فرق التطوع.
+        </p>
+
+        <p>
+          باستخدامك لهذا النموذج فإنك توافق على جمع بياناتك
+          ومعالجتها وفق سياسة الخصوصية الخاصة بمنصة راصد.
+        </p>
+
+      </div>
+
+    </div>
+
+    <div class="policy-modal-footer">
+
+      <button type="button" class="btn secondary" id="closePolicyBtn">
+        تراجع
+      </button>
+
+      <button type="button" class="btn" id="acceptPolicyBtn">
+        أوافق
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const policyModal = document.getElementById('policyModal');
+
+document.getElementById('openPolicyBtn')?.addEventListener('click', () => {
+  policyModal.style.display = 'flex';
+});
+
+document.getElementById('closePolicyBtn')?.addEventListener('click', () => {
+  policyModal.style.display = 'none';
+});
+
+document.getElementById('acceptPolicyBtn')?.addEventListener('click', () => {
+
+  document.getElementById('privacyAgree').value = 'true';
+
+  document.getElementById('policyStatus').textContent =
+    'تمت الموافقة على سياسة الخصوصية';
+
+  policyModal.style.display = 'none';
+});
+</script>
 </body>
 </html>
