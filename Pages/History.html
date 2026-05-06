@@ -53,6 +53,233 @@
       gap: 0.65rem;
     }
     .error-banner.visible { display: flex; }
+  
+    /* ══════════════════════════════════════════
+       UNIFIED SELECT / DROPDOWN STYLE — راصد
+       ══════════════════════════════════════════ */
+    select,
+    .sselect,
+    .asselect,
+    /* Hide native selects — replaced by custom dropdown */
+    #regionSelect,
+    #sortSelect {
+      display: none !important;
+    }
+
+    .sort-select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #5C4530;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A67C52' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")
+        no-repeat left 0.85rem center / 12px 8px,
+        rgba(245, 239, 230, 0.85);
+      border: 1.5px solid rgba(166, 124, 82, 0.28);
+      border-radius: 22px;
+      padding: 9px 0.95rem 9px 2.2rem;
+      outline: none;
+      cursor: pointer;
+      direction: rtl;
+      text-align: right;
+      transition: border-color 0.22s ease, background-color 0.22s ease, box-shadow 0.22s ease;
+      box-shadow: 0 2px 8px rgba(62, 47, 28, 0.06);
+      min-width: 120px;
+    }
+    select:hover,
+    .sselect:hover,
+    .asselect:hover,
+    .sort-select:hover {
+      border-color: rgba(166, 124, 82, 0.52);
+      background-color: rgba(245, 239, 230, 1);
+    }
+    select:focus,
+    .sselect:focus,
+    .asselect:focus,
+    .sort-select:focus {
+      border-color: rgba(166, 124, 82, 0.70);
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(166, 124, 82, 0.13), 0 2px 8px rgba(62, 47, 28, 0.08);
+    }
+    /* Full-width selects inside modals/panels */
+    #statusPanelSelect,
+    #usStatusSelect,
+    #usOutcomeSelect {
+      border-radius: 14px !important;
+      padding: 0 0.95rem 0 2.2rem !important;
+      height: 48px !important;
+      font-size: 0.93rem !important;
+      width: 100% !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A67C52' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")
+        no-repeat left 0.85rem center / 12px 8px,
+        rgba(245, 239, 230, 0.85) !important;
+      border: 1.5px solid rgba(166, 124, 82, 0.28) !important;
+      color: #3E2F1C !important;
+      font-family: 'Tajawal', sans-serif !important;
+      font-weight: 700 !important;
+      outline: none !important;
+      cursor: pointer !important;
+      direction: rtl !important;
+      box-shadow: 0 2px 8px rgba(62, 47, 28, 0.06) !important;
+      transition: border-color 0.22s ease, box-shadow 0.22s ease !important;
+    }
+    #statusPanelSelect:hover,
+    #usStatusSelect:hover,
+    #usOutcomeSelect:hover {
+      border-color: rgba(166, 124, 82, 0.52) !important;
+    }
+    #statusPanelSelect:focus,
+    #usStatusSelect:focus,
+    #usOutcomeSelect:focus {
+      border-color: rgba(166, 124, 82, 0.70) !important;
+      background-color: #fff !important;
+      box-shadow: 0 0 0 3px rgba(166, 124, 82, 0.13), 0 2px 8px rgba(62, 47, 28, 0.08) !important;
+    }
+
+  
+    /* ══════════════════════════════════════════════════════
+       CUSTOM DROPDOWN — نفس ستايل VolunteerRegister
+       ══════════════════════════════════════════════════════ */
+    .cd-native-hidden { display: none !important; }
+
+    .custom-dropdown {
+      position: relative;
+      font-family: 'Tajawal', sans-serif;
+      direction: rtl;
+      display: inline-block;
+    }
+
+    .cd-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-width: 120px;
+      height: 40px;
+      padding: 0 0.9rem;
+      border: 1.5px solid rgba(166,124,82,0.28);
+      border-radius: 22px;
+      background: rgba(245,239,230,0.85);
+      color: #5C4530;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color 0.22s ease, background-color 0.22s ease, box-shadow 0.22s ease;
+      outline: none;
+      user-select: none;
+      text-align: right;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(62,47,28,0.06);
+    }
+
+    .cd-trigger:hover {
+      border-color: rgba(166,124,82,0.52);
+      background: rgba(245,239,230,1);
+    }
+
+    .cd-trigger.open,
+    .cd-trigger:focus {
+      border-color: rgba(166,124,82,0.70);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(166,124,82,0.13), 0 2px 8px rgba(62,47,28,0.08);
+    }
+
+    .cd-trigger-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cd-arrow {
+      flex-shrink: 0;
+      margin-right: 0.55rem;
+      color: #A67C52;
+      font-size: 0.72rem;
+      transition: transform 0.22s ease;
+    }
+
+    .cd-trigger.open .cd-arrow { transform: rotate(180deg); }
+
+    .cd-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 5px);
+      right: 0;
+      left: 0;
+      min-width: 100%;
+      z-index: 9999;
+      background: #fff;
+      border: 1.5px solid rgba(166,124,82,0.45);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(62,47,28,0.14), 0 2px 8px rgba(62,47,28,0.06);
+      overflow: hidden;
+      animation: cdSlideDown 0.18s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .cd-panel.open { display: block; }
+
+    @keyframes cdSlideDown {
+      from { opacity: 0; transform: translateY(-6px) scaleY(0.96); }
+      to   { opacity: 1; transform: translateY(0)    scaleY(1); }
+    }
+
+    .cd-list {
+      max-height: 240px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0.3rem 0;
+    }
+
+    .cd-list::-webkit-scrollbar { width: 4px; }
+    .cd-list::-webkit-scrollbar-track { background: transparent; }
+    .cd-list::-webkit-scrollbar-thumb { background: rgba(166,124,82,0.28); border-radius: 4px; }
+
+    .cd-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.91rem;
+      font-family: 'Tajawal', sans-serif;
+      color: #5C4530;
+      cursor: pointer;
+      transition: background 0.13s ease, color 0.13s ease;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .cd-option:hover,
+    .cd-option.focused { background: rgba(166,124,82,0.09); color: #A67C52; }
+
+    .cd-option.selected {
+      background: rgba(166,124,82,0.13);
+      color: #8B6B47;
+      font-weight: 700;
+    }
+
+    .cd-option.selected::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      font-size: 0.72rem;
+      color: #A67C52;
+      margin-right: auto;
+      padding-right: 0.5rem;
+    }
+
+    /* Full-width modal/panel variant */
+    .cd-full { display: block; width: 100%; }
+    .cd-full .cd-trigger { border-radius: 14px; height: 48px; font-size: 0.93rem; }
+    .cd-full .cd-panel   { border-radius: 14px; }
+
   </style>
 </head>
 <body>
@@ -870,34 +1097,22 @@
 
     // Fetch user profile for header + sidebar
     try {
-      const userSnap = await getDoc(doc(db, 'User', user.uid));
-      if (userSnap.exists()) {
-        const { FirstName, LastName, role } = userSnap.data();
-        const fullName = `${FirstName || ''} ${LastName || ''}`.trim();
-        const initial  = FirstName ? FirstName.charAt(0) : '?';
-
-        const nameEl    = document.getElementById('userName');
-        const initialEl = document.getElementById('userInitial');
-        if (nameEl)    nameEl.textContent    = fullName;
-        if (initialEl) initialEl.textContent = initial;
-
+      const nameEl    = document.getElementById('userName');
+      const initialEl = document.getElementById('userInitial');
+      const vSnap = await getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', user.uid)));
+      if (!vSnap.empty) {
+        const { FirstName, LastName, role } = vSnap.docs[0].data();
+        const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
+        if (nameEl)    nameEl.textContent    = fullName || 'غير متاح';
+        if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '؟';
         currentRole = role || 'volunteer';
-        renderMenu(currentRole);
       } else {
-        // Check Volunteer collection
-        const volSnap = await getDoc(doc(db, 'Volunteer', user.uid));
-        if (volSnap.exists()) {
-          const { FirstName, LastName } = volSnap.data();
-          const fullName = `${FirstName || ''} ${LastName || ''}`.trim();
-          const initial  = FirstName ? FirstName.charAt(0) : '?';
-          const nameEl    = document.getElementById('userName');
-          const initialEl = document.getElementById('userInitial');
-          if (nameEl)    nameEl.textContent    = fullName;
-          if (initialEl) initialEl.textContent = initial;
-        }
+        const fallback = user.displayName || user.email || 'غير متاح';
+        if (nameEl)    nameEl.textContent    = fallback;
+        if (initialEl) initialEl.textContent = fallback.charAt(0).toUpperCase();
         currentRole = 'volunteer';
-        renderMenu('volunteer');
       }
+      renderMenu(currentRole);
     } catch (e) {
       console.warn('Profile fetch failed:', e);
       renderMenu('volunteer');
@@ -908,5 +1123,137 @@
   });
   </script>
 
+  <script>
+  /* ── Custom Dropdown Factory ─────────────────────────── */
+  (function() {
+    function initCustomDropdown(selectEl, opts) {
+      opts = opts || {};
+      if (!selectEl || selectEl._cdInit) return;
+      selectEl._cdInit = true;
+      selectEl.classList.add('cd-native-hidden');
+
+      var wrapper = document.createElement('div');
+      wrapper.className = 'custom-dropdown' + (opts.fullWidth ? ' cd-full' : '');
+
+      var trigger = document.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'cd-trigger';
+
+      var triggerText = document.createElement('span');
+      triggerText.className = 'cd-trigger-text';
+
+      var arrow = document.createElement('i');
+      arrow.className = 'fas fa-chevron-down cd-arrow';
+      arrow.setAttribute('aria-hidden', 'true');
+
+      trigger.appendChild(triggerText);
+      trigger.appendChild(arrow);
+
+      var panel = document.createElement('div');
+      panel.className = 'cd-panel';
+
+      var listEl = document.createElement('div');
+      listEl.className = 'cd-list';
+      panel.appendChild(listEl);
+
+      wrapper.appendChild(trigger);
+      wrapper.appendChild(panel);
+      selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+
+      var isOpen = false;
+      var focusedIdx = -1;
+
+      function getOptions() {
+        return Array.from(selectEl.options).filter(function(o) { return o.value !== ''; });
+      }
+
+      function setLabel() {
+        var cur = selectEl.options[selectEl.selectedIndex];
+        if (cur && cur.value !== '') {
+          triggerText.textContent = cur.text;
+          trigger.classList.add('has-value');
+        } else {
+          var ph = opts.placeholder || (selectEl.options[0] && selectEl.options[0].value === '' ? selectEl.options[0].text : 'اختر...');
+          triggerText.textContent = ph;
+          trigger.classList.remove('has-value');
+        }
+      }
+
+      function buildList() {
+        listEl.innerHTML = '';
+        focusedIdx = -1;
+        getOptions().forEach(function(o) {
+          var div = document.createElement('div');
+          div.className = 'cd-option' + (o.value === selectEl.value ? ' selected' : '');
+          div.textContent = o.text;
+          div.setAttribute('role', 'option');
+          div.setAttribute('data-value', o.value);
+          div.addEventListener('mousedown', function(e) { e.preventDefault(); pick(o.value); });
+          listEl.appendChild(div);
+        });
+      }
+
+      function pick(val) {
+        selectEl.value = val;
+        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof selectEl.onchange === 'function') selectEl.onchange();
+        setLabel(); closePanel(); trigger.focus(); buildList();
+      }
+
+      function openPanel() {
+        isOpen = true; buildList();
+        panel.classList.add('open');
+        trigger.classList.add('open');
+        var items = listEl.querySelectorAll('.cd-option');
+        focusedIdx = -1;
+        items.forEach(function(o, i) { if (o.classList.contains('selected')) focusedIdx = i; });
+        requestAnimationFrame(function() { if (focusedIdx >= 0) setFocused(focusedIdx); });
+      }
+
+      function closePanel() {
+        isOpen = false;
+        panel.classList.remove('open');
+        trigger.classList.remove('open');
+        focusedIdx = -1;
+        listEl.querySelectorAll('.cd-option.focused').forEach(function(o) { o.classList.remove('focused'); });
+      }
+
+      function setFocused(idx) {
+        var items = listEl.querySelectorAll('.cd-option');
+        items.forEach(function(o, i) { o.classList.toggle('focused', i === idx); });
+        if (items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+        focusedIdx = idx;
+      }
+
+      trigger.addEventListener('click', function() { isOpen ? closePanel() : openPanel(); });
+
+      trigger.addEventListener('keydown', function(e) {
+        var items = listEl.querySelectorAll('.cd-option');
+        if (!isOpen) {
+          if (['Enter',' ','ArrowDown','ArrowUp'].indexOf(e.key) !== -1) { e.preventDefault(); openPanel(); }
+          return;
+        }
+        if (e.key === 'ArrowDown') { e.preventDefault(); setFocused(Math.min(focusedIdx+1, items.length-1)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); setFocused(Math.max(focusedIdx-1, 0)); }
+        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (focusedIdx >= 0 && items[focusedIdx]) pick(items[focusedIdx].dataset.value); }
+        else if (e.key === 'Escape' || e.key === 'Tab') { if (e.key === 'Escape') e.preventDefault(); closePanel(); }
+      });
+
+      document.addEventListener('mousedown', function(e) { if (isOpen && !wrapper.contains(e.target)) closePanel(); });
+
+      new MutationObserver(function() { setLabel(); if (isOpen) buildList(); }).observe(selectEl, { childList: true });
+
+      setLabel();
+      return { open: openPanel, close: closePanel, pick: pick, refresh: setLabel };
+    }
+
+    window.initCustomDropdown = initCustomDropdown;
+  })();
+  </script>
+
+  <script>
+    (function(){ var el = document.getElementById('regionSelect'); if(el) initCustomDropdown(el, {fullWidth: false}); })();
+    (function(){ var el = document.getElementById('sortSelect'); if(el) initCustomDropdown(el, {fullWidth: false}); })();
+  </script>
 </body>
 </html>

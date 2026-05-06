@@ -1356,93 +1356,145 @@ body {
 .del-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(20,10,0,.62);
+  background: rgba(42, 31, 18, 0.52);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1.25rem;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .22s;
+  transition: opacity 0.25s ease;
 }
 .del-overlay.on {
   opacity: 1;
   pointer-events: all;
 }
 .del-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 32px 28px 26px;
-  width: 340px;
-  max-width: 90vw;
+  background: rgba(255, 250, 242, 0.96);
+  border: 1px solid rgba(166,124,82,0.20);
+  border-radius: 18px;
+  width: min(420px, 100%);
   font-family: 'Tajawal', sans-serif;
   direction: rtl;
-  text-align: center;
-  box-shadow: 0 16px 48px rgba(0,0,0,.22);
-  transform: translateY(16px) scale(.97);
-  transition: transform .24s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 24px 70px rgba(42, 31, 18, 0.25);
+  overflow: hidden;
+  transform: translateY(14px);
+  opacity: 0;
+  transition: transform 0.22s ease-out, opacity 0.22s ease-out;
 }
 .del-overlay.on .del-card {
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
+  opacity: 1;
+}
+/* Header */
+.del-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid rgba(166,124,82,0.14);
+  background: linear-gradient(135deg, rgba(194,164,119,0.16), rgba(139,107,71,0.10));
 }
 .del-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #fff0ee;
-  border: 2px solid #ffd0cc;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #c0392b, #962d22);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
-  font-size: 24px;
+  font-size: 1rem;
+  box-shadow: 0 10px 24px rgba(192,57,43,0.22);
+  flex-shrink: 0;
 }
 .del-title {
-  font-size: 17px;
-  font-weight: 800;
-  color: #2c1a08;
-  margin-bottom: 8px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #3E2F1C;
+  margin: 0;
+}
+.del-close-btn {
+  margin-right: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(166,124,82,0.18);
+  background: rgba(255,255,255,0.55);
+  color: #3E2F1C;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: background 0.22s, transform 0.18s;
+  flex-shrink: 0;
+}
+.del-close-btn:hover { background: rgba(166,124,82,0.10); transform: translateY(-1px); }
+/* Body */
+.del-body {
+  padding: 1.1rem;
+  text-align: right;
 }
 .del-sub {
-  font-size: 13px;
+  font-size: 0.88rem;
   color: #7a5838;
-  line-height: 1.7;
-  margin-bottom: 24px;
+  line-height: 1.75;
+  margin-bottom: 1.2rem;
+  padding: 0.85rem 0.95rem;
+  background: rgba(245,239,230,0.75);
+  border: 1px solid rgba(166,124,82,0.14);
+  border-radius: 10px;
 }
 .del-sub strong { color: #c0392b; }
 .del-actions {
   display: flex;
-  gap: 10px;
+  gap: 0.65rem;
 }
 .del-confirm-btn {
   flex: 1;
-  padding: 12px;
-  background: linear-gradient(135deg, #c0392b, #96281b);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #c0392b, #962d22);
   color: #fff;
   border: none;
-  border-radius: 12px;
   font-family: 'Tajawal', sans-serif;
-  font-size: 14px;
+  font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity .15s;
+  box-shadow: 0 4px 18px rgba(192,57,43,0.28);
+  transition: all 0.22s ease;
 }
-.del-confirm-btn:active { opacity: .8; }
-.del-confirm-btn:disabled { opacity: .5; cursor: not-allowed; }
+.del-confirm-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(192,57,43,0.40); background: linear-gradient(135deg, #962d22, #7a2318); }
+.del-confirm-btn:active { transform: translateY(0); }
+.del-confirm-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .del-cancel-btn {
   flex: 1;
-  padding: 12px;
-  background: #f5efe6;
-  color: #7a5838;
-  border: 1.5px solid rgba(166,124,82,.2);
-  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  background: transparent;
+  color: #3E2F1C;
+  border: 2px solid rgba(166,124,82,0.25);
   font-family: 'Tajawal', sans-serif;
-  font-size: 14px;
+  font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background .15s;
+  transition: all 0.22s ease;
 }
-.del-cancel-btn:hover { background: #ede0cc; }
+.del-cancel-btn:hover { border-color: #A67C52; color: #8B6B47; background: rgba(166,124,82,0.07); transform: translateY(-2px); }
 
 /* ══════════════════════════════════════════
    CITY DROPDOWN — profile edit mode
@@ -1914,16 +1966,21 @@ body {
 <!-- Modal تأكيد حذف الحساب -->
 <div class="del-overlay" id="delOverlay">
   <div class="del-card">
-    <div class="del-icon">🗑️</div>
-    <div class="del-title">حذف الحساب</div>
-    <div class="del-sub">
-      هل أنت متأكد أنك تريد حذف حسابك؟<br>
-      سيتم تغيير حالة حسابك إلى <strong>غير فعّال</strong><br>
-      ولن تتمكن من الوصول للمنصة.
+    <div class="del-header">
+      <div class="del-icon"><i class="fas fa-trash-can"></i></div>
+      <div class="del-title">حذف الحساب</div>
+      <button class="del-close-btn" onclick="closeDeleteModal()" type="button"><i class="fas fa-xmark"></i></button>
     </div>
-    <div class="del-actions">
-      <button class="del-confirm-btn" id="delConfirmBtn" onclick="executeDeleteAccount()">نعم، اتعطيل حسابي</button>
-      <button class="del-cancel-btn" onclick="closeDeleteModal()">إلغاء</button>
+    <div class="del-body">
+      <div class="del-sub">
+        هل أنت متأكد أنك تريد حذف حسابك؟<br>
+        سيتم تغيير حالة حسابك إلى <strong>غير فعّال</strong><br>
+        ولن تتمكن من الوصول للمنصة.
+      </div>
+      <div class="del-actions">
+        <button class="del-cancel-btn" onclick="closeDeleteModal()"><i class="fas fa-arrow-right"></i> إلغاء</button>
+        <button class="del-confirm-btn" id="delConfirmBtn" onclick="executeDeleteAccount()"><i class="fas fa-trash-can"></i> تعطيل حسابي</button>
+      </div>
     </div>
   </div>
 </div>

@@ -238,32 +238,34 @@
     .modal-backdrop{
       position:fixed;
       inset:0;
-      background: rgba(0,0,0,.55);
+      background: rgba(42, 31, 18, 0.52);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       display:none;
       align-items:center;
       justify-content:center;
-      padding: 18px;
+      padding: 1.25rem;
       z-index: 1000;
     }
 
     .modal{
-      width: min(900px, 100%);
-      background: var(--glass);
-      border: 1px solid var(--glass-edge);
-      border-radius: var(--radius-card);
-      box-shadow: 0 22px 70px rgba(42,36,28,.18);
-      overflow:hidden;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      animation: fadeUp .25s var(--ease-out) both;
+      width: min(600px, 100%);
+      background: rgba(255, 250, 242, 0.96);
+      border: 1px solid rgba(166,124,82,0.20);
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(42, 31, 18, 0.25);
+      overflow: hidden;
+      font-family: 'Tajawal', sans-serif;
+      animation: usModalIn 0.22s ease-out both;
     }
 
     .mhd{
-      padding: 1rem 1.1rem;
       display:flex;
       align-items:center;
       gap:.75rem;
-      border-bottom: 1px solid rgba(231,221,207,.95);
+      padding:1rem 1.1rem;
+      border-bottom: 1px solid rgba(166,124,82,0.14);
+      background: linear-gradient(135deg, rgba(194,164,119,0.16), rgba(139,107,71,0.10));
       flex-wrap:wrap;
     }
 
@@ -346,6 +348,227 @@
       .select{ width:100%; min-width: unset; }
       .statusRow .btn{ width:100%; justify-content:center; }
     }
+  
+    /* ══════════════════════════════════════════
+       UNIFIED SELECT / DROPDOWN STYLE — راصد
+       ══════════════════════════════════════════ */
+    select,
+    .sselect,
+    .asselect,
+    .sort-select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #5C4530;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A67C52' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")
+        no-repeat left 0.85rem center / 12px 8px,
+        rgba(245, 239, 230, 0.85);
+      border: 1.5px solid rgba(166, 124, 82, 0.28);
+      border-radius: 22px;
+      padding: 9px 0.95rem 9px 2.2rem;
+      outline: none;
+      cursor: pointer;
+      direction: rtl;
+      text-align: right;
+      transition: border-color 0.22s ease, background-color 0.22s ease, box-shadow 0.22s ease;
+      box-shadow: 0 2px 8px rgba(62, 47, 28, 0.06);
+      min-width: 120px;
+    }
+    select:hover,
+    .sselect:hover,
+    .asselect:hover,
+    .sort-select:hover {
+      border-color: rgba(166, 124, 82, 0.52);
+      background-color: rgba(245, 239, 230, 1);
+    }
+    select:focus,
+    .sselect:focus,
+    .asselect:focus,
+    .sort-select:focus {
+      border-color: rgba(166, 124, 82, 0.70);
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(166, 124, 82, 0.13), 0 2px 8px rgba(62, 47, 28, 0.08);
+    }
+    /* Full-width selects inside modals/panels */
+    #statusPanelSelect,
+    #usStatusSelect,
+    #usOutcomeSelect {
+      border-radius: 14px !important;
+      padding: 0 0.95rem 0 2.2rem !important;
+      height: 48px !important;
+      font-size: 0.93rem !important;
+      width: 100% !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A67C52' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")
+        no-repeat left 0.85rem center / 12px 8px,
+        rgba(245, 239, 230, 0.85) !important;
+      border: 1.5px solid rgba(166, 124, 82, 0.28) !important;
+      color: #3E2F1C !important;
+      font-family: 'Tajawal', sans-serif !important;
+      font-weight: 700 !important;
+      outline: none !important;
+      cursor: pointer !important;
+      direction: rtl !important;
+      box-shadow: 0 2px 8px rgba(62, 47, 28, 0.06) !important;
+      transition: border-color 0.22s ease, box-shadow 0.22s ease !important;
+    }
+    #statusPanelSelect:hover,
+    #usStatusSelect:hover,
+    #usOutcomeSelect:hover {
+      border-color: rgba(166, 124, 82, 0.52) !important;
+    }
+    #statusPanelSelect:focus,
+    #usStatusSelect:focus,
+    #usOutcomeSelect:focus {
+      border-color: rgba(166, 124, 82, 0.70) !important;
+      background-color: #fff !important;
+      box-shadow: 0 0 0 3px rgba(166, 124, 82, 0.13), 0 2px 8px rgba(62, 47, 28, 0.08) !important;
+    }
+
+  
+    /* ══════════════════════════════════════════════════════
+       CUSTOM DROPDOWN — نفس ستايل VolunteerRegister
+       ══════════════════════════════════════════════════════ */
+    .cd-native-hidden { display: none !important; }
+
+    .custom-dropdown {
+      position: relative;
+      font-family: 'Tajawal', sans-serif;
+      direction: rtl;
+      display: inline-block;
+    }
+
+    .cd-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-width: 120px;
+      height: 40px;
+      padding: 0 0.9rem;
+      border: 1.5px solid rgba(166,124,82,0.28);
+      border-radius: 22px;
+      background: rgba(245,239,230,0.85);
+      color: #5C4530;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color 0.22s ease, background-color 0.22s ease, box-shadow 0.22s ease;
+      outline: none;
+      user-select: none;
+      text-align: right;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(62,47,28,0.06);
+    }
+
+    .cd-trigger:hover {
+      border-color: rgba(166,124,82,0.52);
+      background: rgba(245,239,230,1);
+    }
+
+    .cd-trigger.open,
+    .cd-trigger:focus {
+      border-color: rgba(166,124,82,0.70);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(166,124,82,0.13), 0 2px 8px rgba(62,47,28,0.08);
+    }
+
+    .cd-trigger-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cd-arrow {
+      flex-shrink: 0;
+      margin-right: 0.55rem;
+      color: #A67C52;
+      font-size: 0.72rem;
+      transition: transform 0.22s ease;
+    }
+
+    .cd-trigger.open .cd-arrow { transform: rotate(180deg); }
+
+    .cd-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 5px);
+      right: 0;
+      left: 0;
+      min-width: 100%;
+      z-index: 9999;
+      background: #fff;
+      border: 1.5px solid rgba(166,124,82,0.45);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(62,47,28,0.14), 0 2px 8px rgba(62,47,28,0.06);
+      overflow: hidden;
+      animation: cdSlideDown 0.18s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .cd-panel.open { display: block; }
+
+    @keyframes cdSlideDown {
+      from { opacity: 0; transform: translateY(-6px) scaleY(0.96); }
+      to   { opacity: 1; transform: translateY(0)    scaleY(1); }
+    }
+
+    .cd-list {
+      max-height: 240px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0.3rem 0;
+    }
+
+    .cd-list::-webkit-scrollbar { width: 4px; }
+    .cd-list::-webkit-scrollbar-track { background: transparent; }
+    .cd-list::-webkit-scrollbar-thumb { background: rgba(166,124,82,0.28); border-radius: 4px; }
+
+    .cd-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.91rem;
+      font-family: 'Tajawal', sans-serif;
+      color: #5C4530;
+      cursor: pointer;
+      transition: background 0.13s ease, color 0.13s ease;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .cd-option:hover,
+    .cd-option.focused { background: rgba(166,124,82,0.09); color: #A67C52; }
+
+    .cd-option.selected {
+      background: rgba(166,124,82,0.13);
+      color: #8B6B47;
+      font-weight: 700;
+    }
+
+    .cd-option.selected::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      font-size: 0.72rem;
+      color: #A67C52;
+      margin-right: auto;
+      padding-right: 0.5rem;
+    }
+
+    /* Full-width modal/panel variant */
+    .cd-full { display: block; width: 100%; }
+    .cd-full .cd-trigger { border-radius: 14px; height: 48px; font-size: 0.93rem; }
+    .cd-full .cd-panel   { border-radius: 14px; }
+
   </style>
 </head>
 <body>
@@ -427,7 +650,8 @@
         البلاغات
         <span></span>
       </div>
-      <h2><span id="bigReportTitleId">—</span> — التفاصيل وتتبع الدرون</h2>
+      <h2 id="bigReportTitleId" style="font-family:'Tajawal',sans-serif;font-size:clamp(1.65rem,4.5vw,2.4rem);font-weight:900;line-height:1.15;letter-spacing:-.5px;">—</h2>
+      <p style="font-size:clamp(.86rem,1.5vw,.96rem);color:var(--ink-muted);line-height:1.8;margin-top:.4rem;">تفاصيل عملية البحث والإنقاذ وتتبع الدرون الميداني في الوقت الفعلي.</p>
     </div>
 
     <section class="toolbar" aria-label="شريط الملخص">
@@ -483,14 +707,7 @@
             <div class="v" id="reportLeader">—</div>
           </div>
 
-          <!-- ADDED: قسم ملف الدليل المرفق من المُبلّغ -->
-          <div class="field" style="flex-direction:column;align-items:flex-start;gap:8px;">
-            <div class="k">ملف الدليل المرفق</div>
-            <div id="evidenceContainer" style="width:100%;">
-              <span style="color:#aaa;font-size:13px;">جارٍ التحميل...</span>
-            </div>
-          </div>
-          <!-- END ADDED -->
+          <!-- END REMOVED: evidence file section -->
         </div>
 
         <div style="height:.8rem"></div>
@@ -570,44 +787,40 @@
   <div id="alertModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle">
     <div class="modal">
       <div class="mhd">
-        <h3 id="alertModalTitle">تفاصيل تنبيه الذكاء الاصطناعي</h3>
+        <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#A67C52,#8B6B47);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 10px 24px rgba(139,107,71,0.22);flex-shrink:0;">
+          <i class="fas fa-robot"></i>
+        </div>
+        <h3 id="alertModalTitle" style="margin:0;font-size:1.1rem;font-weight:900;color:#3E2F1C;">تفاصيل تنبيه الذكاء الاصطناعي</h3>
         <div class="spacer"></div>
-        <button class="btn" id="closeAlertModalBtn" type="button">
-          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-          <span class="btn-label">إغلاق</span>
+        <button id="closeAlertModalBtn" type="button" class="us-close" style="flex-shrink:0;">
+          <i class="fas fa-xmark"></i>
         </button>
       </div>
 
-      <div class="mbd">
+      <div class="mbd" style="padding:1.1rem;">
         <div class="mgrid">
           <div class="imgBox">
             <img id="alertImg" alt="الصورة الملتقطة" />
           </div>
 
-          <div>
-            <div class="field">
-              <div class="k">التاريخ والوقت</div>
-              <div class="v" id="alertTime">—</div>
+          <div style="display:grid;gap:0.75rem;">
+            <div class="field" style="background:rgba(245,239,230,0.75);border:1px solid rgba(166,124,82,0.14);border-radius:10px;padding:10px 13px;">
+              <div class="k" style="font-size:0.72rem;font-weight:600;color:#3E2F1C;margin-bottom:4px;">التاريخ والوقت</div>
+              <div class="v" id="alertTime" style="font-size:0.9rem;font-weight:700;color:#3E2F1C;">—</div>
             </div>
 
-            <div style="height:.7rem"></div>
-
-            <div class="field">
-              <div class="k">الموقع</div>
-              <div class="v" id="alertLocation">—</div>
+            <div class="field" style="background:rgba(245,239,230,0.75);border:1px solid rgba(166,124,82,0.14);border-radius:10px;padding:10px 13px;">
+              <div class="k" style="font-size:0.72rem;font-weight:600;color:#3E2F1C;margin-bottom:4px;">الموقع</div>
+              <div class="v" id="alertLocation" style="font-size:0.9rem;font-weight:700;color:#3E2F1C;">—</div>
             </div>
 
-            <div style="height:.7rem"></div>
-
-            <div class="field">
-              <div class="k">الوصف</div>
-              <div class="v" id="alertDesc">—</div>
+            <div class="field" style="background:rgba(245,239,230,0.75);border:1px solid rgba(166,124,82,0.14);border-radius:10px;padding:10px 13px;">
+              <div class="k" style="font-size:0.72rem;font-weight:600;color:#3E2F1C;margin-bottom:4px;">الوصف</div>
+              <div class="v" id="alertDesc" style="font-size:0.9rem;font-weight:700;color:#3E2F1C;">—</div>
             </div>
 
-            <div style="height:.8rem"></div>
-
-            <button class="btn" id="markReadBtn" type="button">
-              <i class="fa-solid fa-check-double" aria-hidden="true"></i>
+            <button id="markReadBtn" type="button" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;min-height:44px;padding:0.75rem 1.5rem;border-radius:50px;background:linear-gradient(135deg,#A67C52,#8B6B47);border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(139,107,71,0.28);transition:all 0.22s;width:100%;">
+              <i class="fa-solid fa-check-double"></i>
               <span class="btn-label">تعليم كمقروء</span>
             </button>
           </div>
@@ -820,16 +1033,30 @@
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
 
-    /* ── Update header name — نبحث بـ UserID لأن document ID مختلف ── */
+    /* ── Update header name ── */
     try {
-      const vq = query(collection(db, 'Volunteer'), where('UserID', '==', user.uid));
-      const vSnap = await getDocs(vq);
+      const nameEl    = document.getElementById('userName');
+      const initialEl = document.getElementById('userInitial');
+      // 1. Volunteer table — has UserID field
+      const vSnap = await getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', user.uid)));
       if (!vSnap.empty) {
         const { FirstName, LastName } = vSnap.docs[0].data();
-        const nameEl    = document.getElementById('userName');
-        const initialEl = document.getElementById('userInitial');
-        if (nameEl)    nameEl.textContent    = `${FirstName} ${LastName}`;
-        if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '?';
+        const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
+        if (nameEl)    nameEl.textContent    = fullName || 'User';
+        if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
+      } else {
+        // 2. Admin table — document ID = user.uid
+        const aDoc = await getDoc(doc(db, 'Admin', user.uid));
+        if (aDoc.exists()) {
+          const { FirstName, LastName } = aDoc.data();
+          const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
+          if (nameEl)    nameEl.textContent    = fullName || 'User';
+          if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
+        } else {
+          // 3. Fallback
+          if (nameEl)    nameEl.textContent    = 'User';
+          if (initialEl) initialEl.textContent = 'U';
+        }
       }
     } catch(e) { console.error('volunteer header error', e); }
 
@@ -851,9 +1078,25 @@
       if (!reportSnap.exists()) return;
 
       const reportData = reportSnap.data();
-      // القائد هو من تولى البلاغ (LeaderID) — وليس من أنشأه (createdBy)
-      const isLeader   = reportData.LeaderID === user.uid;
 
+      /* ── تحقق من كون المستخدم هو القائد ──
+         LeaderID = document ID في Volunteer
+         نجيب منه UserID ونقارنه بـ user.uid ── */
+      let isLeader = false;
+      if (reportData.LeaderID) {
+        try {
+          const lDoc = await getDoc(doc(db, 'Volunteer', reportData.LeaderID));
+          if (lDoc.exists()) {
+            isLeader = lDoc.data().UserID === user.uid;
+          }
+        } catch(e) {}
+        // fallback: قارن مباشرة (للبيانات القديمة)
+        if (!isLeader) isLeader = reportData.LeaderID === user.uid;
+      }
+
+      /* ── عنوان الصفحة ثابت ── */
+      const titleEl = document.getElementById('bigReportTitleId');
+      if (titleEl) titleEl.textContent = 'الدرون الميداني';
       /* Expose to status modal JS */
       window._leaderDocId      = docId;
       window._leaderUid        = user.uid;
@@ -871,9 +1114,31 @@
         window._reportAlreadyClosed = true;
       }
 
-      /* ── ملأ قائد الفريق ── */
+      /* ── ملأ قائد الفريق من جدول Volunteer بـ LeaderID (document ID) ── */
       const leaderEl = document.getElementById('reportLeader');
-      if (leaderEl) leaderEl.textContent = reportData.leader || '—';
+      if (leaderEl && reportData.LeaderID) {
+        try {
+          // LeaderID = document ID في جدول Volunteer
+          const leaderDoc = await getDoc(doc(db, 'Volunteer', reportData.LeaderID));
+          if (leaderDoc.exists()) {
+            const ld = leaderDoc.data();
+            leaderEl.textContent = ((ld.FirstName || '') + ' ' + (ld.LastName || '')).trim() || '—';
+          } else {
+            // fallback: ابحث بـ UserID
+            const leaderSnap = await getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', reportData.LeaderID)));
+            if (!leaderSnap.empty) {
+              const ld = leaderSnap.docs[0].data();
+              leaderEl.textContent = ((ld.FirstName || '') + ' ' + (ld.LastName || '')).trim() || '—';
+            } else {
+              leaderEl.textContent = '—';
+            }
+          }
+        } catch(e) {
+          leaderEl.textContent = '—';
+        }
+      } else if (leaderEl) {
+        leaderEl.textContent = reportData.leader || '—';
+      }
 
       /* ── بناء قائمة الفريق (القائد + الأعضاء بأسمائهم) ── */
       const teamList = document.getElementById('teamList');
@@ -890,11 +1155,22 @@
           );
 
           const namePromises = resolvedMembers.map(uid =>
-            getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', uid)))
-              .then(s => {
-                if (s.empty) return { uid, name: uid };
-                const d = s.docs[0].data();
-                return { uid, name: (d.FirstName || '') + ' ' + (d.LastName || '') };
+            // uid قد يكون document ID أو UserID — نجرب الاثنين
+            getDoc(doc(db, 'Volunteer', uid))
+              .then(d => {
+                if (d.exists()) {
+                  const data = d.data();
+                  return { uid, name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim() };
+                }
+                // fallback: ابحث بـ UserID
+                return getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', uid)))
+                  .then(s => {
+                    if (!s.empty) {
+                      const data = s.docs[0].data();
+                      return { uid, name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim() };
+                    }
+                    return { uid, name: uid };
+                  });
               })
               .catch(() => ({ uid, name: uid }))
           );
@@ -940,28 +1216,234 @@
 <!-- ══════════════════════════════════════════════════
      UPDATE STATUS MODAL
 ══════════════════════════════════════════════════ -->
-<div id="usBackdrop" style="display:none;position:fixed;inset:0;background:rgba(15,8,0,.62);z-index:99999;align-items:center;justify-content:center;padding:16px;font-family:'Tajawal',sans-serif;">
-  <div style="background:#faf6ef;border-radius:22px;width:min(520px,100%);box-shadow:0 28px 80px rgba(42,28,8,.28);overflow:hidden;animation:fadeUp .2s ease both;">
+<style>
+  /* ── Update Status Modal — matches login modal style ── */
+  #usBackdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    direction: rtl;
+    background: rgba(42, 31, 18, 0.52);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+  }
+  #usBackdrop.us-open { display: flex; }
+
+  #usDialog {
+    position: relative;
+    width: min(520px, 100%);
+    background: rgba(255, 250, 242, 0.96);
+    border: 1px solid rgba(166,124,82,0.20);
+    box-shadow: 0 24px 70px rgba(42, 31, 18, 0.25);
+    border-radius: 18px;
+    overflow: hidden;
+    font-family: 'Tajawal', sans-serif;
+    animation: usModalIn 0.22s ease-out both;
+  }
+  @keyframes usModalIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Header */
+  #usDialog .us-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid rgba(166,124,82,0.14);
+    background: linear-gradient(135deg, rgba(194,164,119,0.16), rgba(139,107,71,0.10));
+  }
+  #usDialog .us-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  #usDialog .us-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #A67C52, #8B6B47);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px rgba(139,107,71,0.22);
+    flex-shrink: 0;
+    font-size: 1rem;
+  }
+  #usDialog .us-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #3E2F1C;
+    white-space: nowrap;
+  }
+  #usDialog .us-close,
+  .us-close {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid rgba(166,124,82,0.18);
+    background: rgba(255,255,255,0.55);
+    color: #3E2F1C;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: 'Tajawal', sans-serif;
+    transition: background 0.22s, transform 0.18s;
+    flex-shrink: 0;
+  }
+  #usDialog .us-close:hover,
+  .us-close:hover {
+    background: rgba(166,124,82,0.10);
+    transform: translateY(-1px);
+  }
+
+  /* Body */
+  #usDialog .us-body {
+    padding: 1.1rem;
+    display: grid;
+    gap: 1rem;
+  }
+  #usDialog .us-field label {
+    display: block;
+    font-size: clamp(0.82rem, 1.3vw, 0.9rem);
+    font-weight: 600;
+    color: #3E2F1C;
+    margin-bottom: 0.4rem;
+  }
+  #usDialog .us-field label .us-req { color: #B44B4B; margin-right: 2px; }
+  #usDialog .us-field label .us-opt { color: #7A6245; font-weight: 500; font-size: 0.85em; }
+
+  #usDialog select,
+  #usDialog textarea {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1.5px solid rgba(166,124,82,0.25);
+    border-radius: 6px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: clamp(0.88rem, 1.3vw, 0.95rem);
+    color: #3E2F1C;
+    background: #F5EFE6;
+    direction: rtl;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  #usDialog select {
+    min-height: 44px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%23A67C52' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 0.9rem center;
+    padding-left: 2.2rem;
+    cursor: pointer;
+  }
+  #usDialog textarea {
+    resize: vertical;
+    line-height: 1.7;
+    min-height: 80px;
+  }
+  #usDialog select:focus,
+  #usDialog textarea:focus {
+    border-color: #A67C52;
+    box-shadow: 0 0 0 3px rgba(166,124,82,0.12);
+    background: #fff;
+  }
+
+  /* Footer / Actions */
+  #usDialog .us-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 0.65rem;
+    padding: 0 1.1rem 1.2rem;
+  }
+  #usDialog .us-btn-primary,
+  #usDialog .us-btn-outline {
+    flex: 1;
+  }
+  #usDialog .us-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #A67C52, #8B6B47);
+    color: #fff;
+    min-height: 44px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    box-shadow: 0 4px 18px rgba(139,107,71,0.28);
+    transition: all 0.3s ease;
+    width: 100%;
+    opacity: 0.42;
+  }
+  #usDialog .us-btn-primary:not(:disabled) { opacity: 1; }
+  #usDialog .us-btn-primary:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(139,107,71,0.40);
+    background: linear-gradient(135deg, #9C7A4F, #5C4530);
+  }
+  #usDialog .us-btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: transparent;
+    color: #3E2F1C;
+    min-height: 44px;
+    padding: 0.7rem 1.5rem;
+    border-radius: 50px;
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
+    font-weight: 600;
+    border: 2px solid rgba(166,124,82,0.25);
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    transition: all 0.3s ease;
+    width: 100%;
+  }
+  #usDialog .us-btn-outline:hover {
+    border-color: #A67C52;
+    color: #8B6B47;
+    background: rgba(166,124,82,0.07);
+    transform: translateY(-2px);
+  }
+</style>
+
+<div id="usBackdrop">
+  <div id="usDialog" role="dialog" aria-modal="true" aria-labelledby="usModalTitle">
 
     <!-- Header -->
-    <div style="display:flex;align-items:center;gap:.75rem;padding:1rem 1.2rem;border-bottom:1px solid rgba(166,124,82,.18);background:rgba(245,239,230,.95);">
-      <span style="width:34px;height:34px;border-radius:50%;background:rgba(166,124,82,.15);display:flex;align-items:center;justify-content:center;color:#a67c52;font-size:.95rem;flex-shrink:0;">
-        <i class="fa-solid fa-pen-to-square"></i>
-      </span>
-      <h3 style="margin:0;font-size:1rem;font-weight:900;color:#2a1e0e;">تحديث حالة البلاغ</h3>
-      <div style="margin-right:auto;"></div>
-      <button onclick="closeStatusModal()" style="background:rgba(166,124,82,.1);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;color:#7a5828;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-family:'Tajawal',sans-serif;" type="button">
-        <i class="fa-solid fa-xmark"></i>
+    <div class="us-header">
+      <div class="us-title-wrap">
+        <div class="us-badge"><i class="fa-solid fa-pen-to-square"></i></div>
+        <h3 id="usModalTitle">تحديث حالة البلاغ</h3>
+      </div>
+      <button class="us-close" onclick="closeStatusModal()" type="button" aria-label="إغلاق">
+        <i class="fas fa-xmark"></i>
       </button>
     </div>
 
     <!-- Body -->
-    <div style="padding:1.2rem;display:grid;gap:1rem;">
+    <div class="us-body">
 
       <!-- Status dropdown -->
-      <div>
-        <label style="display:block;font-size:.72rem;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:#8c6840;margin-bottom:.5rem;">الحالة الجديدة <span style="color:#c0392b;">*</span></label>
-        <select id="usStatusSelect" onchange="onUsStatusChange()" style="width:100%;height:48px;padding:0 1rem;border-radius:12px;background:rgba(245,239,230,.9);border:1.5px solid rgba(166,124,82,.28);color:#2a1e0e;font-weight:800;font-family:'Tajawal',sans-serif;font-size:.92rem;outline:none;cursor:pointer;direction:rtl;">
+      <div class="us-field">
+        <label>الحالة الجديدة <span class="us-req">*</span></label>
+        <select id="usStatusSelect">
           <option value="">— اختر الحالة —</option>
           <option value="search_in_progress">عملية البحث جارية</option>
           <option value="report_closed">تم إغلاق البلاغ بنجاح</option>
@@ -970,33 +1452,36 @@
 
       <!-- Outcome section (closed only) -->
       <div id="usOutcomeSection" style="display:none;grid-template-columns:1fr;gap:1rem;">
-        <div>
-          <label style="display:block;font-size:.72rem;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:#8c6840;margin-bottom:.5rem;">نتيجة البحث <span style="color:#c0392b;">*</span></label>
-          <select id="usOutcomeSelect" style="width:100%;height:48px;padding:0 1rem;border-radius:12px;background:rgba(245,239,230,.9);border:1.5px solid rgba(166,124,82,.28);color:#2a1e0e;font-weight:800;font-family:'Tajawal',sans-serif;font-size:.92rem;outline:none;cursor:pointer;direction:rtl;">
+        <div class="us-field">
+          <label>نتيجة البحث <span class="us-req">*</span></label>
+          <select id="usOutcomeSelect">
             <option value="found_safe">تم العثور بحالة جيدة</option>
             <option value="found_deceased">تم العثور متوفياً</option>
             <option value="found_injured">تم العثور مصاباً</option>
             <option value="not_found">لم يتم العثور</option>
           </select>
         </div>
-        <div>
-          <label style="display:block;font-size:.72rem;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:#8c6840;margin-bottom:.5rem;">ملاحظات النتيجة <span style="opacity:.6;font-weight:500;">(اختياري)</span></label>
-          <textarea id="usOutcomeNotes" rows="2" placeholder="أضف تفاصيل حول نتيجة العملية..." style="width:100%;padding:.8rem 1rem;border-radius:12px;background:rgba(245,239,230,.9);border:1.5px solid rgba(166,124,82,.28);color:#2a1e0e;font-weight:700;font-family:'Tajawal',sans-serif;font-size:.88rem;outline:none;resize:vertical;box-sizing:border-box;line-height:1.65;direction:rtl;"></textarea>
+        <div class="us-field">
+          <label>ملاحظات النتيجة <span class="us-opt">(اختياري)</span></label>
+          <textarea id="usOutcomeNotes" rows="2" placeholder="أضف تفاصيل حول نتيجة العملية..."></textarea>
         </div>
       </div>
 
-      <!-- Custom note (any status) -->
-      <div>
-        <label style="display:block;font-size:.72rem;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:#8c6840;margin-bottom:.5rem;">ملاحظة إضافية <span style="opacity:.6;font-weight:500;">(اختياري)</span></label>
-        <textarea id="usCustomNote" rows="2" placeholder="أضف ملاحظة مخصصة إن وجدت..." style="width:100%;padding:.8rem 1rem;border-radius:12px;background:rgba(245,239,230,.9);border:1.5px solid rgba(166,124,82,.28);color:#2a1e0e;font-weight:700;font-family:'Tajawal',sans-serif;font-size:.88rem;outline:none;resize:vertical;box-sizing:border-box;line-height:1.65;direction:rtl;"></textarea>
+      <!-- Custom note -->
+      <div class="us-field">
+        <label>ملاحظة إضافية <span class="us-opt">(اختياري)</span></label>
+        <textarea id="usCustomNote" rows="2" placeholder="أضف ملاحظة مخصصة إن وجدت..."></textarea>
       </div>
 
     </div>
 
-    <!-- Footer -->
-    <div style="padding:.9rem 1.2rem;border-top:1px solid rgba(166,124,82,.15);background:rgba(245,239,230,.7);display:flex;gap:.65rem;justify-content:flex-end;">
-      <button onclick="closeStatusModal()" type="button" style="padding:.6rem 1.2rem;border-radius:10px;background:rgba(166,124,82,.1);border:1.5px solid rgba(166,124,82,.22);color:#7a5828;font-family:'Tajawal',sans-serif;font-size:.88rem;font-weight:800;cursor:pointer;">إلغاء</button>
-      <button onclick="submitStatusUpdate()" type="button" id="usConfirmBtn" disabled style="padding:.6rem 1.4rem;border-radius:10px;background:linear-gradient(135deg,#a67c52,#7a5828);border:none;color:#fff;font-family:'Tajawal',sans-serif;font-size:.88rem;font-weight:900;cursor:pointer;opacity:.42;transition:opacity .18s;display:flex;align-items:center;gap:.5rem;">
+    <!-- Actions -->
+    <div class="us-actions">
+      <button onclick="closeStatusModal()" type="button" class="us-btn-outline">
+        <i class="fas fa-arrow-right"></i>
+        إلغاء
+      </button>
+      <button onclick="submitStatusUpdate()" type="button" id="usConfirmBtn" disabled class="us-btn-primary">
         <i class="fa-solid fa-check"></i>
         تأكيد التحديث
       </button>
@@ -1035,7 +1520,7 @@ function openStatusModal() {
     return;
   }
   const bd = document.getElementById('usBackdrop');
-  bd.style.display = 'flex';
+  bd.classList.add('us-open');
   document.body.style.overflow = 'hidden';
   /* Reset */
   document.getElementById('usStatusSelect').value  = '';
@@ -1048,7 +1533,7 @@ function openStatusModal() {
 }
 
 function closeStatusModal() {
-  document.getElementById('usBackdrop').style.display = 'none';
+  document.getElementById('usBackdrop').classList.remove('us-open');
   document.body.style.overflow = '';
 }
 
@@ -1201,9 +1686,142 @@ document.getElementById('usBackdrop').addEventListener('click', function(e) {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     const bd = document.getElementById('usBackdrop');
-    if (bd && bd.style.display === 'flex') { closeStatusModal(); e.stopImmediatePropagation(); }
+    if (bd && bd.classList.contains('us-open')) { closeStatusModal(); e.stopImmediatePropagation(); }
   }
 }, true);
-</script>
+  </script>
+
+  <script>
+  /* ── Custom Dropdown Factory ─────────────────────────── */
+  (function() {
+    function initCustomDropdown(selectEl, opts) {
+      opts = opts || {};
+      if (!selectEl || selectEl._cdInit) return;
+      selectEl._cdInit = true;
+      selectEl.classList.add('cd-native-hidden');
+
+      var wrapper = document.createElement('div');
+      wrapper.className = 'custom-dropdown' + (opts.fullWidth ? ' cd-full' : '');
+
+      var trigger = document.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'cd-trigger';
+
+      var triggerText = document.createElement('span');
+      triggerText.className = 'cd-trigger-text';
+
+      var arrow = document.createElement('i');
+      arrow.className = 'fas fa-chevron-down cd-arrow';
+      arrow.setAttribute('aria-hidden', 'true');
+
+      trigger.appendChild(triggerText);
+      trigger.appendChild(arrow);
+
+      var panel = document.createElement('div');
+      panel.className = 'cd-panel';
+
+      var listEl = document.createElement('div');
+      listEl.className = 'cd-list';
+      panel.appendChild(listEl);
+
+      wrapper.appendChild(trigger);
+      wrapper.appendChild(panel);
+      selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+
+      var isOpen = false;
+      var focusedIdx = -1;
+
+      function getOptions() {
+        return Array.from(selectEl.options).filter(function(o) { return o.value !== ''; });
+      }
+
+      function setLabel() {
+        var cur = selectEl.options[selectEl.selectedIndex];
+        if (cur && cur.value !== '') {
+          triggerText.textContent = cur.text;
+          trigger.classList.add('has-value');
+        } else {
+          var ph = opts.placeholder || (selectEl.options[0] && selectEl.options[0].value === '' ? selectEl.options[0].text : 'اختر...');
+          triggerText.textContent = ph;
+          trigger.classList.remove('has-value');
+        }
+      }
+
+      function buildList() {
+        listEl.innerHTML = '';
+        focusedIdx = -1;
+        getOptions().forEach(function(o) {
+          var div = document.createElement('div');
+          div.className = 'cd-option' + (o.value === selectEl.value ? ' selected' : '');
+          div.textContent = o.text;
+          div.setAttribute('role', 'option');
+          div.setAttribute('data-value', o.value);
+          div.addEventListener('mousedown', function(e) { e.preventDefault(); pick(o.value); });
+          listEl.appendChild(div);
+        });
+      }
+
+      function pick(val) {
+        selectEl.value = val;
+        selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof selectEl.onchange === 'function') selectEl.onchange();
+        setLabel(); closePanel(); trigger.focus(); buildList();
+      }
+
+      function openPanel() {
+        isOpen = true; buildList();
+        panel.classList.add('open');
+        trigger.classList.add('open');
+        var items = listEl.querySelectorAll('.cd-option');
+        focusedIdx = -1;
+        items.forEach(function(o, i) { if (o.classList.contains('selected')) focusedIdx = i; });
+        requestAnimationFrame(function() { if (focusedIdx >= 0) setFocused(focusedIdx); });
+      }
+
+      function closePanel() {
+        isOpen = false;
+        panel.classList.remove('open');
+        trigger.classList.remove('open');
+        focusedIdx = -1;
+        listEl.querySelectorAll('.cd-option.focused').forEach(function(o) { o.classList.remove('focused'); });
+      }
+
+      function setFocused(idx) {
+        var items = listEl.querySelectorAll('.cd-option');
+        items.forEach(function(o, i) { o.classList.toggle('focused', i === idx); });
+        if (items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+        focusedIdx = idx;
+      }
+
+      trigger.addEventListener('click', function() { isOpen ? closePanel() : openPanel(); });
+
+      trigger.addEventListener('keydown', function(e) {
+        var items = listEl.querySelectorAll('.cd-option');
+        if (!isOpen) {
+          if (['Enter',' ','ArrowDown','ArrowUp'].indexOf(e.key) !== -1) { e.preventDefault(); openPanel(); }
+          return;
+        }
+        if (e.key === 'ArrowDown') { e.preventDefault(); setFocused(Math.min(focusedIdx+1, items.length-1)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); setFocused(Math.max(focusedIdx-1, 0)); }
+        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (focusedIdx >= 0 && items[focusedIdx]) pick(items[focusedIdx].dataset.value); }
+        else if (e.key === 'Escape' || e.key === 'Tab') { if (e.key === 'Escape') e.preventDefault(); closePanel(); }
+      });
+
+      document.addEventListener('mousedown', function(e) { if (isOpen && !wrapper.contains(e.target)) closePanel(); });
+
+      new MutationObserver(function() { setLabel(); if (isOpen) buildList(); }).observe(selectEl, { childList: true });
+
+      setLabel();
+      return { open: openPanel, close: closePanel, pick: pick, refresh: setLabel };
+    }
+
+    window.initCustomDropdown = initCustomDropdown;
+  })();
+  </script>
+
+  <script>
+    (function(){ var el = document.getElementById('usStatusSelect'); if(el) initCustomDropdown(el, {fullWidth: true}); })();
+    (function(){ var el = document.getElementById('usOutcomeSelect'); if(el) initCustomDropdown(el, {fullWidth: true}); })();
+  </script>
 </body>
 </html>
