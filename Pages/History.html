@@ -532,6 +532,7 @@
   import { getFirestore, collection, query, where, getDocs, doc, getDoc }
     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
   import { renderMenu } from '/JS/sidebar-menu.js';
+  import { getRoleFromFirestore } from '/JS/firebase.js';
 
   /* ── Firebase init ─────────────────────────────────────── */
   const firebaseConfig = {
@@ -1099,23 +1100,40 @@
     try {
       const nameEl    = document.getElementById('userName');
       const initialEl = document.getElementById('userInitial');
-      const vSnap = await getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', user.uid)));
-      if (!vSnap.empty) {
-        const { FirstName, LastName, role } = vSnap.docs[0].data();
-        const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
-        if (nameEl)    nameEl.textContent    = fullName || 'غير متاح';
-        if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '؟';
-        currentRole = role || 'volunteer';
+
+      // 1. Get role from Firestore (Admin or Volunteer)
+      currentRole = await getRoleFromFirestore(user.uid) || 'volunteer';
+      localStorage.setItem('role', currentRole);
+
+      // 2. Fetch display name based on role
+      if (currentRole === 'admin') {
+        const aDoc = await getDoc(doc(db, 'Admin', user.uid));
+        if (aDoc.exists()) {
+          const { FirstName, LastName } = aDoc.data();
+          const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
+          if (nameEl)    nameEl.textContent    = fullName || 'غير متاح';
+          if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '؟';
+        }
       } else {
-        const fallback = user.displayName || user.email || 'غير متاح';
-        if (nameEl)    nameEl.textContent    = fallback;
-        if (initialEl) initialEl.textContent = fallback.charAt(0).toUpperCase();
-        currentRole = 'volunteer';
+        const vSnap = await getDocs(query(collection(db, 'Volunteer'), where('AuthUID', '==', user.uid)));
+        if (!vSnap.empty) {
+          const { FirstName, LastName } = vSnap.docs[0].data();
+          const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
+          if (nameEl)    nameEl.textContent    = fullName || 'غير متاح';
+          if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '؟';
+        } else {
+          const fallback = user.displayName || user.email || 'غير متاح';
+          if (nameEl)    nameEl.textContent    = fallback;
+          if (initialEl) initialEl.textContent = fallback.charAt(0).toUpperCase();
+        }
       }
+
+      // 3. Render sidebar based on actual role
       renderMenu(currentRole);
+
     } catch (e) {
       console.warn('Profile fetch failed:', e);
-      renderMenu('volunteer');
+      renderMenu(localStorage.getItem('role') || 'volunteer');
     }
 
     // Now load the closed reports

@@ -684,31 +684,7 @@ border: 1.5px solid rgba(166,124,82,0.18);
       </button>
     </div>
 
-    <nav class="sidebar-nav">
-      <span class="sidebar-section-label">القائمة الرئيسية</span>
-
-      <a href="Control.html" class="sidebar-link">
-      <i class="fas fa-clipboard-list"></i>
-       <span>
-        إدارة البلاغات
-       </span>
-       </a>
-     
-
-      <a href="AdminControlPanel.html" class="sidebar-link active">
-      <i class="fas fa-users"></i>
-       <span>طلبات تسجيل المتطوعين</span>
-       </a>
-
-      <a href="History.html" class="sidebar-link">
-        <i class="fas fa-clock-rotate-left"></i>
-        <span>السجل</span>
-      </a>
-
-      <div class="sidebar-divider"></div>
-
-     
-    </nav>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
 
     <div class="sidebar-footer">
       <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
@@ -1581,6 +1557,8 @@ document.getElementById('viewOvr').classList.add('on');
   </script>
 
 <script type="module">
+  import { renderMenu } from '/JS/sidebar-menu.js';
+  import { getRoleFromFirestore } from '/JS/firebase.js';
   (async function() {
     const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
     const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
@@ -1608,7 +1586,6 @@ document.getElementById('viewOvr').classList.add('on');
           const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
           if (nameEl)    nameEl.textContent    = fullName || 'User';
           if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
-          return;
         }
         // 2. Admin table — document ID = user.uid
         const aDoc = await getDoc(doc(db, 'Admin', user.uid));
@@ -1617,7 +1594,6 @@ document.getElementById('viewOvr').classList.add('on');
           const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
           if (nameEl)    nameEl.textContent    = fullName || 'User';
           if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
-          return;
         }
         // 3. Fallback
         if (nameEl)    nameEl.textContent    = 'User';
@@ -1626,8 +1602,18 @@ document.getElementById('viewOvr').classList.add('on');
         console.error('header name error:', e);
         if (nameEl)    nameEl.textContent    = 'User';
         if (initialEl) initialEl.textContent = 'U';
-      }
-    });
+}
+
+    // ── Sidebar: read role from Firestore ──────────────────
+    try {
+      const _role = await getRoleFromFirestore(user.uid);
+      if (_role) { localStorage.setItem('role', _role); }
+      renderMenu(_role || 'admin');
+    } catch(_e) {
+      console.warn('renderMenu fallback:', _e);
+      renderMenu(localStorage.getItem('role') || 'admin');
+    }
+  });
   })();
 </script>
 </body>

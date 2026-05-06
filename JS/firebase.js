@@ -14,7 +14,10 @@ import {
   getFirestore,
   collection,
   doc,
-  getDoc
+  getDoc,
+  query,
+  where,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ── Firebase config ─────────────────────────────────────────
@@ -28,90 +31,111 @@ const firebaseConfig = {
   measurementId:     "G-MZ3KB7WBK4"
 };
 
-// ── Initialize (نتجنب duplicate-app إذا شُغّل مرتين) ────────
+// ── Initialize ───────────────────────────────────────────────
 const app       = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth      = getAuth(app);
 const db        = getFirestore(app);
 
-// ── Sign-in with role check ──────────────────────────────────
-// Strategy (no User collection):
-//   1. Sign in with Firebase Auth
-//   2. Check Admin collection by UID  → admin panel
-//   3. Check Volunteer collection by AuthUID field (set on approval)
-//      OR by document ID (legacy) → volunteer portal
+// ── Get role from Firestore ──────────────────────────────────
+// Reads the `role` field directly from the Admin or Volunteer document.
+// Admin doc  → uses data.role field (e.g. "admin")
+// Volunteer  → returns "volunteer" (field or default)
+// Returns null if UID not found in either collection.
+export async function getRoleFromFirestore(uid) {
+
+  // 1. Check Admin collection — read `role` field directly
+  const adminSnap = await getDoc(doc(db, "Admin", uid));
+  if (adminSnap.exists()) {
+    const data = adminSnap.data();
+    return (data.role || "admin").toLowerCase();
+  }
+
+  // 2. Check Volunteer by AuthUID field
+  const volQuery = query(collection(db, "Volunteer"), where("AuthUID", "==", uid));
+  const volSnap  = await getDocs(volQuery);
+  if (!volSnap.empty) {
+    const data = volSnap.docs[0].data();
+    return (data.role || "volunteer").toLowerCase();
+  }
+
+  // 3. Fallback: Volunteer doc ID = uid (legacy)
+  const volDocSnap = await getDoc(doc(db, "Volunteer", uid));
+  if (volDocSnap.exists()) {
+    const data = volDocSnap.data();
+    return (data.role || "volunteer").toLowerCase();
+  }
+
+  return null; // not found
+}
+
+// ── Sign-in with role-aware redirect ────────────────────────
 export async function loginAndRedirect(email, password) {
   try {
-    // 1. Sign in with Firebase Auth
+    // 1. Sign in
     const credential = await signInWithEmailAndPassword(auth, email, password);
     const uid        = credential.user.uid;
 
-    // 2. Check Admin collection
-    const adminSnap = await getDoc(doc(db, "Admin", uid));
-    if (adminSnap.exists()) {
-      const data          = adminSnap.data();
-      const accountStatus = (data.AccountStatus || data.accountStatus || "").toLowerCase();
-      if (accountStatus === "valid" || accountStatus === "active" || accountStatus === "") {
-window.location.href = "/Pages/Control.html";
-        return { success: true };
-      }
+    // 2. Get role from Firestore (reads `role` field)
+    const role = await getRoleFromFirestore(uid);
+
+    if (!role) {
       await signOut(auth);
-      return { success: false, error: "حسابك معلّق. تواصل مع الإدارة." };
+      return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
     }
 
-    // 3. Check Volunteer collection — match on AuthUID field (set during approval)
-    //    Fallback: also try doc ID = uid (for any legacy documents)
-    const { query, where, getDocs } = await import(
-      "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
-    );
-
-    let volData = null;
-
-    // 3a. Query by AuthUID field
-    const volQuery = query(
-      collection(db, "Volunteer"),
-      where("AuthUID", "==", uid)
-    );
-    const volQuerySnap = await getDocs(volQuery);
-    if (!volQuerySnap.empty) {
-      volData = volQuerySnap.docs[0].data();
+    // 3. Extra checks per role
+    if (role === "admin") {
+      const adminSnap = await getDoc(doc(db, "Admin", uid));
+      if (adminSnap.exists()) {
+        const accountStatus = (
+          adminSnap.data().AccountStatus ||
+          adminSnap.data().accountStatus || "valid"
+        ).toLowerCase();
+        if (accountStatus !== "valid" && accountStatus !== "active") {
+          await signOut(auth);
+          return { success: false, error: "حسابك معلّق. تواصل مع الإدارة." };
+        }
+      }
     }
 
-    // 3b. Fallback: doc ID matches uid
-    if (!volData) {
-      const volDocSnap = await getDoc(doc(db, "Volunteer", uid));
-      if (volDocSnap.exists()) volData = volDocSnap.data();
-    }
-
-    if (volData) {
-      const approvalStatus = (
-        volData.ApprovalStatus || volData.approvalStatus || ""
-      ).toLowerCase();
-      const accountStutes = (
-        volData.AccountStutes || volData.AccountStatus || volData.accountStatus || ""
-      ).toLowerCase();
-
-      const isApproved =
-        approvalStatus === "approved" ||
-        approvalStatus === "active"   ||
-        accountStutes  === "valid"    ||
-        accountStutes  === "active";
-
-      if (isApproved) {
-        window.location.href = "/Pages/Reports.html";
-        return { success: true };
+    if (role === "volunteer") {
+      // Find volunteer doc
+      let volData = null;
+      const vq = query(collection(db, "Volunteer"), where("AuthUID", "==", uid));
+      const vSnap = await getDocs(vq);
+      if (!vSnap.empty) {
+        volData = vSnap.docs[0].data();
+      } else {
+        const vDoc = await getDoc(doc(db, "Volunteer", uid));
+        if (vDoc.exists()) volData = vDoc.data();
       }
 
-      await signOut(auth);
-      if (approvalStatus === "pending" || approvalStatus === "") {
-        return { success: false, error: "حسابك لا يزال قيد المراجعة. يرجى الانتظار حتى يتم القبول." };
+      if (volData) {
+        const approvalStatus = (volData.ApprovalStatus || volData.approvalStatus || "").toLowerCase();
+        const accountStatus  = (volData.AccountStutes  || volData.AccountStatus  || volData.accountStatus || "").toLowerCase();
+        const isApproved =
+          approvalStatus === "approved" ||
+          approvalStatus === "active"   ||
+          accountStatus  === "valid"    ||
+          accountStatus  === "active";
+
+        if (!isApproved) {
+          await signOut(auth);
+          return {
+            success: false,
+            error: approvalStatus === "pending" || approvalStatus === ""
+              ? "حسابك لا يزال قيد المراجعة. يرجى الانتظار حتى يتم القبول."
+              : "حسابك لم يتم قبوله أو غير نشط. تواصل مع الإدارة."
+          };
+        }
       }
-      return { success: false, error: "حسابك لم يتم قبوله أو غير نشط. تواصل مع الإدارة." };
     }
 
-    // 4. UID not found in Admin or Volunteer
-    await signOut(auth);
-    return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
+    // 4. Store role & redirect
+    localStorage.setItem("role", role);
+    window.location.href = role === "admin" ? "/Pages/Control.html" : "/Pages/Reports.html";
+    return { success: true };
 
   } catch (err) {
     console.error("Login error:", err.code, err.message);
@@ -119,10 +143,9 @@ window.location.href = "/Pages/Control.html";
   }
 }
 
-// ── Auth state helper (used on protected pages) ──────────────
+// ── Auth state helper (protected pages) ─────────────────────
 export async function requireAuth(requiredRole) {
   return new Promise((resolve) => {
-
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       unsubscribe();
 
@@ -133,37 +156,12 @@ export async function requireAuth(requiredRole) {
 
       if (requiredRole) {
         try {
-          let role = null;
-
-          // Check Admin collection
-          const adminSnap = await getDoc(doc(db, "Admin", user.uid));
-          if (adminSnap.exists()) {
-            role = "admin";
-          } else {
-            // Check Volunteer collection by AuthUID field
-            const { query, where, getDocs } = await import(
-              "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
-            );
-            const volQuery = query(
-              collection(db, "Volunteer"),
-              where("AuthUID", "==", user.uid)
-            );
-            const volSnap = await getDocs(volQuery);
-
-            if (!volSnap.empty) {
-              role = "volunteer";
-            } else {
-              // Fallback: doc ID = uid
-              const volDocSnap = await getDoc(doc(db, "Volunteer", user.uid));
-              if (volDocSnap.exists()) role = "volunteer";
-            }
-          }
-
-          if (role !== requiredRole.toLowerCase()) {
+          const role = await getRoleFromFirestore(user.uid);
+          if (!role || role !== requiredRole.toLowerCase()) {
             window.location.href = "/Pages/index.html";
             return;
           }
-
+          localStorage.setItem("role", role); // keep in sync
         } catch (error) {
           console.error("Auth Error:", error);
           window.location.href = "/Pages/index.html";
@@ -173,12 +171,12 @@ export async function requireAuth(requiredRole) {
 
       resolve(user);
     });
-
   });
 }
 
 // ── Sign-out helper ──────────────────────────────────────────
 export async function logout() {
+  localStorage.removeItem("role");
   await signOut(auth);
   window.location.href = "/Pages/index.html";
 }

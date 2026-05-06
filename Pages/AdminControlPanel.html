@@ -422,30 +422,7 @@
       </button>
     </div>
 
-    <nav class="sidebar-nav">
-      <span class="sidebar-section-label">القائمة الرئيسية</span>
-
-     <a href="Control.html" class="sidebar-link">
-      <i class="fas fa-clipboard-list"></i>
-       <span>
-        إدارة البلاغات
-       </span>
-       </a>
-
-      <a href="AdminControlPanel.html" class="sidebar-link active">
-      <i class="fas fa-users"></i>
-       <span>طلبات تسجيل المتطوعين</span>
-       </a>
-
-      <a href="History.html" class="sidebar-link">
-        <i class="fas fa-clock-rotate-left"></i>
-        <span>السجل</span>
-      </a>
-
-      <div class="sidebar-divider"></div>
-
-     
-    </nav>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
 
     <div class="sidebar-footer">
       <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
@@ -723,6 +700,8 @@
   import { auth, db } from '/JS/firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { renderMenu } from '/JS/sidebar-menu.js';
+  import { getRoleFromFirestore } from '/JS/firebase.js';
 
   onAuthStateChanged(auth, async (user) => {
   if (!user) return;
@@ -752,11 +731,20 @@
 
     if (nameEl) nameEl.textContent = fullName;
     if (initialEl) initialEl.textContent = initial;
-
-  } catch (e) {
+} catch (e) {
     console.error(e);
   }
-});
+
+    // ── Sidebar: read role from Firestore ──────────────────
+    try {
+      const _role = await getRoleFromFirestore(user.uid);
+      if (_role) { localStorage.setItem('role', _role); }
+      renderMenu(_role || 'admin');
+    } catch(_e) {
+      console.warn('renderMenu fallback:', _e);
+      renderMenu(localStorage.getItem('role') || 'admin');
+    }
+  });
 </script>
 </body>
 </html>
