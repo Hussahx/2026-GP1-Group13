@@ -897,7 +897,8 @@ body.reports-page .bov{
           'جهة التواصل':    reporterEmail
         },
         desc: data.Details || data.description || 'لا توجد تفاصيل إضافية.',
-        teamCount: teamMembers.length,
+        teamCount: teamMembers.length, // placeholder — updated after active-check
+        _rawTeamUids: teamMembers,
         mbr:  [],   // visual avatars — kept empty (team shown via mTeam section)
         // بيانات ملف الدليل — EvidanceFile هو الاسم الفعلي في Firestore
         evidenceFile:     data.EvidanceFile    || data.evidenceFile     || '',
@@ -962,6 +963,26 @@ body.reports-page .bov{
         AR.sort((a, b) => (b.dt || 0) - (a.dt || 0));
         MR.sort((a, b) => (b.dt || 0) - (a.dt || 0));
         render(); // re-render UI whenever Firestore changes
+
+        // ── Async: resolve active volunteer counts for all reports ────
+        // Cards show raw count instantly, then update once Firestore checks complete
+        const allReports = [...NR, ...AR, ...MR];
+        const uniqueReports = allReports.filter((r, i, arr) => arr.findIndex(x => x._docId === r._docId) === i);
+
+        Promise.all(uniqueReports.map(async r => {
+          const uids = r._rawTeamUids || [];
+          if (uids.length === 0) return { r, count: 0 };
+          const checks = await Promise.all(uids.map(uid =>
+            window._fbGetVolunteerByUid ? window._fbGetVolunteerByUid(uid).then(v => v ? 1 : 0).catch(() => 0) : Promise.resolve(1)
+          ));
+          return { r, count: checks.reduce((a, b) => a + b, 0) };
+        })).then(results => {
+          let changed = false;
+          results.forEach(({ r, count }) => {
+            if (r.teamCount !== count) { r.teamCount = count; changed = true; }
+          });
+          if (changed) render();
+        });
       }, (err) => {
         console.error('onSnapshot error:', err);
       });
@@ -1477,20 +1498,21 @@ document.getElementById('mTeam').innerHTML='<p style="font-size:13px;color:var(-
   var colors = ['#9a7440','#4060c8','#2d9e52','#c05820','#7a5828','#6b4c2a'];
   var rows = [];
 
+  var colorIdx = 0;
   for (var mi = 0; mi < members.length; mi++) {
     var uid = members[mi];
     var isLead = uid === leaderId;
-    var name = '—', phone = '—';
+    var vd = null;
     try {
       if (window._fbGetVolunteerByUid) {
-        var vd = await window._fbGetVolunteerByUid(uid);
-        if (vd) {
-          name = ((vd.FirstName||'') + ' ' + (vd.LastName||'')).trim() || uid.slice(0,8);
-          phone = vd.Phone || '—';
-        }
+        vd = await window._fbGetVolunteerByUid(uid);
       }
-    } catch(e) { name = uid.slice(0,8); }
-    rows.push({ n: name, p: phone, role: isLead ? 'قائد' : 'عضو', c: colors[mi % colors.length] });
+    } catch(e) {}
+    // Skip deactivated / deleted accounts (helper returns null for them)
+    if (!vd) continue;
+    var name  = ((vd.FirstName||'') + ' ' + (vd.LastName||'')).trim() || uid.slice(0,8);
+    var phone = vd.Phone || '—';
+    rows.push({ n: name, p: phone, role: isLead ? 'قائد' : 'عضو', c: colors[colorIdx++ % colors.length] });
   }
 
   rows.sort(function(a,b){ return a.role === 'قائد' ? -1 : b.role === 'قائد' ? 1 : 0; });
