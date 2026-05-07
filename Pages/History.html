@@ -296,8 +296,8 @@
       <i class="fas fa-bars"></i>
     </button>
     <nav class="header-nav" aria-label="تنقل سريع">
-      <div class="user-chip" title="حسابي" onclick="window.location.href='Profile1.html'" style="cursor:pointer;">
-        <span class="avatar" id="userInitial"></span>
+<div class="user-chip" id="userChip" title="حسابي" style="cursor:pointer;">
+          <span class="avatar" id="userInitial"></span>
         <span class="name" id="userName"></span>
       </div>
     </nav>
@@ -606,10 +606,9 @@
   }
 
   /* ── Convert Firestore doc → internal case object ────── */
-  function docToCase(docSnap) {
-    const d = docSnap.data();
+function docToCase(docSnap, reporterData = null) {    const d = docSnap.data();
 
-    const reportDt = tsToDate(d.reportTime);
+    const reportDt = tsToDate(d.LoggedAt);
     const closedDt = tsToDate(d.closedAt) || tsToDate(d.lastUpdateAt) || reportDt;
     const durationHours = calcDurationHours(reportDt, closedDt);
     const outcome = resolveOutcome(d);
@@ -622,11 +621,16 @@
         const tB = tsToDate(b.timestamp) || new Date(0);
         return tB - tA;
       });
-      logEntries = sorted.map(e => ({
-        time: tsToDate(e.timestamp) ? fmtTime(tsToDate(e.timestamp)) : (e.loggedAt || '—'),
-        text: e.note || e.label || e.status || '—'
-      }));
-    }
+   logEntries = sorted.map(e => ({
+  time: tsToDate(e.timestamp)
+    ? fmtTime(tsToDate(e.timestamp))
+    : (e.loggedAt || '—'),
+
+  text:
+    (e.note && e.note.includes('عملية البحث'))
+      ? `عملية البحث جارية في ${d.LastSeenLocation || d.Region || 'الموقع المحدد'}.`
+      : (e.note || e.label || e.status || '—'),
+}));}
 
     // Always add a "received" entry from reportTime
     const hasReceived = logEntries.some(e => e.text.includes('استلام') || e.text.includes('تسجيل'));
@@ -634,32 +638,48 @@
       logEntries.push({ time: fmtTime(reportDt), text: 'تم استلام البلاغ وتسجيله في النظام.' });
     }
 
-    const volunteerCount = Array.isArray(d.teamMembers) ? d.teamMembers.length : (d.currentVolunteers || 0);
+const volunteerCount =
+  Array.isArray(d.teamMembers)
+    ? d.teamMembers.length
+    : (d.CurrentVolunteers || 0);
 
     return {
-      id:               d.reportId || docSnap.id,
-      title:            'بلاغ مفقود — ' + (d.location || d.region || 'غير محدد'),
-      closedDate:       fmtDate(closedDt),
-      closedTimestamp:  closedDt || reportDt || new Date(0),
-      outcome:          outcome.key,
-      outcomeLbl:       outcome.label,
-      region:           d.region || d.location || '—',
-      location:         (d.region && d.location && d.region !== d.location)
-                          ? `${d.region} — ${d.location}`
-                          : (d.location || d.region || '—'),
-      reportDate:       fmtDate(reportDt),
-      volunteers:       volunteerCount > 0 ? `${volunteerCount} متطوعاً` : '—',
-      duration:         fmtDuration(durationHours),
-      durationHours,
-      missing:          d.missingPersonName || '—',
-      notes:            d.outcomeNotes || d.description || 'لا توجد ملاحظات.',
-      healthStatus:     d.healthStatus || null,
-      leader:           d.leader || null,
-      leaderPhone:      d.leaderPhone || null,
-      log:              logEntries,
-    };
-  }
+  id: d.reportId || docSnap.id,
 
+  title: 'بلاغ مفقود — ' + (d.LastSeenLocation || d.Region || 'غير محدد'),
+
+  closedDate: fmtDate(closedDt),
+  closedTimestamp: closedDt || reportDt || new Date(0),
+
+  outcome: outcome.key,
+  outcomeLbl: outcome.label,
+
+  region: d.Region || '—',
+
+  location: (d.Region && d.LastSeenLocation && d.Region !== d.LastSeenLocation)
+    ? `${d.Region} — ${d.LastSeenLocation}`
+    : (d.LastSeenLocation || d.Region || '—'),
+
+  reportDate: fmtDate(reportDt),
+
+  volunteers: volunteerCount > 0 ? `${volunteerCount} متطوعاً` : '—',
+
+  duration: fmtDuration(durationHours),
+  durationHours,
+
+  missing: d.MissingPersonName || '—',
+  notes: d.OutcomeNote || d.Details || 'لا توجد ملاحظات.',
+  healthStatus: d.HealthStatus || null,
+
+  leader: d.leader || null,
+  leaderPhone: d.leaderPhone || null,
+
+  reporterEmail: reporterData?.Email || '—',
+reporterPhone: reporterData?.Phone || '—',
+  log: logEntries,
+};
+
+  }
   /* ── Arabic numeral helper ────────────────────────────── */
   const toAr = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
 
@@ -758,6 +778,13 @@
         c.leaderPhone
           ? `<div class="detail-item"><div class="detail-label">هاتف القائد</div><div class="detail-value" dir="ltr" style="text-align:right;">${c.leaderPhone}</div></div>`
           : '',
+          c.reporterEmail && c.reporterEmail !== '—'
+  ? `<div class="detail-item"><div class="detail-label">إيميل المبلّغ</div><div class="detail-value">${c.reporterEmail}</div></div>`
+  : '',
+
+c.reporterPhone && c.reporterPhone !== '—'
+  ? `<div class="detail-item"><div class="detail-label">جوال المبلّغ</div><div class="detail-value" dir="ltr" style="text-align:right;">${c.reporterPhone}</div></div>`
+  : '',
       ].join('');
 
       return `
@@ -830,12 +857,14 @@
               </div>
             `).join('')}` : ''}
 
-            <div class="detail-actions">
-              <button class="detail-btn detail-btn-ghost pdf-btn" data-id="${c.id}">
-                <i class="fas fa-file-arrow-down" aria-hidden="true"></i>
-                تحميل PDF
-              </button>
-            </div>
+           ${currentRole === 'admin' ? `
+  <div class="detail-actions">
+    <button class="detail-btn detail-btn-ghost pdf-btn" data-id="${c.id}">
+      <i class="fas fa-file-arrow-down" aria-hidden="true"></i>
+      تحميل PDF
+    </button>
+  </div>
+` : ''}
           </div>
         </div>
       </article>`;
@@ -916,40 +945,70 @@
     const badgeColor = isFound ? '#3E5C32' : '#7B2020';
 
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:\'Tajawal\',sans-serif;direction:rtl;text-align:right;color:#2A1F12;';
-
+wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;font-family:Tahoma, Arial, sans-serif;direction:rtl;text-align:right;color:#2A1F12;letter-spacing:0;';
     wrap.innerHTML = `
-      <div style="background:linear-gradient(135deg,#8B6B47,#5C4025);padding:28px 36px;display:flex;align-items:center;justify-content:space-between;">
-        <div style="text-align:left;"><div style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:3px;">RASID PLATFORM</div><div style="font-size:10px;color:rgba(255,255,255,0.38);margin-top:4px;">rasid.sa</div></div>
-        <div style="text-align:right;"><div style="font-size:24px;font-weight:900;color:#fff;line-height:1;">راصد</div><div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:4px;">تقرير عملية بحث وإنقاذ</div></div>
-      </div>
-      <div style="background:#F5EFE6;padding:20px 36px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E8D8C0;">
-        <span style="display:inline-flex;align-items:center;gap:8px;background:${badgeColor};color:#fff;padding:6px 18px;border-radius:100px;font-size:13px;font-weight:800;">${c.outcomeLbl}</span>
-        <div style="font-size:22px;font-weight:900;letter-spacing:1px;color:#2A1F12;">${c.id}</div>
-      </div>
-      <div style="padding:28px 36px 0;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#7A6245;opacity:0.6;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #EAD8BB;">تفاصيل البلاغ</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px 24px;margin-bottom:24px;">
-          ${[['اسم المفقود',c.missing],['الموقع',c.location],['تاريخ البلاغ',c.reportDate],['تاريخ الإغلاق',c.closedDate],['مدة العملية',c.duration],['المتطوعون',c.volunteers]].map(([lbl,val]) => `
-            <div style="background:#FAF6EF;border-radius:10px;padding:12px 14px;border:1px solid #EDE4D3;">
-              <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7A6245;opacity:0.55;margin-bottom:5px;">${lbl}</div>
-              <div style="font-size:14px;font-weight:800;color:#2A1F12;">${val}</div>
-            </div>`).join('')}
-        </div>
-      </div>
-      <div style="padding:0 36px 24px;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#7A6245;opacity:0.6;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #EAD8BB;">ملاحظات</div>
-        <div style="background:#FAF6EF;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.8;color:#4A3828;border:1px solid #EDE4D3;">${c.notes}</div>
-      </div>
-      ${c.log.length > 0 ? `
-      <div style="padding:0 36px 32px;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#7A6245;opacity:0.6;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #EAD8BB;">سجل التحديثات</div>
-        ${c.log.map((e,i) => `<div style="display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:10px 14px;background:${i%2===0?'#FAF6EF':'#F5EFE6'};border-radius:8px;margin-bottom:6px;"><div style="font-size:11px;font-weight:700;color:#8B6B47;white-space:nowrap;padding-top:2px;">${e.time}</div><div style="font-size:13px;color:#2A1F12;line-height:1.65;">${e.text}</div></div>`).join('')}
-      </div>` : ''}
-      <div style="background:#5C4025;padding:14px 36px;display:flex;align-items:center;justify-content:space-between;">
-        <div style="font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:1px;">rasid.sa</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.35);">جميع الحقوق محفوظة © ٢٠٢٥ — منصة راصد</div>
-      </div>`;
+  <div style="background:linear-gradient(135deg,#8B6B47,#5C4025);padding:28px 36px;display:flex;align-items:center;justify-content:space-between;font-family:Tahoma, Arial, sans-serif;letter-spacing:0;">
+    <div style="text-align:left;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:2px;">RASID PLATFORM</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.38);margin-top:4px;">rasid.sa</div>
+    </div>
+    <div style="text-align:right;direction:rtl;">
+      <div style="font-size:24px;font-weight:900;color:#fff;line-height:1.4;letter-spacing:0;">راصد</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:4px;letter-spacing:0;">تقرير عملية بحث وإنقاذ</div>
+    </div>
+  </div>
+
+  <div style="background:#F5EFE6;padding:20px 36px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E8D8C0;font-family:Tahoma, Arial, sans-serif;letter-spacing:0;">
+    <span style="display:inline-flex;align-items:center;gap:8px;background:${badgeColor};color:#fff;padding:6px 18px;border-radius:100px;font-size:13px;font-weight:800;letter-spacing:0;">
+      ${c.outcomeLbl}
+    </span>
+    <div style="font-size:22px;font-weight:900;color:#2A1F12;letter-spacing:0;">${c.id}</div>
+  </div>
+
+  <div style="padding:28px 36px 0;font-family:Tahoma, Arial, sans-serif;direction:rtl;text-align:right;letter-spacing:0;">
+    <div style="font-size:11px;font-weight:700;color:#7A6245;opacity:0.6;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #EAD8BB;letter-spacing:0;">
+      تفاصيل البلاغ
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px 24px;margin-bottom:24px;">
+${[
+  ['اسم المفقود', c.missing],
+  ['الموقع', c.location],
+  ['تاريخ البلاغ', c.reportDate],
+  ['تاريخ الإغلاق', c.closedDate],
+  ['مدة العملية', c.duration],
+  ['المتطوعون', c.volunteers],
+  ['قائد الفريق', c.leader || '—'],
+  ['هاتف القائد', c.leaderPhone || '—'],
+  ['إيميل المبلّغ', c.reporterEmail || '—'],
+  ['جوال المبلّغ', c.reporterPhone || '—'],
+  ['الحالة الصحية', c.healthStatus || '—']
+].map(([lbl,val]) => `        <div style="background:#FAF6EF;border-radius:10px;padding:12px 14px;border:1px solid #EDE4D3;direction:rtl;text-align:right;">
+          <div style="font-size:10px;font-weight:700;color:#7A6245;opacity:0.55;margin-bottom:5px;letter-spacing:0;">${lbl}</div>
+          <div style="font-size:14px;font-weight:500;color:#2A1F12;letter-spacing:0;line-height:1.6;">${val}</div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <div style="padding:0 36px 24px;font-family:Tahoma, Arial, sans-serif;direction:rtl;text-align:right;letter-spacing:0;">
+    <div style="font-size:11px;font-weight:700;color:#7A6245;opacity:0.6;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #EAD8BB;letter-spacing:0;">ملاحظات</div>
+    <div style="background:#FAF6EF;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.8;color:#4A3828;border:1px solid #EDE4D3;letter-spacing:0;">${c.notes}</div>
+  </div>
+
+  ${c.log.length > 0 ? `
+  <div style="padding:0 36px 32px;font-family:Tahoma, Arial, sans-serif;direction:rtl;text-align:right;letter-spacing:0;">
+    <div style="font-size:11px;font-weight:700;color:#7A6245;opacity:0.6;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #EAD8BB;letter-spacing:0;">سجل التحديثات</div>
+    ${c.log.map((e,i) => `
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:10px 14px;background:${i%2===0?'#FAF6EF':'#F5EFE6'};border-radius:8px;margin-bottom:6px;direction:rtl;text-align:right;">
+        <div style="font-size:11px;font-weight:700;color:#8B6B47;white-space:nowrap;padding-top:2px;letter-spacing:0;">${e.time}</div>
+        <div style="font-size:13px;color:#2A1F12;line-height:1.65;letter-spacing:0;">${e.text}</div>
+      </div>`).join('')}
+  </div>` : ''}
+
+  <div style="background:#5C4025;padding:14px 36px;display:flex;align-items:center;justify-content:space-between;font-family:Tahoma, Arial, sans-serif;letter-spacing:0;">
+    <div style="font-size:10px;color:rgba(255,255,255,0.35);">rasid.sa</div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.35);direction:rtl;">جميع الحقوق محفوظة © ٢٠٢٥ — منصة راصد</div>
+  </div>`;
 
     document.body.appendChild(wrap);
 
@@ -1051,23 +1110,36 @@
       const cases = [];
 
       for (const snap of snapshots) {
-        for (const docSnap of snap.docs) {
-          if (seen.has(docSnap.id)) continue;
-          seen.add(docSnap.id);
+       for (const docSnap of snap.docs) {
 
-          // Volunteers only see reports they're part of; admins see all
-          if (userRole !== 'admin') {
-            const d = docSnap.data();
-            const members = Array.isArray(d.teamMembers) ? d.teamMembers : [];
-            // skip if the user isn't in the team (this is filtered server-side for admins)
-            // For volunteers, we already know they're auth'd, but let's still show all
-            // closed reports so history feels complete — matches the design intent.
-            // If you want volunteer-only filtering, uncomment:
-            // if (!members.includes(currentUid)) continue;
-          }
+  if (seen.has(docSnap.id)) continue;
+  seen.add(docSnap.id);
 
-          cases.push(docToCase(docSnap));
-        }
+  const d = docSnap.data();
+
+  // Volunteers only see reports they're part of; admins see all
+  if (userRole !== 'admin') {
+
+    const members = Array.isArray(d.teamMembers) ? d.teamMembers : [];
+
+    // if (!members.includes(currentUid)) continue;
+  }
+
+  let reporterData = null;
+
+  const reporterSnap = await getDocs(
+    query(
+      collection(db, 'Reporter'),
+      where('reportIds', 'array-contains', d.reportId || docSnap.id)
+    )
+  );
+
+  if (!reporterSnap.empty) {
+    reporterData = reporterSnap.docs[0].data();
+  }
+
+  cases.push(docToCase(docSnap, reporterData));
+}
       }
 
       ALL_CASES = cases;
@@ -1078,7 +1150,7 @@
 
     } catch (err) {
       console.error('Firestore error:', err);
-      showError('تعذّر تحميل البيانات. تأكد من اتصالك بالإنترنت وأذونات قاعدة البيانات.');
+      showError('تعذّر تحميل البيانات. تأكد من اتصالك بالإنترنت.');
     }
   }
 
@@ -1105,26 +1177,36 @@
       currentRole = await getRoleFromFirestore(user.uid) || 'volunteer';
       localStorage.setItem('role', currentRole);
 
+      const userChip = document.getElementById('userChip');
+
+if (userChip && currentRole !== 'admin') {
+  userChip.onclick = () => window.location.href = 'Profile1.html';
+} else if (userChip) {
+  userChip.onclick = null;
+  userChip.style.cursor = 'default';
+}
       // 2. Fetch display name based on role
+          // 2. Fetch display name based on role
       if (currentRole === 'admin') {
         const aDoc = await getDoc(doc(db, 'Admin', user.uid));
+
         if (aDoc.exists()) {
           const { FirstName, LastName } = aDoc.data();
           const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
-          if (nameEl)    nameEl.textContent    = fullName || 'غير متاح';
+
+          if (nameEl) nameEl.textContent = fullName || 'غير متاح';
           if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '؟';
         }
+
       } else {
-        const vSnap = await getDocs(query(collection(db, 'Volunteer'), where('AuthUID', '==', user.uid)));
-        if (!vSnap.empty) {
-          const { FirstName, LastName } = vSnap.docs[0].data();
+        const vDoc = await getDoc(doc(db, 'Volunteer', user.uid));
+
+        if (vDoc.exists()) {
+          const { FirstName, LastName } = vDoc.data();
           const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
-          if (nameEl)    nameEl.textContent    = fullName || 'غير متاح';
+
+          if (nameEl) nameEl.textContent = fullName || 'غير متاح';
           if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : '؟';
-        } else {
-          const fallback = user.displayName || user.email || 'غير متاح';
-          if (nameEl)    nameEl.textContent    = fallback;
-          if (initialEl) initialEl.textContent = fallback.charAt(0).toUpperCase();
         }
       }
 
@@ -1135,7 +1217,6 @@
       console.warn('Profile fetch failed:', e);
       renderMenu(localStorage.getItem('role') || 'volunteer');
     }
-
     // Now load the closed reports
     await loadClosedReports(currentRole);
   });
