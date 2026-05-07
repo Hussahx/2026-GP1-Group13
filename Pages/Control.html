@@ -471,6 +471,36 @@
       background: rgba(166,124,82,0.07);
       transform: translateY(-2px);
     }
+
+    .mbtn-acc{
+  background: rgba(245,239,230,0.92);
+  border: 1.5px solid rgba(62,154,90,0.42);
+  color: #2F8B4F;
+  box-shadow: 0 3px 10px rgba(62,154,90,0.08);
+}
+
+.mbtn-acc:hover{
+  background: rgba(245,239,230,1);
+  border-color: rgba(62,154,90,0.70);
+  color: #23713D;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(62,154,90,0.14);
+}
+
+.mbtn-rej{
+  background: rgba(245,239,230,0.92);
+  border: 1.5px solid rgba(192,57,43,0.35);
+  color: #C0392B;
+  box-shadow: 0 3px 10px rgba(192,57,43,0.07);
+}
+
+.mbtn-rej:hover{
+  background: rgba(245,239,230,1);
+  border-color: rgba(192,57,43,0.60);
+  color: #A12D22;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(192,57,43,0.13);
+}
     /* Accept — brown gradient like login primary */
    .abtn-acc{
   background: rgba(245,239,230,0.92);
@@ -1641,29 +1671,23 @@ document.getElementById('viewOvr').classList.add('on');
       const nameEl    = document.getElementById('userName');
       const initialEl = document.getElementById('userInitial');
       try {
-        // 1. Volunteer table — has UserID field
-        const vSnap = await getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', user.uid)));
-        if (!vSnap.empty) {
-          const { FirstName, LastName } = vSnap.docs[0].data();
-          const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
-          if (nameEl)    nameEl.textContent    = fullName || 'User';
-          if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
-        }
-        // 2. Admin table — document ID = user.uid
-        const aDoc = await getDoc(doc(db, 'Admin', user.uid));
-        if (aDoc.exists()) {
-          const { FirstName, LastName } = aDoc.data();
-          const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
-          if (nameEl)    nameEl.textContent    = fullName || 'User';
-          if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
-        }
-        // 3. Fallback
-        if (nameEl)    nameEl.textContent    = 'User';
-        if (initialEl) initialEl.textContent = 'U';
-      } catch(e) {
-        console.error('header name error:', e);
-        if (nameEl)    nameEl.textContent    = 'User';
-        if (initialEl) initialEl.textContent = 'U';
+       const aDoc = await getDoc(doc(db, 'Admin', user.uid));
+
+if (aDoc.exists()) {
+  const { FirstName, LastName } = aDoc.data();
+  const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
+
+  if (nameEl) nameEl.textContent = fullName || 'مشرف';
+  if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'م';
+
+} else {
+  if (nameEl) nameEl.textContent = 'مشرف';
+  if (initialEl) initialEl.textContent = 'م';
+}
+    } catch(e) {
+  console.error('header name error:', e);
+  if (nameEl) nameEl.textContent = 'مشرف';
+  if (initialEl) initialEl.textContent = 'م';
 }
 
     // ── Sidebar: read role from Firestore ──────────────────
