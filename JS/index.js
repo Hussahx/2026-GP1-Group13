@@ -888,8 +888,10 @@ if (!rFile || !rFile.files.length) {
 
       // ── التحقق من تاريخ الفقدان ─────────────────────────────
       if (!lostDateVal) {
-        setFieldError(rLostDate, document.getElementById('rLostDateErr'), 'الرجاء إدخال تاريخ الفقدان.'); ok = false;
-      } else { setFieldError(rLostDate, document.getElementById('rLostDateErr'), ''); }
+  setFieldError(rLostDate, document.getElementById('rLostDateErr'), 'الرجاء إدخال تاريخ الفقدان.'); ok = false;
+} else if (new Date(lostDateVal) > new Date()) {
+  setFieldError(rLostDate, document.getElementById('rLostDateErr'), 'لا يمكن اختيار تاريخ مستقبلي.'); ok = false;
+} else { setFieldError(rLostDate, document.getElementById('rLostDateErr'), ''); }
 
       // ── التحقق من المنطقة ────────────────────────────────────
       if (!regionVal) {
@@ -1056,14 +1058,16 @@ try {
           }
         }
 
-      } catch (err) {
+     } catch (err) {
         console.error('Firebase save error:', err);
+        reportForm._submitting = false;
         if (submitBtn) submitBtn.disabled = false;
         return;
       }
 
-      // ── تنظيف الفورم + إغلاق المودال ─────────────────────
+     // ── تنظيف الفورم + إغلاق المودال ─────────────────────
       reportForm.reset();
+      reportForm._submitting = false;
       if (rFile)     rFile.value = '';
       if (rFileName) rFileName.textContent = 'اضغط لاختيار ملف (PDF، JPG، PNG)';
       resetReportUI();
@@ -1823,5 +1827,99 @@ try {
     window.addEventListener('resize', checkOverflow, { passive: true });
     checkOverflow();
   }
+  /* ── Region Dropdown (Report Modal) ── */
+(function initRegionDropdown() {
+  const regionSelect  = document.getElementById('rRegion');
+  const trigger       = document.getElementById('regionTrigger');
+  const triggerText   = document.getElementById('regionTriggerText');
+  const panel         = document.getElementById('regionPanel');
+  const listEl        = document.getElementById('regionList');
+  const wrapper       = document.getElementById('regionDropdown');
+  if (!regionSelect || !trigger || !panel || !listEl) return;
+
+  const regions = Array.from(regionSelect.options)
+    .filter(o => o.value !== '')
+    .map(o => o.value);
+
+  let isOpen = false;
+  let focusedIdx = -1;
+
+  function buildList() {
+    listEl.innerHTML = '';
+    focusedIdx = -1;
+    regions.forEach(region => {
+      const opt = document.createElement('div');
+      const isSel = region === regionSelect.value;
+      opt.className = 'cd-option' + (isSel ? ' selected' : '');
+      opt.textContent = region;
+      opt.setAttribute('role', 'option');
+      opt.setAttribute('data-value', region);
+      opt.addEventListener('mousedown', e => { e.preventDefault(); selectRegion(region); });
+      listEl.appendChild(opt);
+    });
+  }
+
+  function selectRegion(val) {
+    regionSelect.value = val;
+    triggerText.textContent = val;
+    trigger.classList.add('has-value');
+    trigger.classList.remove('is-invalid');
+    const errEl = document.getElementById('rRegionErr');
+    if (errEl) errEl.textContent = '';
+    closePanel();
+    trigger.focus();
+    buildList();
+  }
+
+  function openPanel() {
+    isOpen = true;
+    buildList();
+    panel.classList.add('open');
+    trigger.classList.add('open');
+    trigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function closePanel() {
+    isOpen = false;
+    panel.classList.remove('open');
+    trigger.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  function setFocused(idx) {
+    const opts = listEl.querySelectorAll('.cd-option');
+    opts.forEach((o, i) => o.classList.toggle('focused', i === idx));
+    if (opts[idx]) opts[idx].scrollIntoView({ block: 'nearest' });
+    focusedIdx = idx;
+  }
+
+  trigger.addEventListener('click', () => isOpen ? closePanel() : openPanel());
+
+  trigger.addEventListener('keydown', e => {
+    const opts = listEl.querySelectorAll('.cd-option');
+    if (!isOpen) {
+      if (['Enter',' ','ArrowDown','ArrowUp'].includes(e.key)) { e.preventDefault(); openPanel(); }
+      return;
+    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setFocused(Math.min(focusedIdx+1, opts.length-1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setFocused(Math.max(focusedIdx-1, 0)); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (focusedIdx>=0 && opts[focusedIdx]) selectRegion(opts[focusedIdx].dataset.value); }
+    else if (e.key === 'Escape' || e.key === 'Tab') { if (e.key==='Escape') e.preventDefault(); closePanel(); }
+  });
+
+  document.addEventListener('mousedown', e => {
+    if (isOpen && !wrapper.contains(e.target)) closePanel();
+  });
+
+  /* Reset on modal open */
+  document.getElementById('openReportModal')?.addEventListener('click', () => {
+    regionSelect.value = '';
+    triggerText.textContent = '— اختر المنطقة —';
+    trigger.classList.remove('has-value', 'is-invalid');
+    buildList();
+  });
+
+  buildList();
+})();
 
 });
