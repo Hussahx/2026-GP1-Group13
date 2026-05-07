@@ -1052,25 +1052,47 @@
       if (!reportSnap.exists()) return;
 
       const reportData = reportSnap.data();
-
-      /* ── تحقق من كون المستخدم هو القائد ──
-         LeaderID = document ID في Volunteer
-         نجيب منه UserID ونقارنه بـ user.uid ── */
+      /* ── LEADER CHECK ─────────────────────────────────────────
+         1. If LeaderID exists → fetch Volunteer doc → compare UserID
+         2. If no LeaderID → compare leader name field to my full name
+      ────────────────────────────────────────────────────────── */
       let isLeader = false;
-      if (reportData.LeaderID) {
-        try {
-          const lDoc = await getDoc(doc(db, 'Volunteer', reportData.LeaderID));
-          if (lDoc.exists()) {
-            isLeader = lDoc.data().UserID === user.uid;
+
+      try {
+        const leaderDocId = reportData.LeaderID || reportData.leaderID || reportData.leaderId || '';
+
+        if (leaderDocId) {
+          // ── Check 1: LeaderID exists ──────────────────────────
+          if (leaderDocId === user.uid) {
+            isLeader = true;
+          } else {
+            const lDoc = await getDoc(doc(db, 'Volunteer', leaderDocId));
+            if (lDoc.exists()) {
+              const lData = lDoc.data();
+              const storedUid = lData.UserID || lData.userId || lData.uid || lData.userID || '';
+              if (storedUid === user.uid) isLeader = true;
+            }
           }
-        } catch(e) {}
-        // fallback: قارن مباشرة (للبيانات القديمة)
-        if (!isLeader) isLeader = reportData.LeaderID === user.uid;
+        }
+
+        if (!isLeader && reportData.leader) {
+          // ── Check 2: No LeaderID — compare by name ────────────
+          const leaderName = reportData.leader.trim();
+          const mySnap = await getDocs(
+            query(collection(db, 'Volunteer'), where('UserID', '==', user.uid))
+          );
+          if (!mySnap.empty) {
+            const d = mySnap.docs[0].data();
+            const myName = ((d.FirstName || '') + ' ' + (d.LastName || '')).trim();
+            if (myName && myName === leaderName) isLeader = true;
+          }
+        }
+
+      } catch(e) {
+        console.warn('[RASID] Leader check error:', e);
       }
 
-      /* ── عنوان الصفحة ثابت ── */
-      const titleEl = document.getElementById('bigReportTitleId');
-      if (titleEl) titleEl.textContent = 'الدرون الميداني';
+      console.log('[RASID] isLeader =', isLeader, '| uid =', user.uid);
       /* Expose to status modal JS */
       window._leaderDocId      = docId;
       window._leaderUid        = user.uid;
@@ -1084,8 +1106,11 @@
       const statusMap = { 'new':'report_received','accepted':'report_received','org':'under_review','active':'search_in_progress','rescued':'report_closed','found':'report_closed','closed':'report_closed' };
       window._currentStatusKey = statusMap[reportData.status || 'new'] || 'report_received';
       /* Guard: if already closed, disable button */
-      if (reportData.status === 'rescued' || reportData.status === 'found' || reportData.status === 'closed') {
+      const closedStatuses = ['rescued', 'found', 'closed', 'report_closed'];
+      if (closedStatuses.includes(reportData.status)) {
         window._reportAlreadyClosed = true;
+      } else {
+        window._reportAlreadyClosed = false; // reset in case stale from previous load
       }
 
       /* ── ملأ قائد الفريق من جدول Volunteer بـ LeaderID (document ID) ── */
@@ -1427,7 +1452,7 @@
       <!-- Status dropdown -->
       <div class="us-field">
         <label>الحالة الجديدة <span class="us-req">*</span></label>
-        <select id="usStatusSelect">
+        <select id="usStatusSelect" onchange="onUsStatusChange()">
           <option value="">— اختر الحالة —</option>
           <option value="search_in_progress">عملية البحث جارية</option>
           <option value="report_closed">تم إغلاق البلاغ بنجاح</option>
@@ -1499,6 +1524,12 @@ const _OUTCOME_LBL = {
 };
 
 function openStatusModal() {
+  // Only the confirmed leader may open this modal
+  if (window._isLeader !== true) {
+    _showToast('فقط قائد الفريق يمكنه تحديث حالة البلاغ.');
+    return;
+  }
+
   if (window._reportAlreadyClosed) {
     _showToast('البلاغ مغلق بالفعل ولا يمكن تحديث حالته.');
     return;
@@ -1531,6 +1562,13 @@ function onUsStatusChange() {
 }
 
 async function submitStatusUpdate() {
+  // ── Security guard: only the confirmed leader may submit ──────────
+  if (window._isLeader !== true) {
+    _showToast('فقط قائد الفريق يمكنه تحديث حالة البلاغ.');
+    closeStatusModal();
+    return;
+  }
+
   if (window._reportAlreadyClosed) return;
 
   const statusVal  = document.getElementById('usStatusSelect').value;
@@ -1611,14 +1649,38 @@ async function submitStatusUpdate() {
 }
 
 async function _writeToFirestore(logEntry, fbStatusVal, nowDate) {
-  const docId  = window._leaderDocId;
-  const db     = window._firestoreDb;
-  const docFn  = window._firestoreDoc;
-  const updFn  = window._firestoreUpdate;
-  const unionFn= window._firestoreUnion;
-  const TSClass= window._firestoreTS;
+  // Use whichever doc ID is available — _leaderDocId is set after the async
+  // leader check; _currentReportDocId is set immediately from the URL.
+  const docId = window._leaderDocId || window._currentReportDocId || null;
+  if (!docId) throw new Error('Firestore: no docId available');
 
-  if (!docId || !db || !docFn || !updFn) throw new Error('Firestore refs not ready');
+  // Use module-exposed refs if available, otherwise import directly
+  let db     = window._firestoreDb;
+  let docFn  = window._firestoreDoc;
+  let updFn  = window._firestoreUpdate;
+  let unionFn= window._firestoreUnion;
+  let TSClass= window._firestoreTS;
+
+  if (!db || !docFn || !updFn) {
+    // Self-contained fallback — import Firebase directly
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getFirestore, doc: _doc, updateDoc: _upd, arrayUnion: _union, Timestamp: _ts } =
+      await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const firebaseConfig = {
+      apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+      authDomain:        'rasid-1bb06.firebaseapp.com',
+      projectId:         'rasid-1bb06',
+      storageBucket:     'rasid-1bb06.firebasestorage.app',
+      messagingSenderId: '668525115587',
+      appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+    };
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    db      = getFirestore(app);
+    docFn   = _doc;
+    updFn   = _upd;
+    unionFn = _union;
+    TSClass = _ts;
+  }
 
   const tsNow = TSClass.fromDate(nowDate);
 

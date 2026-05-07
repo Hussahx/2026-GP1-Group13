@@ -5,10 +5,18 @@
   const STORAGE_KEY = "missing_report_page_v2";
 
   const STATUSES = {
-    accepted:  { label: "مقبول",     dot: "var(--oak-400)" },
-    searching: { label: "جاري البحث", dot: "var(--oak-500)" },
-    found:     { label: "تم العثور", dot: "var(--olive-500)" },
-    rescued:   { label: "تم الإنقاذ", dot: "#3b82f6" },
+    // Firestore values
+    "Under Review":  { label: "قيد المراجعة",          dot: "var(--oak-400)" },
+    "under_review":  { label: "قيد المراجعة",          dot: "var(--oak-400)" },
+    "org":           { label: "قيد المراجعة",          dot: "var(--oak-400)" },
+    "accepted":      { label: "مقبول",                 dot: "var(--oak-400)" },
+    "active":        { label: "جاري البحث",            dot: "var(--oak-500)" },
+    "search_in_progress": { label: "جاري البحث",       dot: "var(--oak-500)" },
+    "searching":     { label: "جاري البحث",            dot: "var(--oak-500)" },
+    "found":         { label: "تم العثور",             dot: "var(--olive-500)" },
+    "rescued":       { label: "تم إغلاق البلاغ",       dot: "#6b7280" },
+    "report_closed": { label: "تم إغلاق البلاغ",       dot: "#6b7280" },
+    "closed":        { label: "تم إغلاق البلاغ",       dot: "#6b7280" },
   };
 
   const DEFAULT_STATE = {
@@ -186,7 +194,7 @@
     const unreadEl = $("#unreadCount");
     if (unreadEl) unreadEl.textContent = String(unreadCount());
 
-    const st = STATUSES[state.report.status] || STATUSES.searching;
+    const st = STATUSES[state.report.status] || STATUSES["Under Review"];
 
     const statusTextEl = $("#statusText");
     if (statusTextEl) statusTextEl.textContent = st.label;
@@ -480,8 +488,16 @@
   // -------- Events ----------
   // ── Firestore status update (leader only) ─────────────────────────
   async function saveStatusToFirestore(newStatus) {
-    const docId = window._leaderDocId || null;
-    if (!docId) return;
+    // Use whichever doc ID is available — _leaderDocId is set after the async
+    // leader check; _currentReportDocId is set immediately from the URL.
+    const docId = window._leaderDocId || window._currentReportDocId || null;
+    if (!docId) { console.warn('saveStatusToFirestore: no docId'); return; }
+
+    // Extra guard: only the confirmed leader may write
+    if (window._isLeader === false) {
+      console.warn('saveStatusToFirestore: blocked — not the leader');
+      return;
+    }
 
     try {
       const { initializeApp, getApps } = await import(
@@ -512,59 +528,9 @@
   }
 
   function wireEvents() {
-    const saveBtn = $("#saveStatusBtn");
-    if (saveBtn) {
-      saveBtn.addEventListener("click", async () => {
-        const sel = $("#statusSelect");
-        if (!sel) return;
-
-        if (window._isLeader === false) {
-          showToast('فقط قائد البلاغ يمكنه تغيير الحالة');
-          return;
-        }
-
-        const newStatus = sel.value;
-
-        // إذا اختار "تم الإنقاذ" — أظهر dialog التأكيد أولاً
-        if (newStatus === 'rescued') {
-          const confirmOvr = document.getElementById('closeConfirmOverlay');
-          if (confirmOvr) {
-            confirmOvr.style.display = 'flex';
-
-            document.getElementById('closeConfirmNo').onclick = function() {
-              confirmOvr.style.display = 'none';
-            };
-
-            document.getElementById('closeConfirmYes').onclick = async function() {
-              confirmOvr.style.display = 'none';
-              state.report.status = 'rescued';
-              saveState();
-              setHeader();
-              await saveStatusToFirestore('rescued');
-              showToast('تم إغلاق البلاغ وتحويله للسجل');
-              // انتقل للسجل بعد ثانية
-              setTimeout(() => { window.location.href = 'History.html'; }, 1200);
-            };
-          }
-          return;
-        }
-
-        state.report.status = newStatus;
-        saveState();
-        setHeader();
-
-        await saveStatusToFirestore(newStatus);
-
-        const hint = $("#statusSavedHint");
-        if (hint) hint.style.display = "inline-flex";
-
-        showToast("تم حفظ حالة البلاغ");
-        setTimeout(() => {
-          const h = $("#statusSavedHint");
-          if (h) h.style.display = "none";
-        }, 1600);
-      });
-    }
+    // NOTE: Status updates are now handled exclusively by the modal
+    // (openStatusModal / submitStatusUpdate) in the HTML.
+    // The old #saveStatusBtn element no longer exists in the page.
 
     const closeBtn = $("#closeAlertModalBtn");
     if (closeBtn) closeBtn.addEventListener("click", closeAlert);
