@@ -1113,84 +1113,92 @@
         window._reportAlreadyClosed = false; // reset in case stale from previous load
       }
 
-      /* ── ملأ قائد الفريق من جدول Volunteer بـ LeaderID (document ID) ── */
-      const leaderEl = document.getElementById('reportLeader');
-      if (leaderEl && reportData.LeaderID) {
-        try {
-          // LeaderID = document ID في جدول Volunteer
-          const leaderDoc = await getDoc(doc(db, 'Volunteer', reportData.LeaderID));
-          if (leaderDoc.exists()) {
-            const ld = leaderDoc.data();
-            leaderEl.textContent = ((ld.FirstName || '') + ' ' + (ld.LastName || '')).trim() || '—';
-          } else {
-            // fallback: ابحث بـ UserID
-            const leaderSnap = await getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', reportData.LeaderID)));
-            if (!leaderSnap.empty) {
-              const ld = leaderSnap.docs[0].data();
-              leaderEl.textContent = ((ld.FirstName || '') + ' ' + (ld.LastName || '')).trim() || '—';
-            } else {
-              leaderEl.textContent = '—';
-            }
-          }
-        } catch(e) {
-          leaderEl.textContent = '—';
+      /* ── Helper: check if a Volunteer account is active (not deactivated/deleted) ── */
+      function isVolunteerActive(data) {
+        if (!data) return false;
+        const s = data.status ?? data.Status ?? data.isActive ?? data.active;
+        if (s === undefined || s === null) return true; // no status field = active
+        if (s === false || s === 0) return false;
+        if (typeof s === 'string') {
+          const low = s.toLowerCase();
+          if (low === 'inactive' || low === 'deactivated' || low === 'disabled' || low === 'deleted') return false;
         }
-      } else if (leaderEl) {
-        leaderEl.textContent = reportData.leader || '—';
-}
+        return true;
+      }
 
-      /* ── بناء قائمة الفريق (القائد + الأعضاء بأسمائهم) ── */
+      /* ── Helper: fetch a Volunteer by docId or UserID, returns {uid,name} | null ── */
+      async function fetchActiveVolunteer(uid) {
+        try {
+          const d = await getDoc(doc(db, 'Volunteer', uid));
+          if (d.exists()) {
+            const data = d.data();
+            if (!isVolunteerActive(data)) return null;
+            return { uid, name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim() };
+          }
+          // fallback: search by UserID field
+          const snap = await getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', uid)));
+          if (!snap.empty) {
+            const data = snap.docs[0].data();
+            if (!isVolunteerActive(data)) return null;
+            return { uid, name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim() };
+          }
+          return null; // account deleted
+        } catch { return null; }
+      }
+
+      /* ── Resolve all active team members (preserve join order) ── */
+      const members = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
+      const resolvedUids = members.map(m => typeof m === 'object' && m !== null ? m.userId : m);
+      const allResolved = await Promise.all(resolvedUids.map(uid => fetchActiveVolunteer(uid)));
+      const activeMembers = allResolved.filter(m => m !== null);
+
+      /* ── Determine effective leader ──────────────────────────────────────
+         1. Stored LeaderID resolves to an active volunteer → they lead.
+         2. Leader is deactivated/deleted → promote the earliest active member
+            who is NOT the original leader (second person who joined).
+      ─────────────────────────────────────────────────────────────────────── */
+      const storedLeaderUid = reportData.LeaderID || '';
+      const storedLeaderResolved = storedLeaderUid ? await fetchActiveVolunteer(storedLeaderUid) : null;
+
+      let effectiveLeaderUid  = '';
+      let effectiveLeaderName = '—';
+
+      if (storedLeaderResolved) {
+        effectiveLeaderUid  = storedLeaderUid;
+        effectiveLeaderName = storedLeaderResolved.name || '—';
+      } else {
+        // Leader gone — promote the first active member who isn't the old leader
+        const promoted = activeMembers.find(m => m.uid !== storedLeaderUid) || activeMembers[0] || null;
+        if (promoted) {
+          effectiveLeaderUid  = promoted.uid;
+          effectiveLeaderName = promoted.name || '—';
+        }
+      }
+
+      /* ── Fill leader field ── */
+      const leaderEl = document.getElementById('reportLeader');
+      if (leaderEl) leaderEl.textContent = effectiveLeaderName;
+
+      /* ── Build team list ── */
       const teamList = document.getElementById('teamList');
       if (teamList) {
-        const members = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
-        const leaderUid = reportData.LeaderID || '';
-
-        if (members.length === 0) {
+        if (activeMembers.length === 0) {
           teamList.innerHTML = '<div style="color:var(--t300,#b89870);font-size:13px;">لا يوجد أعضاء بعد</div>';
         } else {
-          // نجيب أسماء كل الأعضاء من Volunteer collection بـ UserID
-          const resolvedMembers = members.map(m =>
-            typeof m === 'object' && m !== null ? m.userId : m
-          );
+          const rows = activeMembers.map(m => {
+            const isEffectiveLeader = m.uid === effectiveLeaderUid;
+            const badge = isEffectiveLeader
+              ? '<span style="font-size:9px;font-weight:800;background:#fef0d0;color:#9a6010;border:1px solid #e8c870;border-radius:6px;padding:1px 7px;margin-right:6px;">قائد</span>'
+              : '<span style="font-size:9px;font-weight:700;background:#f0f4ff;color:#3050a0;border:1px solid #b0c0f0;border-radius:6px;padding:1px 7px;margin-right:6px;">عضو</span>';
+            return `<div style="display:flex;align-items:center;padding:7px 10px;background:#fff;border-radius:10px;border:1px solid rgba(180,140,80,0.12);">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--s400,#b8965e);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;margin-left:10px;">${m.name.trim().charAt(0)||'؟'}</div>
+              <span style="font-size:13px;font-weight:600;color:var(--t900,#2a1e0e);flex:1;">${m.name.trim()||'—'}</span>
+              ${badge}
+            </div>`;
+          }).join('');
 
-          const namePromises = resolvedMembers.map(uid =>
-            // uid قد يكون document ID أو UserID — نجرب الاثنين
-            getDoc(doc(db, 'Volunteer', uid))
-              .then(d => {
-                if (d.exists()) {
-                  const data = d.data();
-                  return { uid, name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim() };
-                }
-                // fallback: ابحث بـ UserID
-                return getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', uid)))
-                  .then(s => {
-                    if (!s.empty) {
-                      const data = s.docs[0].data();
-                      return { uid, name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim() };
-                    }
-                    return { uid, name: uid };
-                  });
-              })
-              .catch(() => ({ uid, name: uid }))
-          );
-
-          Promise.all(namePromises).then(resolved => {
-            const total = resolved.length;
-            const rows = resolved.map(m => {
-              const isLeaderMember = m.uid === leaderUid;
-              const badge = isLeaderMember
-                ? '<span style="font-size:9px;font-weight:800;background:#fef0d0;color:#9a6010;border:1px solid #e8c870;border-radius:6px;padding:1px 7px;margin-right:6px;">قائد</span>'
-                : '<span style="font-size:9px;font-weight:700;background:#f0f4ff;color:#3050a0;border:1px solid #b0c0f0;border-radius:6px;padding:1px 7px;margin-right:6px;">عضو</span>';
-              return `<div style="display:flex;align-items:center;padding:7px 10px;background:#fff;border-radius:10px;border:1px solid rgba(180,140,80,0.12);">
-                <div style="width:32px;height:32px;border-radius:50%;background:var(--s400,#b8965e);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;margin-left:10px;">${m.name.trim().charAt(0)||'؟'}</div>
-                <span style="font-size:13px;font-weight:600;color:var(--t900,#2a1e0e);flex:1;">${m.name.trim()||'—'}</span>
-                ${badge}
-              </div>`;
-            }).join('');
-
-            teamList.innerHTML =
-              `<div style="font-size:11px;color:var(--t500,#8c6840);font-weight:700;margin-bottom:6px;">👥 ${total} متطوع مشارك</div>` + rows;
-          });
+          teamList.innerHTML =
+            `<div style="font-size:11px;color:var(--t500,#8c6840);font-weight:700;margin-bottom:6px;">👥 ${activeMembers.length} متطوع مشارك</div>` + rows;
         }
       }
 
