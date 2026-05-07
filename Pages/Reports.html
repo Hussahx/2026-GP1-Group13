@@ -782,8 +782,11 @@ body.reports-page .bov{
   arrayUnion,
   orderBy,
   query,
-  getDoc
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  getDoc,
+  getDocs,
+  where
+}
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     // ── Firebase init (re-use existing app if already initialised) ──
     const firebaseConfig = {
@@ -1097,7 +1100,81 @@ body.reports-page .bov{
     // Classic script reads window._fbCurrentUid before calling actions
     onAuthStateChanged(auth, (user) => {
       window._fbCurrentUid = user ? user.uid : null;
-    });
+      
+      
+    }
+  );
+  onAuthStateChanged(auth, async (user) => {
+
+  window._fbCurrentUid = user ? user.uid : null;
+
+  if (!user) return;
+
+  const userNameEl = document.getElementById('userName');
+  const userInitialEl = document.getElementById('userInitial');
+
+  try {
+
+    let volunteerData = null;
+
+    // محاولة مباشرة بالـ uid
+    const directSnap = await getDoc(doc(db, 'Volunteer', user.uid));
+
+    if (directSnap.exists()) {
+      volunteerData = directSnap.data();
+    }
+
+    // إذا document id مختلف
+    if (!volunteerData) {
+
+      const q = query(
+        collection(db, 'Volunteer'),
+        where('UserID', '==', user.uid)
+      );
+
+      const qs = await getDocs(q);
+
+      if (!qs.empty) {
+        volunteerData = qs.docs[0].data();
+      }
+    }
+
+    console.log(volunteerData);
+
+    if (!volunteerData) return;
+
+    const firstName = volunteerData.FirstName || '';
+    const lastName  = volunteerData.LastName || '';
+
+    const fullName = (firstName + ' ' + lastName).trim();
+
+   if (userNameEl) {
+
+  // حذف أي نص قديم
+  userNameEl.innerHTML = '';
+
+  // إجبار المتصفح يكتب الاسم
+  requestAnimationFrame(() => {
+    userNameEl.innerText = fullName || 'متطوع';
+  });
+}
+
+    if (userInitialEl) {
+
+  userInitialEl.innerHTML = '';
+
+  requestAnimationFrame(() => {
+    userInitialEl.innerText =
+      firstName.charAt(0) || 'م';
+  });
+}
+
+  } catch (err) {
+    console.error('USER NAME ERROR:', err);
+  }
+
+});
+  
     
     // ── Helper: fetch volunteer data by UID ─────────────────────────
     window._fbGetVolunteerByUid = async function(uid) {
@@ -1711,12 +1788,10 @@ document.getElementById('mTeam').innerHTML='<p style="font-size:13px;color:var(-
         if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
       }
       // 3. Fallback
-      if (nameEl)    nameEl.textContent    = 'User';
-      if (initialEl) initialEl.textContent = 'U';
+      console.error('header name error:', e);
     } catch(e) {
       console.error('header name error:', e);
-      if (nameEl)    nameEl.textContent    = 'User';
-      if (initialEl) initialEl.textContent = 'U';
+      console.error('header name error:', e);
 }
 
     // ── Sidebar: read role from Firestore ──────────────────

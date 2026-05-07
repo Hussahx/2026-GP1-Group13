@@ -1649,6 +1649,7 @@ body {
 /* Checkmark on selected option */
 .profile-page .cd-option.selected::after {
   content: '\f00c';
+  
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
   font-size: 0.65rem;
@@ -1656,6 +1657,235 @@ body {
   margin-right: auto;
   padding-right: 0.4rem;
 }
+/* ══════════════════════════════
+   PREMIUM UI — Final Polish
+══════════════════════════════ */
+
+/* HERO */
+.page-body.profile-page { padding-top: 0 !important; }
+.profile-page .profile-hero {
+  padding-top: 92px !important;
+  padding-bottom: 56px !important;
+}
+.profile-page .hero-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* AVATAR */
+.profile-page .avatar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.profile-page .p-avatar {
+  margin: 0 auto;
+  box-shadow:
+    0 0 0 1px rgba(166,124,82,0.12),
+    0 8px 32px rgba(120,80,30,0.18),
+    0 2px 8px rgba(120,80,30,0.08);
+}
+
+/* ROLE BADGE */
+.profile-page .hero-role {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  color: rgba(80,50,15,0.58);
+  background: rgba(166,124,82,0.08);
+  border: 1px solid rgba(166,124,82,0.18);
+  border-radius: 100px;
+  padding: 4px 16px;
+  margin-bottom: 10px;
+  display: inline-block;
+}
+
+/* NAME */
+.profile-page .hero-name {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #180e04;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+.profile-page .name-row {
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+/* BUTTONS */
+.profile-page .pencil-btn {
+  height: 34px;
+  padding: 0 15px;
+  border-radius: 100px;
+  border: 1px solid rgba(166,124,82,0.28);
+  background: rgba(255,255,255,0.75);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #4a2e10;
+  gap: 6px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 4px rgba(120,80,30,0.08);
+  transition: all 0.18s ease;
+}
+.profile-page .pencil-btn:hover {
+  background: rgba(255,255,255,0.96);
+  border-color: rgba(166,124,82,0.45);
+  box-shadow: 0 4px 14px rgba(120,80,30,0.13);
+  transform: translateY(-1px);
+}
+.profile-page .pencil-btn.state-save {
+  background: linear-gradient(135deg,#2d9e52,#1a6832);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(45,158,82,0.28);
+}
+.profile-page .pencil-btn.state-cancel {
+  background: rgba(166,124,82,0.07);
+  border-color: rgba(166,124,82,0.20);
+  color: #6b4820;
+}
+.delete-account-btn {
+  height: 34px;
+  padding: 0 15px;
+  border-radius: 100px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+.delete-account-btn:hover {
+  background: rgba(192,57,43,0.12);
+  border-color: rgba(192,57,43,0.45);
+  transform: translateY(-1px);
+}
+
+/* INFO PILLS */
+.profile-page .hero-bio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.profile-page .bio-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(166,124,82,0.14);
+  border-radius: 100px;
+  padding: 6px 14px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 3px rgba(120,80,30,0.06);
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+.profile-page .bio-row:hover {
+  background: rgba(255,255,255,0.90);
+  border-color: rgba(166,124,82,0.26);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(120,80,30,0.09);
+}
+.profile-page .bio-ico {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.profile-page .bio-val {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(36,20,6,0.78);
+  letter-spacing: 0.1px;
+}
+
+/* STATS */
+.profile-page .stats-row {
+  display: inline-flex;
+  background: rgba(255,255,255,0.76);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.92);
+  box-shadow:
+    0 12px 40px rgba(100,60,20,0.11),
+    0 2px 8px rgba(100,60,20,0.05),
+    0 1px 0 rgba(255,255,255,1) inset;
+  overflow: hidden;
+}
+.profile-page .stat {
+  padding: 18px 34px;
+  text-align: center;
+  border-left: 1px solid rgba(166,124,82,0.09);
+  transition: background 0.16s, transform 0.16s;
+  cursor: pointer;
+}
+.profile-page .stat:last-child { border-left: none; }
+.profile-page .stat:hover {
+  background: rgba(255,255,255,0.68);
+  transform: translateY(-2px);
+}
+.profile-page .stat:active { transform: translateY(0); }
+.profile-page .stat.active-filter {
+  background: rgba(255,255,255,0.82);
+  box-shadow: 0 0 0 1.5px rgba(166,124,82,0.25) inset;
+}
+.profile-page .stat-num {
+  font-family: 'Scheherazade New', serif;
+  font-size: 2rem;
+  line-height: 1;
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.profile-page .stat-lbl {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  font-weight: 700;
+  color: rgba(90,60,28,0.48);
+  text-transform: uppercase;
+  white-space: nowrap;
+  display: block;
+}
+
+/* FOOTER */
+footer { position: relative; overflow: hidden; }
+.footer-wave { display: block; width: 100%; }
+.footer-inner {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1fr;
+  gap: 32px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 36px 24px 24px;
+}
+@media (max-width: 767px) {
+  .footer-inner { grid-template-columns: 1fr; gap: 18px; padding: 22px 16px 14px; }
+  .profile-page .stat { padding: 14px 18px; }
+  .profile-page .stat-num { font-size: 1.7rem; }
+  .profile-page .stats-row { border-radius: 16px; }
+  .profile-page .hero-bio { gap: 6px; }
+}
+.profile-page .hero-inner { overflow: visible !important; }
+.profile-page .hero-bio { overflow: visible !important; position: relative; z-index: 10; }
+.profile-page .bio-row { overflow: visible !important; position: relative; }
+.profile-page #cityBioRow { position: relative; z-index: 100; }
+.profile-page .city-group { position: relative !important; z-index: 1000 !important; }
+.profile-page .cd-panel { z-index: 9999 !important; position: absolute !important; }
+
+
+
+
 </style>
 </head>
 <body>
@@ -1717,7 +1947,7 @@ body {
       </div>
     </div>
   </div>
-<main class="page-body profile-page" style="padding-top:72px;">
+<main class="page-body profile-page">
 
   <!-- HERO -->
   <div class="profile-hero">
@@ -1732,7 +1962,7 @@ body {
         <div class="online-dot"></div>
       </div>
 
-      <div class="hero-role" id="bioRole">&#x22C6; متطوع &mdash; منصة راصد &#x22C6;</div>
+      <div class="hero-role" id="bioRole">متطوع · منصة راصد</div>
 
       <div class="name-row" id="editWrap">
         <div class="hero-name display-only" id="bioNameDisplay">...</div>
@@ -2030,7 +2260,7 @@ body {
         sidebar.setAttribute('aria-hidden', 'false');
         toggle.setAttribute('aria-expanded', 'true');
         toggle.setAttribute('aria-label', 'إغلاق القائمة');
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = 'visible';
         if (!IS_HOMEPAGE && pageHeader) {
           pageHeader.classList.add('header-hidden');
         }
@@ -2222,10 +2452,31 @@ function bindProfileToDOM(data, user) {
     roleEl.textContent = '⋆ متطوع — منصة راصد ⋆';
   }
 
-  if (joinEl) {
-    const joinStr = formatJoinDate(data.JoinDate || data.JoindAt || data.JoinedAt);
-    joinEl.textContent = joinStr || '—';
+  if (joinEl && data.JoinedAt) {
+
+  let joinDate = data.JoinedAt;
+
+  // إذا Firestore Timestamp
+  if (typeof joinDate.toDate === 'function') {
+    joinDate = joinDate.toDate();
   }
+
+  // إذا String
+  else {
+    joinDate = new Date(joinDate);
+  }
+
+  const months = [
+    'يناير','فبراير','مارس','أبريل','مايو','يونيو',
+    'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'
+  ];
+
+  joinEl.textContent =
+    'انضم ' +
+    joinDate.getDate() + ' ' +
+    months[joinDate.getMonth()] + ' ' +
+    joinDate.getFullYear();
+}
 }
 
 
@@ -2355,8 +2606,11 @@ window.startEdit = function() {
   if (window._cityDropdownRebuild) window._cityDropdownRebuild();
 
   // Show inputs, hide displays
+  // Show inputs, hide displays
   document.getElementById('bioPhoneDisplay').classList.add('display-only');
+  document.getElementById('bioPhoneDisplay').style.display = 'none';
   document.getElementById('bioCityDisplay').classList.add('display-only');
+  document.getElementById('bioCityDisplay').style.display  = 'none';
 
   document.getElementById('bioPhoneInput').style.display = 'inline-block';
   // Show custom dropdown wrapper
@@ -2396,7 +2650,9 @@ function _exitEditMode() {
 
 
   document.getElementById('bioPhoneDisplay').classList.remove('display-only');
+  document.getElementById('bioPhoneDisplay').style.display = '';
   document.getElementById('bioCityDisplay').classList.remove('display-only');
+  document.getElementById('bioCityDisplay').style.display  = '';
 
   document.getElementById('bioPhoneInput').style.display = 'none';
   // Hide city dropdown wrapper
@@ -3167,38 +3423,139 @@ window.addEventListener('scroll', function(){
 <script type="module">
   import { auth, db } from '/JS/firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { renderMenu } from '/JS/sidebar-menu.js';
   import { getRoleFromFirestore } from '/JS/firebase.js';
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) return;
+  if (!user) return;
 
-    const snap = await getDoc(doc(db, "Volunteer", user.uid));
-    if (!snap.exists()) return;
+  // محاولة ١: البحث بـ UserID
+  let volunteerData = null;
+  let volunteerDocId = null;
 
-    const { FirstName, LastName } = snap.data();
-    const fullName = `${FirstName} ${LastName}`;
-    const initial  = FirstName ? FirstName.charAt(0) : '?';
+  try {
+    const q1 = query(collection(db, "Volunteer"), where("UserID", "==", user.uid));
+    const snap1 = await getDocs(q1);
+    if (!snap1.empty) {
+      volunteerData = snap1.docs[0].data();
+      volunteerDocId = snap1.docs[0].id;
+    }
+  } catch(e) {}
+
+  // محاولة ٢: البحث بـ document ID مباشرة (fallback)
+  if (!volunteerData) {
+    try {
+      const snap2 = await getDoc(doc(db, "Volunteer", user.uid));
+      if (snap2.exists()) {
+        volunteerData = snap2.data();
+        volunteerDocId = user.uid;
+      }
+    } catch(e) {}
+  }
+
+  // محاولة ٣: البحث بـ Email
+  if (!volunteerData) {
+    try {
+      const q3 = query(collection(db, "Volunteer"), where("Email", "==", user.email));
+      const snap3 = await getDocs(q3);
+      if (!snap3.empty) {
+        volunteerData = snap3.docs[0].data();
+        volunteerDocId = snap3.docs[0].id;
+      }
+    } catch(e) {}
+  }
+
+  if (volunteerData) {
+    
+    const firstName = volunteerData.FirstName || '';
+    const lastName  = volunteerData.LastName  || '';
+    const fullName  = (firstName + ' ' + lastName).trim();
 
     // تحديث الهيدر
     const nameEl    = document.getElementById('userName');
     const initialEl = document.getElementById('userInitial');
+    if (nameEl)    nameEl.textContent    = fullName || user.email || 'مستخدم';
+    if (initialEl) initialEl.textContent = firstName ? firstName.charAt(0) : 'م';
 
-    if (nameEl)    nameEl.textContent    = fullName;
-    if (initialEl) initialEl.textContent = initial;
+    // تحديث البروفايل
+    const nameDisplay  = document.getElementById('bioNameDisplay');
+    const nameInput    = document.getElementById('bioNameInput');
+    const phoneDisplay = document.getElementById('bioPhoneDisplay');
+    const emailDisplay = document.getElementById('bioEmailDisplay');
+    const cityDisplay  = document.getElementById('bioCityDisplay');
+    const joinEl       = document.getElementById('bioJoin');
 
-    // ── Sidebar: read role from Firestore ──────────────────
-    try {
-      const _role = await getRoleFromFirestore(user.uid);
-      if (_role) { localStorage.setItem('role', _role); }
-      renderMenu(_role || 'volunteer');
-    } catch(_e) {
-      console.warn('renderMenu fallback:', _e);
-      renderMenu(localStorage.getItem('role') || 'volunteer');
+    if (nameDisplay)  nameDisplay.textContent = fullName || '—';
+    if (nameInput)    nameInput.value          = fullName || '';
+    if (phoneDisplay) phoneDisplay.textContent = volunteerData.Phone || '—';
+    if (emailDisplay) emailDisplay.textContent = volunteerData.Email || user.email || '—';
+    if (cityDisplay)  cityDisplay.textContent  = volunteerData.City  || '—';
+    if (joinEl && volunteerData.JoinDate) {
+
+  const joinDate = volunteerData.JoinDate.toDate();
+
+  if (joinEl) {
+
+  let jd =
+    volunteerData.JoinedAt ||
+    volunteerData.JoinDate ||
+    volunteerData.JoindAt;
+
+  let d = null;
+
+  // Firestore Timestamp
+  if (jd && typeof jd.toDate === 'function') {
+    d = jd.toDate();
+  }
+
+  // String أو Date عادي
+  else if (jd) {
+    d = new Date(jd);
+  }
+
+  if (d && !isNaN(d.getTime())) {
+
+    const months = [
+      'يناير','فبراير','مارس','أبريل','مايو','يونيو',
+      'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'
+    ];
+
+    joinEl.textContent =
+      'انضم ' +
+      d.getDate() + ' ' +
+      months[d.getMonth()] + ' ' +
+      d.getFullYear();
+  }
+}
+
+}
+
+    if (joinEl) {
+      const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                      'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+      let jd = volunteerData.JoinDate;
+      let d = null;
+      if (jd && typeof jd.toDate === 'function') d = jd.toDate();
+      else if (jd) d = new Date(jd);
+      if (d && !isNaN(d))
+        joinEl.textContent = 'انضم ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
     }
-  });
+
+    window._volunteerDocId = volunteerDocId;
+  }
+
+  // Sidebar
+  try {
+    const _role = await getRoleFromFirestore(user.uid);
+    if (_role) localStorage.setItem('role', _role);
+    renderMenu(_role || 'volunteer');
+  } catch(_e) {
+    renderMenu(localStorage.getItem('role') || 'volunteer');
+  }
+});
 </script>
+
 
 
 </body>
