@@ -287,7 +287,7 @@
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import {
       getFirestore, collection, onSnapshot,
-      doc, updateDoc, query, getDoc
+      doc, updateDoc, query, getDoc, getDocs, where
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -527,6 +527,7 @@
 
     // ── Firestore listener ────────────────────────────────────────────
     let unsub = null;
+    let _pendingTeamUIDs = {}; // docId -> [uid, ...]
 
     function startListening(uid){
       if(unsub){ unsub(); unsub=null; }
@@ -547,6 +548,8 @@
           const isLeader = data.LeaderID === uid;
           const isMember = teamUIDs.includes(uid);
           if(!isLeader && !isMember) return; // ليس في الفريق — تجاهل
+          // Cache UIDs for active-count resolution after snapshot
+          _pendingTeamUIDs[docSnap.id] = teamUIDs;
 
           const rid = data.reportId || docSnap.id;
 
@@ -585,7 +588,7 @@
             age:     data.Age || data.age || '—',
             hlth:    data.HealthStatus || data.healthStatus || 'لا يوجد',
             status:  currentStatus || 'accepted',
-            teamCount: teamUIDs.length,
+            teamCount: teamUIDs.length, // placeholder — updated after active-check
             role:    isLeader ? 'leader' : 'member',
             ldr:     data.leader || '—',
             lph:     data.leaderPhone || '—',
@@ -600,6 +603,50 @@
           });
         });
         render();
+
+        // ── Resolve active volunteer counts asynchronously ──────────────
+        // For each report, count only volunteers whose account is active
+        function isVolActive(data) {
+          if (!data) return false;
+          const s = data.status ?? data.Status ?? data.isActive ?? data.active;
+          if (s === undefined || s === null) return true;
+          if (s === false || s === 0) return false;
+          if (typeof s === 'string') {
+            const low = s.toLowerCase();
+            if (low === 'inactive' || low === 'deactivated' || low === 'disabled' || low === 'deleted') return false;
+          }
+          return true;
+        }
+
+        const pending = Object.entries(_pendingTeamUIDs);
+        _pendingTeamUIDs = {};
+        if (pending.length > 0) {
+          Promise.all(pending.map(async ([reportDocId, uids]) => {
+            const counts = await Promise.all(uids.map(uid =>
+              getDoc(doc(db, 'Volunteer', uid))
+                .then(d => {
+                  if (d.exists()) return isVolActive(d.data()) ? 1 : 0;
+                  // fallback: search by UserID
+                  return getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', uid)))
+                    .then(s => (!s.empty && isVolActive(s.docs[0].data())) ? 1 : 0)
+                    .catch(() => 0);
+                })
+                .catch(() => 0)
+            ));
+            const activeCount = counts.reduce((a, b) => a + b, 0);
+            return { reportDocId, activeCount };
+          })).then(results => {
+            let changed = false;
+            results.forEach(({ reportDocId, activeCount }) => {
+              const r = MY_REPORTS.find(x => x._docId === reportDocId);
+              if (r && r.teamCount !== activeCount) {
+                r.teamCount = activeCount;
+                changed = true;
+              }
+            });
+            if (changed) render();
+          });
+        }
       }, err=>{ console.error('onSnapshot error',err); });
     }
 
