@@ -1007,7 +1007,18 @@ if (!rFile || !rFile.files.length) {
           LastSeenLocation:    locVal,
           LocationDescription: (document.getElementById('rLocationDesc')?.value || '').trim(),
           Details:             descVal,
-          Priority:            document.getElementById('rPriority')?.value || 'متوسط',
+          Priority: (function() {
+  const ageNum    = parseInt(document.getElementById('rAge')?.value || '0', 10) || 0;
+  const healthRadio = document.querySelector('input[name="rHealthRadio"]:checked');
+  const hlth = healthRadio?.value === 'yes'
+    ? (document.getElementById('rHealth')?.value || '').trim() || 'لا يوجد'
+    : 'لا يوجد';
+  const ageRisk = (ageNum > 0) && (ageNum < 16 || ageNum > 60);
+  const bad = hlth !== 'لا يوجد';
+  if (ageRisk && bad) return 'طارئ جداً';
+  if (ageRisk || bad) return 'طارئ';
+  return 'متوسط';
+})(),
           Status:              'Report Received',
           ApprovalStutes:      'pending',
           ReportDate:          new Date().toLocaleDateString('en-SA'),

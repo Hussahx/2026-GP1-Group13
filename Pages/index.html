@@ -590,18 +590,20 @@
           <form id="reportForm" class="report-form" novalidate>
             <div class="form-grid">
               <div class="form-group">
-                <label for="rName">اسم المفقود</label>
+                 <label for="rName">اسم المفقود <span style="color:#c0392b;">*</span></label>
+                
                 <input type="text" id="rName" name="rName" placeholder="مثال: محمد عبدالله" required minlength="2" />
                 <small class="field-error" id="rNameErr" aria-live="polite"></small>
               </div>
               <div class="form-group">
-  <label for="rAge">العمر</label>
+  <label for="rAge">العمر<span style="color:#c0392b;">*</span></label>
+
   <input type="number" id="rAge" name="rAge" placeholder="مثال: 35" min="1" max="120" required/>
   <small class="field-error" id="rAgeErr" aria-live="polite"></small>
 </div>
 
 <div class="form-group form-group--full">
-  <label>هل يعاني المفقود من أي أمراض؟</label>
+  <label>هل يعاني المفقود من أي أمراض؟ <span style="color:#c0392b;">*</span></label>
   <div style="display:flex;gap:24px;margin:8px 0 10px;">
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:15px;">
       <input type="radio" name="rHealthRadio" id="rHealthYes" value="yes"
@@ -722,7 +724,7 @@
               </div>
 
               <div class="form-group form-group--full">
-                <label for="rDesc">وصف البلاغ</label>
+                <label for="rDesc">وصف البلاغ<span style="color:#c0392b;">*</span></label>
                 <textarea id="rDesc" name="rDesc" rows="4" placeholder="اكتب تفاصيل مختصرة وواضحة..." required minlength="10"></textarea>
                 <small class="field-error" id="rDescErr" aria-live="polite"></small>
               </div>
@@ -766,7 +768,7 @@
               </div>
             </div>
 
-            <div class="modal-actions modal-actions--sticky">
+            <div class="modal-actions">
               <button type="button" class="btn-outline modal-btn" data-close="true">
                 <i class="fas fa-arrow-right"></i> إلغاء
               </button>
