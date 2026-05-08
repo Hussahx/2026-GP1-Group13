@@ -939,8 +939,10 @@ body.reports-page .bov{
              البلاغات بحالة "Report Received" أو "Rejected" لا تظهر هنا.
           ───────────────────────────────────────────────────────── */
           /* نتحقق من Status (capital) و status (lowercase) للتوافق مع كلا الحالتين */
-          const dbStatus = data.Status || data.status || '';
-          if (dbStatus !== 'Under Review') return;
+          // بعد ✅
+const dbStatus = data.Status || data.status || '';
+const visibleStatuses = ['Under Review', 'active'];
+if (!visibleStatuses.includes(dbStatus)) return;
 
           const r = docToReport(data, docSnap.id, currentUid);
           // Check leader deactivation asynchronously (won't block render)
