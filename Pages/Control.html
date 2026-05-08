@@ -1192,6 +1192,9 @@
         'Report Received': 'pending',
         'Under Review':    'accepted',
         'Rejected':        'rejected',
+        'active':          'accepted',
+        'rescued':         'accepted',
+        'found':           'accepted',
         // Legacy fallbacks
         'pending':         'pending',
         'accepted':        'accepted',
@@ -1457,19 +1460,17 @@
           ApprovalStutes: pendingAction.action === 'accept' ? 'approved' : 'rejected',
           AdminID:        adminUID          // ← record which admin acted on this report
         }).then(function() {
-          // Reflect AdminID locally so subsequent opens show correct data
+          r.status  = newIntStatus;
           r.adminId = adminUID;
+          notify(msg, pendingAction.action === 'accept' ? 's' : 'ne');
+          renderAll();
+          closeConfirm();
+          pendingAction = null;
         }).catch(function(err) {
           console.error('Firestore update error:', err);
           notify('حدث خطأ أثناء تحديث الحالة', 'ne');
         });
       }
-
-      r.status = newIntStatus;
-      notify(msg, pendingAction.action === 'accept' ? 's' : 'ne');
-      renderAll();
-      closeConfirm();
-      pendingAction = null;
     }
     function closeConfirm(){ document.getElementById('confirmOvr').classList.remove('on'); }
 
