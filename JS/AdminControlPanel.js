@@ -259,8 +259,25 @@ function render() {
           <span class="tag"><i class="fa-regular fa-calendar"></i>${escapeHtml(formatDateTime(created))}</span>
         </div>
         <div class="req-sub">
-          <span><i class="fa-regular fa-envelope"></i> ${escapeHtml(r.email)}</span>
-          <span><i class="fa-solid fa-phone"></i> ${escapeHtml(r.phone)}</span>
+${
+  r.email
+    ? `<a href="https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(r.email)}"
+          target="_blank"
+          style="display:inline-flex;align-items:center;gap:5px;color:#9b7a56;text-decoration:none;font-size:13px;">
+          ${escapeHtml(r.email)}
+          <i class="fa-regular fa-envelope" style="color:#9b7a56;"></i>
+       </a>`
+    : `<span style="color:#9b7a56;">—</span>`
+}          ${
+  r.phone && r.phone !== '—'
+    ? `<a href="https://wa.me/966${String(r.phone).replace(/\D/g,'').replace(/^0/,'')}"
+          target="_blank"
+          style="display:inline-flex;align-items:center;gap:5px;color:#9b7a56;text-decoration:none;font-size:13px;">
+          ${escapeHtml(r.phone)}
+          <i class="fab fa-whatsapp" style="color:#9b7a56;"></i>
+       </a>`
+    : `<span style="color:#9b7a56;">—</span>`
+}
         </div>
       </div>
       <div class="req-actions">${actionBtns}</div>
