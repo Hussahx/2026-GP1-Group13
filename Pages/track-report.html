@@ -10,6 +10,7 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/CSS/Rasid.css" />
 
   <style>
     :root {
@@ -119,14 +120,38 @@
   font-weight: 700;
 
   background: rgba(245,239,230,0.92);
-  color: #5C4025;
-
-  border: 1.5px solid rgba(166,124,82,0.22);
-
+color: #7A5C38 !important;
+border: 1.5px solid #9E7449;
   box-shadow: 0 4px 14px rgba(62,47,28,0.06);
 
   transition: var(--transition);
   text-decoration: none;
+}
+
+.header-nav a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.45rem;
+
+  padding:.55rem 1.2rem;
+  border-radius:999px;
+
+  background:rgba(245,239,230,0.92) !important;
+  color:#5C4025 !important;
+
+  border:1.5px solid rgba(166,124,82,0.28) !important;
+  box-shadow:0 4px 14px rgba(62,47,28,0.06);
+
+  font-weight:800;
+  text-decoration:none;
+}
+
+.header-nav a:hover{
+  background:rgba(245,239,230,0.98) !important;
+  color:#5C4025 !important;
+  transform:translateY(-2px);
+  box-shadow:0 8px 22px rgba(62,47,28,0.10);
 }
 
 .btn-home:hover {
@@ -134,8 +159,7 @@
 
   background: rgba(245,239,230,0.98);
 
-  color: #5C4025;
-
+color: #5C4025 !important;
   box-shadow: 0 8px 22px rgba(62,47,28,0.10);
 }
 
@@ -326,19 +350,7 @@ position:relative;
 
     .found-content { display:none; }
     .found-content.visible { display:block; }
-footer {
-  position: relative;
-  overflow: hidden;
-margin-top: 0;
-  background: linear-gradient(
-    180deg,
-    #e5d5bc 0%,
-    #d8bc90 18%,
-    #c4a070 40%,
-    #9e7449 68%,
-    #614426 100%
-  );
-}
+
     
     .footer-inner { position:relative; z-index:3; max-width:1100px; margin:0 auto; padding:0 2rem 3.5rem; display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:3rem; }
     .f-logo { font-size:1.7rem; font-weight:900; color:rgba(255,255,255,.92); line-height:1; }
@@ -532,9 +544,12 @@ margin-top: 0;
   </main>
 
   <footer>
-    
-     
-    <div class="footer-inner">
+  <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+    <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
+  </svg>
+
+  <div class="footer-inner">
       <div class="f-brand">
         <div class="f-logo">راصد<span>RASID</span></div>
         <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
