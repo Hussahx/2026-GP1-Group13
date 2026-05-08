@@ -444,8 +444,8 @@
         : '';
 
       const btns = isLeader
-        ? `<button class="btn bov" style="flex:2;" data-act="details" data-docid="${r._docId}" type="button">تفاصيل العملية</button>`
-        : `<button class="btn bov" style="flex:2;" data-act="details" data-docid="${r._docId}" type="button">تفاصيل العملية</button>`;
+? `<button class="btn bov" style="flex:2;" data-act="details" data-docid="${r._docId}" type="button"><i class="fas fa-eye"></i> تفاصيل العملية</button>`  : 
+`<button class="btn bov" style="flex:2;" data-act="details" data-docid="${r._docId}" type="button"><i class="fas fa-eye"></i> تفاصيل العملية</button>`;
 
       return `<div class="card ${cardCls}">
         <div class="ctop">

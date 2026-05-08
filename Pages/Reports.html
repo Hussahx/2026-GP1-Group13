@@ -140,7 +140,8 @@ body.reports-page .bjn {
 }
 
 /* زر ثانوي (أوف وايت) */
-body.reports-page .bvw,
+body.repor
+ts-page .bvw,
 body.reports-page .bph,
 body.reports-page .bov {
   background: #f5efe6;
@@ -171,6 +172,11 @@ body.reports-page .bov{
   border-color:#e0d5c3;
   color:#7a5828;
 }
+body.reports-page .bvw i{
+  color:#7a5828;
+}
+
+
 
 body.reports-page .bph{
   font-size:11.5px;
@@ -1448,12 +1454,12 @@ await updateDoc(doc(db, 'Report', docId), {
         var btns='';
         if(type==='new'){
           btns='<button class="btn bto" data-act="takeover" data-id="'+r.id+'" type="button">تولّي البلاغ</button>'+
-               '<button class="btn bvw" data-act="openmodal" data-id="'+r.id+'" data-type="new" type="button">التفاصيل</button>';
+               '<button class="btn bvw" data-act="openmodal" data-id="'+r.id+'" data-type="new" type="button"><i class="fas fa-eye"></i> التفاصيل</button>';
         } else if(type==='active'){
           btns=(r.userInTeam
             ? '<button class="btn bjn" disabled style="opacity:0.6;cursor:default;" type="button">أنت منضم لهذا الفريق</button>'
             : '<button class="btn bjn" data-act="join" data-id="'+r.id+'" type="button">انضمام للفريق</button>')+
-              '<button class="btn bvw" data-act="openmodal" data-id="'+r.id+'" data-type="active" type="button">التفاصيل</button>';
+              '<button class="btn bvw" data-act="openmodal" data-id="'+r.id+'" data-type="active" type="button"><i class="fas fa-eye"></i> التفاصيل</button>';
         } else {
           if(r.role==='leader'){
             btns='<button class="btn bov" data-act="opendetails" data-docid="'+r._docId+'" type="button">تفاصيل البلاغ</button>'+
@@ -1648,7 +1654,7 @@ if (teamEl) teamEl.innerHTML = th;})();
   if(r.userInTeam){
     fh='<div style="display:flex;gap:9px;">'+
        '<button class="btn bjn" disabled style="flex:1;padding:13px;opacity:0.6;cursor:default;" type="button">أنت منضم للفريق</button>'+
-       '<button class="btn bov" style="flex:1;padding:13px;" data-act="opendetails" data-docid="'+r._docId+'" type="button">تفاصيل البلاغ</button>'+
+       '<button class="btn bov" style="flex:1;padding:13px;" data-act="opendetails" data-docid="'+r._docId+'" type="button"><i class="fas fa-eye"></i> تفاصيل البلاغ</button>'+
        '</div>';
   } else {
     fh='<button class="btn bjn" style="width:100%;padding:0.75rem 1.5rem;min-height:44px;" data-act="modal-join" data-id="'+id+'" type="button">انضمام للفريق</button>';
