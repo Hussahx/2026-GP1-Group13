@@ -1613,19 +1613,34 @@ document.getElementById('mTeam').innerHTML='<p style="font-size:13px;color:var(-
   rows.sort(function(a,b){ return a.role === 'قائد' ? -1 : b.role === 'قائد' ? 1 : 0; });
 
   var th = '<div style="display:flex;flex-direction:column;gap:7px;">';
-  for (var z = 0; z < rows.length; z++) {
-    var rw = rows[z], rc = (rw.role === 'قائد') ? '#b8782a' : '#6b4c2a';
-    th += '<div style="display:flex;align-items:center;gap:9px;background:var(--s100);border-radius:10px;padding:10px 12px;">' +
-          '<div class="av" style="background:'+rw.c+';width:32px;height:32px;font-size:10px;flex-shrink:0;">'+(rw.n&&rw.n.length>=2?rw.n.slice(0,2):rw.n)+'</div>' +
-          '<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">' +
-          '<span style="font-size:13px;color:var(--t900);font-weight:600;">'+rw.n+'</span>' +
-          '<span style="font-size:10px;padding:2px 6px;border-radius:5px;background:#fff;border:1px solid var(--s300);color:'+rc+';font-weight:700;">'+rw.role+'</span>' +
-          '</div><div style="font-size:11.5px;color:var(--t500);margin-top:1px;">'+rw.p+'</div></div>' +
-          '</div>';
-  }
-  th += '</div>';
-  if (teamEl) teamEl.innerHTML = th;
-})();
+
+for (var z = 0; z < rows.length; z++) {
+  var rw = rows[z], rc = (rw.role === 'قائد') ? '#b8782a' : '#6b4c2a';
+
+  th += '<div style="display:flex;align-items:center;gap:9px;background:var(--s100);border-radius:10px;padding:10px 12px;">' +
+    '<div class="av" style="background:'+rw.c+';width:32px;height:32px;font-size:10px;flex-shrink:0;">'+(rw.n&&rw.n.length>=2?rw.n.slice(0,2):rw.n)+'</div>' +
+
+    '<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">' +
+
+      '<span style="font-size:13px;color:var(--t900);font-weight:600;">'+rw.n+'</span>' +
+
+      '<span style="font-size:10px;padding:2px 6px;border-radius:5px;background:#fff;border:1px solid var(--s300);color:'+rc+';font-weight:700;">'+rw.role+'</span>' +
+
+      (rw.p && rw.p !== '—'
+        ? '<a href="https://wa.me/966'+rw.p.replace(/^0/,"")+'" target="_blank" style="display:flex;align-items:center;gap:4px;margin-right:auto;color:#9b7a56;font-size:13px;font-weight:500;text-decoration:none;direction:ltr;">'+
+            '<span>'+rw.p+'</span>'+
+            '<i class="fab fa-whatsapp" style="color:#9b7a56;font-size:13px;"></i>'+
+          '</a>'
+        : '<span style="margin-right:auto;font-size:11.5px;color:var(--t500);">—</span>'
+      ) +
+
+    '</div>' +
+  '</div>';
+}
+
+th += '</div>';
+
+if (teamEl) teamEl.innerHTML = th;})();
       var fh='';
       if(type==='new'){
         fh='<button class="btn bto" style="width:100%;padding:0.75rem 1.5rem;min-height:44px;" data-act="modal-takeover" data-id="'+id+'" type="button">تولّي البلاغ</button>';
