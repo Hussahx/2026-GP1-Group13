@@ -148,26 +148,73 @@
 
   <!-- ══════════ FOOTER — base.html ══════════ -->
   <footer>
-    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
-      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
-    </svg>
-    <div class="footer-inner">
-      <div class="f-brand">
-        <div class="f-logo">راصد<span>RASID</span></div>
-        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
-      </div>
-  
+  <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+    <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
+  </svg>
 
-      <div class="f-col">
-        <h4>أرقام الطوارئ</h4>
-        <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
-        <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+  <div class="footer-inner">
+
+    <div class="f-brand">
+      <div class="f-logo">راصد<span>RASID</span></div>
+      <p>
+        منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين
+        في البيئات الصحراوية.
+      </p>
+    </div>
+
+    <!-- تواصل معنا -->
+    <div class="f-col">
+      <h4>تواصل معنا</h4>
+
+      <p style="
+        font-size:12.5px;
+        color:rgba(255,255,255,0.58);
+        line-height:1.9;
+        margin-bottom:12px;
+      ">
+        نحن هنا للإجابة على استفساراتك
+      </p>
+
+      <a href="https://mail.google.com/mail/?view=cm&fs=1&to=rasidsupport@gmail.com"
+         target="_blank"
+         style="
+           display:inline-flex;
+           align-items:center;
+           gap:8px;
+           color:rgba(255,255,255,0.82);
+           text-decoration:none;
+           font-weight:700;
+           font-size:13px;
+         ">
+        <i class="fa-solid fa-envelope"></i>
+        rasidsupport@gmail.com
+      </a>
+    </div>
+
+    <!-- أرقام الطوارئ -->
+    <div class="f-col">
+      <h4>أرقام الطوارئ</h4>
+
+      <div class="f-emergency">
+        <div class="num">911</div>
+        <small>الدفاع المدني</small>
+      </div>
+
+      <div class="f-emergency">
+        <div class="num">998</div>
+        <small>الهلال الأحمر</small>
       </div>
     </div>
-    <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
-    <div class="footer-dune"></div>
-  </footer>
+
+  </div>
+
+  <div class="footer-bar">
+    جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ
+  </div>
+
+  <div class="footer-dune"></div>
+</footer>
 
   <!-- Detail modal -->
   <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
