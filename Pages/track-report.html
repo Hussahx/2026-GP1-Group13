@@ -116,11 +116,27 @@
     }
     .header-nav a:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.32); }
 
-    .page-body {
-      flex: 1; display: flex; flex-direction: column; align-items: center;
-      padding: clamp(2.5rem, 6vw, 4rem) clamp(1rem, 4vw, 2rem) 3rem;
-      gap: clamp(1.75rem, 4vw, 2.5rem);
-    }
+   .page-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding:
+    clamp(2.5rem, 6vw, 4rem)
+    clamp(1rem, 4vw, 2rem)
+    4rem;
+
+  gap: clamp(1.75rem, 4vw, 2.5rem);
+position:relative;
+  z-index:1;
+
+  margin-bottom:-1px;
+  width:100%;
+}
+
+
+
 
     .page-heading { text-align: center; max-width: 520px; width: 100%; animation: fadeUp 0.7s var(--ease-out) both; }
     .page-heading-eyebrow {
@@ -287,9 +303,20 @@
 
     .found-content { display:none; }
     .found-content.visible { display:block; }
-
-    footer { position:relative; background:linear-gradient(180deg,#f5efe5 0%,#f4ead8 18%,#e8d4b4 34%,#d8bc90 50%,#c4a070 64%,#9e7449 78%,#614426 100%); overflow:hidden; margin-top:auto; }
-    .footer-wave { display:block; width:100%; height:60px; position:relative; z-index:2; }
+footer {
+  position: relative;
+  overflow: hidden;
+margin-top: 0;
+  background: linear-gradient(
+    180deg,
+    #e5d5bc 0%,
+    #d8bc90 18%,
+    #c4a070 40%,
+    #9e7449 68%,
+    #614426 100%
+  );
+}
+    
     .footer-inner { position:relative; z-index:3; max-width:1100px; margin:0 auto; padding:0 2rem 3.5rem; display:grid; grid-template-columns:1.5fr 1fr 1fr; gap:3rem; }
     .f-logo { font-size:1.7rem; font-weight:900; color:rgba(255,255,255,.92); line-height:1; }
     .f-logo span { display:block; font-size:.75rem; font-weight:700; letter-spacing:4px; color:rgba(255,255,255,.4); margin-top:2px; }
@@ -328,6 +355,12 @@
       .search-row{flex-direction:column;}
       .search-btn{width:100%;justify-content:center;}
     }
+    .footer-wave {
+  display: block;
+  width: 100%;
+  
+}
+   
   </style>
 </head>
 <body>
@@ -476,10 +509,8 @@
   </main>
 
   <footer>
-    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
-      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
-    </svg>
+    
+     
     <div class="footer-inner">
       <div class="f-brand">
         <div class="f-logo">راصد<span>RASID</span></div>
