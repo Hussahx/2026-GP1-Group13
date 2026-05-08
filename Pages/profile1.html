@@ -2522,8 +2522,7 @@ onAuthStateChanged(auth, function(user) {
         days:      daysText,
         ld:        reportTimeStr,
         role:      isLeader ? 'leader' : 'member',
-        teamCount: Array.isArray(d.teamMembers) ? d.teamMembers.length : 0,
-        closed:    closedStatuses.includes(currentStatus),
+teamCount: d.CurrentVolunteers || d.currentVolunteers || (Array.isArray(d.teamMembers) ? d.teamMembers.length : 0),        closed:    closedStatuses.includes(currentStatus),
         hlth:      d.HealthStatus      || d.healthStatus        || 'لا يوجد',
         veh:       d.Vehicle           || d.vehicle             || '—',
         age:       d.Age               || d.age                 || '—',
@@ -2532,9 +2531,17 @@ onAuthStateChanged(auth, function(user) {
         status:    currentStatus       || 'Under Review',
         desc:      d.Details           || d.description         || '',
         mbr:       [],
-        foundAt:   '',
-        startDate: reportTimeStr,
-        foundDate: '',
+foundAt: (() => {
+  const logs = Array.isArray(d.statusLog) ? d.statusLog : [];
+  const lastClosed = logs.slice().reverse().find(x => x.status === 'report_closed') || logs[logs.length - 1];
+
+  const notes = [];
+
+  if (lastClosed?.outcomeNotes) notes.push(lastClosed.outcomeNotes);
+  if (lastClosed?.note) notes.push(lastClosed.note);
+
+  return notes.join(' — ');
+})(),        foundDate: '',
         closeDate: d.lastUpdate || '',
         duration:  daysText
       });
@@ -2795,7 +2802,7 @@ function openLog(id){
   document.getElementById('mlLoc').textContent  = '📍 ' + r.loc;
 
   var keys = ['العمر','الحالة الصحية','المركبة','تاريخ الفقدان','مدة البلاغ','قائد الفريق','عدد المتطوعين','نتيجة العملية'];
-  var vals = [r.age+' سنة', r.hlth, r.veh, r.ld, r.duration, r.ldr, toAr(r.mbr.length)+' أفراد', 'تم الانقاذ بنجاح ✅'];
+  var vals = [r.age+' سنة', r.hlth, r.veh, r.ld, r.duration, r.ldr, toAr(r.teamCount || 0)+' أفراد', 'تم الانقاذ بنجاح ✅'];
   var dh = '';
 
   for(var i=0; i<keys.length; i++){
@@ -2804,7 +2811,7 @@ function openLog(id){
 
   document.getElementById('mlDetails').innerHTML = dh;
 document.getElementById('mlFound').textContent =
-  r.OutcomeNote || 'لا توجد ملاحظات';
+  r.foundAt || 'لا توجد ملاحظات';
   document.getElementById('mlTimeline').innerHTML =
     '<div class="tl-item"><div class="tl-dot start">🚨</div><div class="tl-content"><div class="tl-lbl">بدء البلاغ</div><div class="tl-time">'+r.startDate+'</div><div class="tl-dur">استلم البلاغ وبدأ تشكيل الفريق</div></div></div>'+
     '<div class="tl-item"><div class="tl-dot found">✅</div><div class="tl-content"><div class="tl-lbl">تم العثور على المفقودين</div><div class="tl-time">'+r.foundDate+'</div><div class="tl-dur">'+r.foundAt+'</div></div></div>'+
