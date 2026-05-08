@@ -1007,32 +1007,67 @@
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
 
-    /* ── Update header name ── */
-    try {
-      const nameEl    = document.getElementById('userName');
-      const initialEl = document.getElementById('userInitial');
-      // 1. Volunteer table — has UserID field
-      const vSnap = await getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', user.uid)));
-      if (!vSnap.empty) {
-        const { FirstName, LastName } = vSnap.docs[0].data();
-        const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
-        if (nameEl)    nameEl.textContent    = fullName || 'User';
-        if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
-      } else {
-        // 2. Admin table — document ID = user.uid
-        const aDoc = await getDoc(doc(db, 'Admin', user.uid));
-        if (aDoc.exists()) {
-          const { FirstName, LastName } = aDoc.data();
-          const fullName = ((FirstName || '') + ' ' + (LastName || '')).trim();
-          if (nameEl)    nameEl.textContent    = fullName || 'User';
-          if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
-        } else {
-          // 3. Fallback
-          if (nameEl)    nameEl.textContent    = 'User';
-          if (initialEl) initialEl.textContent = 'U';
-        }
-      }
-    } catch(e) { console.error('volunteer header error', e); }
+   /* ── Update header name ── */
+try {
+
+  const nameEl    = document.getElementById('userName');
+  const initialEl = document.getElementById('userInitial');
+
+  const vDoc = await getDoc(doc(db, 'Volunteer', user.uid));
+
+if (vDoc.exists()) {
+
+  const { FirstName, LastName } = vDoc.data();
+
+  const fullName =
+    `${FirstName || ''} ${LastName || ''}`.trim();
+
+  if (nameEl)
+    nameEl.textContent = fullName || 'متطوع';
+
+  if (initialEl)
+    initialEl.textContent = FirstName
+      ? FirstName.charAt(0)
+      : 'م';
+
+} else {
+
+  if (nameEl)
+    nameEl.textContent = 'متطوع';
+
+  if (initialEl)
+    initialEl.textContent = 'م';
+}
+
+  if (!vSnap.empty) {
+
+    const { FirstName, LastName } = vSnap.docs[0].data();
+
+    const fullName =
+      `${FirstName || ''} ${LastName || ''}`.trim();
+
+    if (nameEl)
+      nameEl.textContent = fullName || 'متطوع';
+
+    if (initialEl)
+      initialEl.textContent = FirstName
+        ? FirstName.charAt(0)
+        : 'م';
+
+  } else {
+
+    if (nameEl)
+      nameEl.textContent = 'متطوع';
+
+    if (initialEl)
+      initialEl.textContent = 'م';
+  }
+
+} catch(e) {
+
+  console.error('volunteer header error', e);
+
+}
 
     /* ── Resolve docId ── */
     const getDocId = () => {
@@ -1056,42 +1091,61 @@
          1. If LeaderID exists → fetch Volunteer doc → compare UserID
          2. If no LeaderID → compare leader name field to my full name
       ────────────────────────────────────────────────────────── */
-      let isLeader = false;
+let isLeader = false;
 
-      try {
-        const leaderDocId = reportData.LeaderID || reportData.leaderID || reportData.leaderId || '';
+try {
 
-        if (leaderDocId) {
-          // ── Check 1: LeaderID exists ──────────────────────────
-          if (leaderDocId === user.uid) {
-            isLeader = true;
-          } else {
-            const lDoc = await getDoc(doc(db, 'Volunteer', leaderDocId));
-            if (lDoc.exists()) {
-              const lData = lDoc.data();
-              const storedUid = lData.UserID || lData.userId || lData.uid || lData.userID || '';
-              if (storedUid === user.uid) isLeader = true;
-            }
-          }
-        }
+  const leaderDocId =
+    reportData.LeaderID ||
+    reportData.leaderID ||
+    reportData.leaderId ||
+    '';
 
-        if (!isLeader && reportData.leader) {
-          // ── Check 2: No LeaderID — compare by name ────────────
-          const leaderName = reportData.leader.trim();
-          const mySnap = await getDocs(
-            query(collection(db, 'Volunteer'), where('UserID', '==', user.uid))
-          );
-          if (!mySnap.empty) {
-            const d = mySnap.docs[0].data();
-            const myName = ((d.FirstName || '') + ' ' + (d.LastName || '')).trim();
-            if (myName && myName === leaderName) isLeader = true;
-          }
-        }
+  // نجيب بياناتي من Volunteer
+  const mySnap = await getDocs(
+    query(
+      collection(db, 'Volunteer'),
+      where('UserID', '==', user.uid)
+    )
+  );
 
-      } catch(e) {
-        console.warn('[RASID] Leader check error:', e);
-      }
+  let myVolunteerDocId = '';
+  let myFullName = '';
 
+  if (!mySnap.empty) {
+
+    myVolunteerDocId = mySnap.docs[0].id;
+
+    const myData = mySnap.docs[0].data();
+
+    myFullName =
+      ((myData.FirstName || '') + ' ' + (myData.LastName || '')).trim();
+  }
+
+  // 1) لو مخزن auth uid مباشرة
+  if (leaderDocId === user.uid) {
+    isLeader = true;
+  }
+
+  // 2) لو مخزن document id حق Volunteer
+  if (!isLeader && leaderDocId === myVolunteerDocId) {
+    isLeader = true;
+  }
+
+  // 3) fallback بالاسم
+  if (
+    !isLeader &&
+    reportData.leader &&
+    reportData.leader.trim() === myFullName
+  ) {
+    isLeader = true;
+  }
+
+} catch(e) {
+
+  console.warn('[RASID] Leader check error:', e);
+
+}
       console.log('[RASID] isLeader =', isLeader, '| uid =', user.uid);
       /* Expose to status modal JS */
       window._leaderDocId      = docId;
@@ -1126,25 +1180,42 @@
         return true;
       }
 
-      /* ── Helper: fetch a Volunteer by docId or UserID, returns {uid,name} | null ── */
-      async function fetchActiveVolunteer(uid) {
-        try {
-          const d = await getDoc(doc(db, 'Volunteer', uid));
-          if (d.exists()) {
-            const data = d.data();
-            if (!isVolunteerActive(data)) return null;
-            return { uid, name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim() };
-          }
-          // fallback: search by UserID field
-          const snap = await getDocs(query(collection(db, 'Volunteer'), where('UserID', '==', uid)));
-          if (!snap.empty) {
-            const data = snap.docs[0].data();
-            if (!isVolunteerActive(data)) return null;
-            return { uid, name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim() };
-          }
-          return null; // account deleted
-        } catch { return null; }
-      }
+      /* ── Helper: fetch a Volunteer by docId or UserID, returns {uid,name,phone} | null ── */
+async function fetchActiveVolunteer(uid) {
+  try {
+    const d = await getDoc(doc(db, 'Volunteer', uid));
+
+    if (d.exists()) {
+      const data = d.data();
+      if (!isVolunteerActive(data)) return null;
+
+      return {
+        uid,
+        name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim(),
+        phone: data.Phone || '—'
+      };
+    }
+
+    const snap = await getDocs(
+      query(collection(db, 'Volunteer'), where('UserID', '==', uid))
+    );
+
+    if (!snap.empty) {
+      const data = snap.docs[0].data();
+      if (!isVolunteerActive(data)) return null;
+
+      return {
+        uid,
+        name: ((data.FirstName || '') + ' ' + (data.LastName || '')).trim(),
+        phone: data.Phone || '—'
+      };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
 
       /* ── Resolve all active team members (preserve join order) ── */
       const members = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
@@ -1192,8 +1263,36 @@
               : '<span style="font-size:9px;font-weight:700;background:#f0f4ff;color:#3050a0;border:1px solid #b0c0f0;border-radius:6px;padding:1px 7px;margin-right:6px;">عضو</span>';
             return `<div style="display:flex;align-items:center;padding:7px 10px;background:#fff;border-radius:10px;border:1px solid rgba(180,140,80,0.12);">
               <div style="width:32px;height:32px;border-radius:50%;background:var(--s400,#b8965e);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;margin-left:10px;">${m.name.trim().charAt(0)||'؟'}</div>
-              <span style="font-size:13px;font-weight:600;color:var(--t900,#2a1e0e);flex:1;">${m.name.trim()||'—'}</span>
-              ${badge}
+<div style="flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+
+  <div>
+    <div style="font-size:13px;font-weight:600;color:var(--t900,#2a1e0e);">
+      ${m.name.trim() || '—'}
+    </div>
+  </div>
+
+  <a
+  href="https://wa.me/966${(m.phone || '').replace(/\D/g,'').replace(/^0/,'')}"
+  target="_blank"
+  style="
+    font-size:11px;
+    color:var(--t500,#8c6840);
+    display:flex;
+    align-items:center;
+    gap:5px;
+    text-decoration:none;
+    transition:.2s;
+  "
+  title="يمكنك التواصل أو الاتصال به"
+>
+
+  <i class="fab fa-whatsapp"></i>
+
+  ${m.phone || '—'}
+
+</a>
+
+</div>             ${badge}
             </div>`;
           }).join('');
 
@@ -1705,11 +1804,16 @@ async function _writeToFirestore(logEntry, fbStatusVal, nowDate) {
     outcomeNotes:   logEntry.outcomeNotes || null,
   };
 
-  const payload = {
-    status:     fbStatusVal,
-    lastUpdate: logEntry.loggedAt,
-    statusLog:  unionFn(firestoreEntry),
-  };
+ const payload = {
+
+  Status: fbStatusVal,
+  status: fbStatusVal,
+
+  lastUpdate: logEntry.loggedAt,
+
+  statusLog: unionFn(firestoreEntry),
+
+};
 
   if (logEntry.status === 'report_closed') {
     payload.closedAt      = tsNow;

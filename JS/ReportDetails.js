@@ -627,10 +627,21 @@
       const d = snap.data();
       const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
       let reportTimeStr = '—';
-      if (d.reportTime && d.reportTime.toDate) {
-        const dt = d.reportTime.toDate();
-        reportTimeStr = dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
-      }
+
+if (d.LoggedAt && d.LoggedAt.toDate) {
+
+  const dt = d.LoggedAt.toDate();
+
+  reportTimeStr = dt.toLocaleString('ar-SA', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  });
+
+} else if (d.ReportDate) {
+
+  reportTimeStr = d.ReportDate;
+
+}
 
       return {
         id:           d.reportId || docId,
