@@ -827,26 +827,51 @@ body.reports-page .bov{
       const teamMembers = rawTeam.map(m =>
         (typeof m === 'object' && m !== null) ? m.userId : m
       ).filter(Boolean);
+let ldDisplay = data.LostDate || data.ReportDate || data.lastSeen || '';
 
-      let ldDisplay = data.lastSeen || data.LostDate || data.ReportDate || '';
-      if (!ldDisplay && data.reportTime?.toDate) {
-        ldDisplay = formatArDate(data.reportTime.toDate());
-      } else if (!ldDisplay && data.LoggedAt?.toDate) {
-        ldDisplay = formatArDate(data.LoggedAt.toDate());
-      }
+if (!ldDisplay && data.reportTime?.toDate) {
+  ldDisplay = formatArDate(data.reportTime.toDate());
+} else if (!ldDisplay && data.LoggedAt?.toDate) {
+  ldDisplay = formatArDate(data.LoggedAt.toDate());
+}
 
-      let daysText = '—';
-      let tsDate = null;
-      if (data.reportTime?.toDate)   tsDate = data.reportTime.toDate();
-      else if (data.LoggedAt?.toDate) tsDate = data.LoggedAt.toDate();
-      else if (data.ReportDate)       tsDate = new Date(data.ReportDate);
-      if (tsDate && !isNaN(tsDate)) {
-        const diff = Math.floor((Date.now() - tsDate.getTime()) / 86400000);
-        if (diff === 0)      daysText = 'منذ اليوم';
-        else if (diff === 1) daysText = 'منذ يوم';
-        else if (diff <= 10) daysText = 'منذ ' + toArNum(diff) + ' أيام';
-        else                 daysText = 'منذ ' + toArNum(diff) + ' يوماً';
-      }
+function parseLocalDate(value) {
+  if (!value) return null;
+
+  if (value.toDate) return value.toDate();
+
+  const s = String(value).trim();
+
+  // يدعم 2026-05-01 أو 2026/05/01
+  const m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+let daysText = '—';
+
+let tsDate =
+  parseLocalDate(data.LostDate) ||
+  parseLocalDate(data.ReportDate) ||
+  parseLocalDate(data.reportTime) ||
+  parseLocalDate(data.LoggedAt);
+
+if (tsDate) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  tsDate.setHours(0,0,0,0);
+
+  let diff = Math.round((today - tsDate) / 86400000);
+  if (diff < 0) diff = 0;
+
+  if (diff === 0) daysText = 'منذ اليوم';
+  else if (diff === 1) daysText = 'منذ يوم';
+  else if (diff <= 10) daysText = 'منذ ' + toArNum(diff) + ' أيام';
+  else daysText = 'منذ ' + toArNum(diff) + ' يوم';
+}
 
       // Map Firestore field names (capitalized) to display values
       // Support both old lowercase and new capitalized field names
