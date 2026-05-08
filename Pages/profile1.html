@@ -63,8 +63,8 @@ body {
   max-width: none !important;
   width: 100% !important;
   margin: 0 !important;
-  /* FIX 3: بيضاء */
-  background-color: #F5EFE6 !important; background-image: radial-gradient(ellipse 80% 50% at 10% 0%, rgba(166,124,82,0.10) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 90% 100%, rgba(122,154,106,0.07) 0%, transparent 55%), repeating-linear-gradient(45deg, transparent 0px, transparent 40px, rgba(166,124,82,0.025) 40px, rgba(166,124,82,0.025) 41px) !important;
+
+  background: transparent !important;
 }
 
 /* ══════════════════════════════════════════
@@ -448,8 +448,7 @@ body {
 .profile-page .p-main {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 28px 40px 60px;
-  /* FIX: شفاف فوق الأبيض */
+  padding: 28px 40px 0;
   background: transparent;
 }
 
@@ -1859,7 +1858,7 @@ body {
 }
 
 /* FOOTER */
-footer { position: relative; overflow: hidden; }
+footer { position: relative; overflow: hidden; margin-top: 0; }
 .footer-wave { display: block; width: 100%; }
 .footer-inner {
   display: grid;
