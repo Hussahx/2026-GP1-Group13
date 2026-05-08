@@ -74,7 +74,7 @@
   background: rgba(245,239,230,0.95);
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
-  padding:12px 30px;
+ padding: 0.75rem 1.5rem; 
   display:flex;
   align-items:center;
   gap:0.875rem;
@@ -104,17 +104,40 @@
   object-fit:contain;
   display:block;
 }
-    .header-brand { position: relative; z-index: 1; }
+    .header-brand { position: relative; z-index: 1;margin-right: auto; margin-left: 0; }
     .header-brand h1 { font-size: clamp(1.2rem, 3vw, 1.55rem); font-weight: 900; color: #fff; line-height: 1.1; }
     .header-brand p  { font-size: clamp(0.72rem, 1.3vw, 0.82rem); color: rgba(255,255,255,0.62); margin-top: 2px; }
-    .header-nav { position: relative; z-index: 1; margin-right: auto; }
-    .header-nav a {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      color: rgba(255,255,255,0.7); font-size: 0.82rem; font-weight: 600;
-      padding: 0.3rem 0.8rem; border-radius: var(--radius-pill);
-      border: 1px solid rgba(255,255,255,0.18); transition: all 0.22s ease;
-    }
-    .header-nav a:hover { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.32); }
+   .btn-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 38px;
+  padding: 0 0.77em;
+  border-radius: 50px;
+  font-family: var(--font);
+  font-size: 0.88rem;
+  font-weight: 700;
+
+  background: rgba(245,239,230,0.92);
+  color: #5C4025;
+
+  border: 1.5px solid rgba(166,124,82,0.22);
+
+  box-shadow: 0 4px 14px rgba(62,47,28,0.06);
+
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.btn-home:hover {
+  transform: translateY(-2px);
+
+  background: rgba(245,239,230,0.98);
+
+  color: #5C4025;
+
+  box-shadow: 0 8px 22px rgba(62,47,28,0.10);
+}
 
    .page-body {
   flex: 1;
@@ -373,11 +396,11 @@ margin-top: 0;
       
     </div>
     <nav class="header-nav" aria-label="تنقل سريع">
-      <a href="index.html">
-        <i class="fas fa-chevron-right" aria-hidden="true"></i>
-        الرئيسية
-      </a>
-    </nav>
+  <a href="index.html" class="btn-home">
+    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+    <span>الرئيسية</span>
+  </a>
+</nav>
   </header>
 
   <main class="page-body">
@@ -520,9 +543,8 @@ margin-top: 0;
         <h4>روابط سريعة</h4>
         <ul>
           <li><a href="index.html">الصفحة الرئيسية</a></li>
-          <li><a href="login.html">تسجيل الدخول</a></li>
-          <li><a href="Regester.html">انضم كمتطوع</a></li>
-          <li><a href="track-report.html">تتبع البلاغ</a></li>
+          <li><a href="VolunteerRegister.html">انضم كمتطوع</a></li>
+          
         </ul>
       </div>
       <div class="f-col">
