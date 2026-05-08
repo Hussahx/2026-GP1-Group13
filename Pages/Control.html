@@ -1338,11 +1338,25 @@
     }
 
     function contactCell(r){
-      return '<div class="contact-cell">' +
-        '<div class="contact-row"><i class="fas fa-phone"></i>'+r.phone+'</div>' +
-        '<div class="contact-row"><i class="fas fa-envelope"></i>'+r.email+'</div>' +
-      '</div>';
-    }
+  var cleanPhone = String(r.phone || '').replace(/\D/g,'');
+  var waPhone = cleanPhone.startsWith('0')
+    ? '966' + cleanPhone.substring(1)
+    : cleanPhone;
+
+  var phoneHtml = cleanPhone
+    ? '<a class="contact-row" href="https://wa.me/'+waPhone+'" target="_blank" style="text-decoration:none;color:#9b7a56;">' +
+        '<i class="fab fa-whatsapp" style="color:#9b7a56;"></i>' + r.phone +
+      '</a>'
+    : '<div class="contact-row"><i class="fab fa-whatsapp" style="color:#9b7a56;"></i>—</div>';
+
+  var emailHtml = r.email && r.email !== '—'
+    ? '<a class="contact-row" href="mailto:'+r.email+'" style="text-decoration:none;color:#9b7a56;">' +
+        '<i class="fas fa-envelope" style="color:#9b7a56;"></i>' + r.email +
+      '</a>'
+    : '<div class="contact-row"><i class="fas fa-envelope" style="color:#9b7a56;"></i>—</div>';
+
+  return '<div class="contact-cell">' + phoneHtml + emailHtml + '</div>';
+}
 
     function urgTag(p){
       var m = {
