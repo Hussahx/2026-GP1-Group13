@@ -1026,13 +1026,27 @@ body.reports-page .bov{
           leaderPhone = volData.Phone || '';
         }
 
-        await updateDoc(doc(db, 'Report', docId), {
-          LeaderID:          uid,        // FK → Volunteer (leader)
-          leader:            leaderName,
-          leaderPhone:       leaderPhone,
-          CurrentVolunteers: 1,
-          teamMembers:       arrayUnion(uid)   // نخزن UID فقط (string)
-        });
+        // ── الحالة الحالية قبل الانضمام ──
+const preSnap = await getDoc(doc(db, 'Report', docId));
+const preData = preSnap.exists() ? preSnap.data() : {};
+const preStatus = preData.Status || preData.status || '';
+const closedStatuses = ['rescued', 'found', 'closed', 'report_closed'];
+const isAlreadyClosed = closedStatuses.includes(preStatus);
+
+// ── أول متطوع = Team Leader → الحالة تصبح active تلقائياً ──
+const statusUpdate = (!isAlreadyClosed) ? {
+  Status: 'active',
+  status: 'active',
+} : {};
+
+await updateDoc(doc(db, 'Report', docId), {
+  LeaderID:          uid,
+  leader:            leaderName,
+  leaderPhone:       leaderPhone,
+  CurrentVolunteers: 1,
+  teamMembers:       arrayUnion(uid),
+  ...statusUpdate
+});
 
         console.log('✅ assignLeader: LeaderID set to', uid);
       } catch (err) {
@@ -1071,10 +1085,12 @@ body.reports-page .bov{
         }
 
         // نخزن UID فقط (string) — متناسق مع _fbTakeOver
-        await updateDoc(doc(db, 'Report', docId), {
-          teamMembers:       arrayUnion(uid),
-          CurrentVolunteers: (reportData.CurrentVolunteers || 0) + 1
-        });
+        // ── _fbJoin: عضو إضافي — الحالة لا تتغير هنا ──
+// (فقط _fbTakeOver هو من يغير الحالة لأنه أول متطوع)
+await updateDoc(doc(db, 'Report', docId), {
+  teamMembers:       arrayUnion(uid),
+  CurrentVolunteers: (reportData.CurrentVolunteers || 0) + 1,
+});
 
         console.log('✅ addTeamMember: added uid', uid);
       } catch (err) {

@@ -1746,15 +1746,8 @@ canvas {
 }
 
 /* Optional: keep action buttons visible while scrolling (sticky footer inside scroll area) */
-#reportModal .modal-actions{
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  background: rgba(255, 250, 242, 0.92);
-  padding-top: .75rem;
-  padding-bottom: .25rem;
+#reportModal .modal-actions {
   margin-top: 1rem;
-  border-top: 1px solid rgba(166,124,82,0.12);
 }
 
 /* Ensure the sticky footer doesn't look like a new block */
