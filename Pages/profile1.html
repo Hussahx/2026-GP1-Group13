@@ -2160,32 +2160,27 @@ const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const auth = getAuth(app);
 
-window._fbGetVolunteerByUid = async function(uid) {
-
+window._fbGetVolunteerByUid = async function(uid, includeInactive) {
   if (!uid) return null;
-
   try {
-
     const q = query(
       collection(db, 'Volunteer'),
       where('UserID', '==', uid)
     );
-
     const snap = await getDocs(q);
-
     if (!snap.empty) {
-      return snap.docs[0].data();
+      const data = snap.docs[0].data();
+      if (!includeInactive && data.Status && data.Status !== 'active') return null;
+      return data;
     }
-
     const ref = doc(db, 'Volunteer', uid);
     const d = await getDoc(ref);
-
     if (d.exists()) {
-      return d.data();
+      const data = d.data();
+      if (!includeInactive && data.Status && data.Status !== 'active') return null;
+      return data;
     }
-
     return null;
-
   } catch (e) {
     console.error('getVolunteerByUid error:', e);
     return null;
@@ -2659,6 +2654,7 @@ onAuthStateChanged(auth, function(user) {
 teamCount: Array.isArray(d.teamMembers)
   ? d.teamMembers.length
   : (d.CurrentVolunteers || d.currentVolunteers || 0),
+_rawTeamUids: Array.isArray(d.teamMembers) ? d.teamMembers : [],
 
 closed: closedStatuses.includes(currentStatus),        hlth:      d.HealthStatus      || d.healthStatus        || 'لا يوجد',
         veh:       d.Vehicle           || d.vehicle             || '—',
@@ -2685,6 +2681,22 @@ foundAt: (() => {
         duration:  daysText
       });
     });
+    var closedStatuses = ['rescued','found','Rescued','Found','closed','Closed'];
+    Promise.all(ops.map(async function(r) {
+      var isClosed = closedStatuses.includes(r.status);
+      if (isClosed) return;
+      var uids = r._rawTeamUids || [];
+      if (!uids.length) return;
+      var checks = await Promise.all(uids.map(function(uid) {
+        return window._fbGetVolunteerByUid
+          ? window._fbGetVolunteerByUid(uid, false).then(function(v){ return v ? 1 : 0; }).catch(function(){ return 0; })
+          : Promise.resolve(1);
+      }));
+      r.teamCount = checks.reduce(function(a, b){ return a + b; }, 0);
+    })).then(function() {
+      if (typeof window.renderOps === 'function') window.renderOps();
+    });
+
     window.MY_OPS = ops;
     if (typeof window.renderOps === 'function') window.renderOps();
   }, function(err) {
@@ -2958,6 +2970,9 @@ th += '<div class="team-member">'+
 async function buildTeamHTML(r){
   var th = '';
 
+  var closedStatuses = ['rescued', 'found', 'closed', 'report_closed'];
+  var isClosedReport = closedStatuses.includes((r.status || '').toLowerCase());
+
   function whatsappPhone(phone){
     if (!phone || !/^05\d{8}$/.test(phone)) return '';
 
@@ -2989,7 +3004,7 @@ async function buildTeamHTML(r){
     // لا نكرر القائد كعضو
     if (uid === r.leaderUid) continue;
 
-    var v = await window._fbGetVolunteerByUid(uid);
+    var v = await window._fbGetVolunteerByUid(uid, isClosedReport);
 
     var name = v ? ((v.FirstName || '') + ' ' + (v.LastName || '')).trim() : 'متطوع';
     var phone = v ? (v.Phone || '') : '';
