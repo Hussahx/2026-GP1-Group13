@@ -3031,8 +3031,8 @@ async function openLog(id){
   document.getElementById('mlName').textContent = r.nm;
   document.getElementById('mlLoc').textContent  = '📍 ' + r.loc;
 
-  var keys = ['العمر','الحالة الصحية','المركبة','تاريخ الفقدان','مدة البلاغ','قائد الفريق','عدد المتطوعين','نتيجة العملية'];
-  var vals = [r.age+' سنة', r.hlth, r.veh, r.ld, r.duration, r.ldr, toAr(r.teamCount || 0)+' أفراد', 'تم الانقاذ بنجاح ✅'];
+  var keys = ['العمر','الحالة الصحية','المركبة','تاريخ الفقدان','قائد الفريق','عدد المتطوعين','نتيجة العملية'];
+var vals = [r.age+' سنة', r.hlth, r.veh, r.ld, r.ldr, toAr(r.teamCount || 0)+' أفراد', 'تم الانقاذ بنجاح ✅'];
   var dh = '';
 
   for(var i=0; i<keys.length; i++){
