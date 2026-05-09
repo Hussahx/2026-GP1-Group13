@@ -2638,8 +2638,7 @@ onAuthStateChanged(auth, function(user) {
       else if (d.ReportDate) tsDate = new Date(d.ReportDate);
       if (tsDate && !isNaN(tsDate)) {
         var diff = Math.floor((Date.now() - tsDate.getTime()) / 86400000);
-        daysText = diff === 0 ? 'منذ اليوم' : 'منذ ' + diff + ' يوم';
-        reportTimeStr = tsDate.getDate() + ' ' + _months[tsDate.getMonth()] + ' ' + tsDate.getFullYear();
+daysText = '';        reportTimeStr = tsDate.getDate() + ' ' + _months[tsDate.getMonth()] + ' ' + tsDate.getFullYear();
       }
       var currentStatus = d.Status || d.status || '';
       var closedStatuses = ['rescued','found','Rescued','Found','closed','Closed'];
@@ -2884,7 +2883,7 @@ var opCls = r.closed
 '<span style="font-size:11.5px;color:var(--ink-muted);">👥 '+
 toAr(r.teamCount || 0)+
 ' متطوع</span>'+            '</div>'+
-            '<div class="p-dtag">⏱ '+r.days+'</div>'+
+            ''+
           '</div>'+
         '</div>';
   });
