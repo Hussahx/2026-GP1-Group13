@@ -1578,9 +1578,71 @@ footer { position: relative; overflow: hidden; margin-top: 0; }
 .profile-page #cityBioRow { position: relative; z-index: 100; }
 .profile-page .city-group { position: relative !important; z-index: 1000 !important; }
 .profile-page .cd-panel { z-index: 9999 !important; position: absolute !important; }
+.tm-info{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex:1;
+}
+
+.tm-phone-row{
+  margin-top:0 !important;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-shrink:0;
+}
 
 
 
+
+
+
+
+.tm-wa{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:rgba(166,124,82,0.12);
+  border:1px solid rgba(166,124,82,0.25);
+
+  color:#9a7440;
+  text-decoration:none;
+
+  transition:.25s;
+}
+
+.tm-wa:hover{
+  transform:translateY(-2px);
+  background:#9a7440;
+  color:#fff;
+}
+
+.team-wa-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:4px;
+  color:#8c6840;
+  font-size:11.5px;
+  font-weight:700;
+  text-decoration:none;
+  direction:ltr;
+}
+
+.team-wa-link i{
+  color:#8c6840;
+  font-size:14px;
+}
+
+.team-wa-link:hover{
+  color:#6b4820;
+}
 
 </style>
 </head>
@@ -2042,7 +2104,7 @@ footer { position: relative; overflow: hidden; margin-top: 0; }
 
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, collection, query, where, orderBy, onSnapshot, updateDoc, getDocs }
+import { getFirestore, doc, getDoc, collection, query, where, orderBy, onSnapshot, updateDoc, getDocs }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -2061,6 +2123,37 @@ const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const auth = getAuth(app);
 
+window._fbGetVolunteerByUid = async function(uid) {
+
+  if (!uid) return null;
+
+  try {
+
+    const q = query(
+      collection(db, 'Volunteer'),
+      where('UserID', '==', uid)
+    );
+
+    const snap = await getDocs(q);
+
+    if (!snap.empty) {
+      return snap.docs[0].data();
+    }
+
+    const ref = doc(db, 'Volunteer', uid);
+    const d = await getDoc(ref);
+
+    if (d.exists()) {
+      return d.data();
+    }
+
+    return null;
+
+  } catch (e) {
+    console.error('getVolunteerByUid error:', e);
+    return null;
+  }
+};
 let currentUser  = null;
 let unsubProfile = null;
 let unsubReports = null;
@@ -2535,6 +2628,8 @@ teamCount: d.CurrentVolunteers || d.currentVolunteers || (Array.isArray(d.teamMe
         status:    currentStatus       || 'Under Review',
         desc:      d.Details           || d.description         || '',
         mbr:       [],
+        teamUids: Array.isArray(d.teamMembers) ? d.teamMembers : [],
+        leaderUid: d.LeaderID || '',
 foundAt: (() => {
   const logs = Array.isArray(d.statusLog) ? d.statusLog : [];
   const lastClosed = logs.slice().reverse().find(x => x.status === 'report_closed') || logs[logs.length - 1];
@@ -2781,11 +2876,35 @@ function openTrack(id){
     var nm = isMe ? 'يوسف الدوسري' : info.n;
     var rl = isMe ? (r.role === 'leader' ? 'قائد' : 'عضو') : 'عضو';
 
-    th += '<div class="team-member">'+
-            '<div class="tm-av" style="background:'+m.c+';">'+m.i+'</div>'+
-            '<div style="flex:1;min-width:0;"><div class="tm-name">'+nm+'</div><div class="tm-phone" dir="ltr">'+info.p+'</div></div>'+
-            '<span class="tm-role">'+rl+'</span>'+
-          '</div>';
+    var waBtn = '';
+
+if (phone && phone.startsWith('05')) {
+  var waPhone = '966' + phone.substring(1);
+
+  waBtn =
+    '<a href="https://wa.me/'+waPhone+'" target="_blank" class="tm-wa">'+
+      '<i class="fab fa-whatsapp"></i>'+
+    '</a>';
+}
+
+th += '<div class="team-member">'+
+
+  '<div class="tm-av" style="background:#4060c8;">'+initial+'</div>'+
+
+  '<div class="tm-info">'+
+
+    '<div class="tm-name">'+name+'</div>'+
+
+    '<div class="tm-phone-row">'+
+      '<span class="tm-phone" dir="ltr">'+phone+'</span>'+
+      waBtn+
+    '</div>'+
+
+  '</div>'+
+
+  '<span class="tm-role">عضو</span>'+
+
+'</div>';
   });
 
   document.getElementById('mtTeam').innerHTML = th;
@@ -2795,8 +2914,60 @@ function openTrack(id){
   document.getElementById('modalTrack').classList.add('on');
 }
 
-function openLog(id){
-  var MY_OPS = window.MY_OPS || [];
+async function buildTeamHTML(r){
+  var th = '';
+
+  function whatsappPhone(phone){
+    if (!phone || !/^05\d{8}$/.test(phone)) return '';
+
+    var waPhone = '966' + phone.substring(1);
+
+    return '<a href="https://wa.me/'+waPhone+'" target="_blank" rel="noopener" class="team-wa-link">'+
+             '<span dir="ltr">'+phone+'</span>'+
+             '<i class="fab fa-whatsapp"></i>'+
+           '</a>';
+  }
+
+  // القائد
+  if (r.ldr && r.ldr !== '—') {
+    th += '<div class="team-member">'+
+      '<div class="tm-av" style="background:#a67c52;">ق</div>'+
+'<div class="tm-info">'+
+          '<div class="tm-name">'+r.ldr+'</div>'+
+        (whatsappPhone(r.lph) || '<div class="tm-phone" dir="ltr">'+(r.lph || '')+'</div>')+
+      '</div>'+
+      '<span class="tm-role">قائد</span>'+
+    '</div>';
+  }
+
+  var ids = Array.from(new Set(r.teamUids || []));
+
+  for (var i = 0; i < ids.length; i++) {
+    var uid = ids[i];
+
+    // لا نكرر القائد كعضو
+    if (uid === r.leaderUid) continue;
+
+    var v = await window._fbGetVolunteerByUid(uid);
+
+    var name = v ? ((v.FirstName || '') + ' ' + (v.LastName || '')).trim() : 'متطوع';
+    var phone = v ? (v.Phone || '') : '';
+    var initial = name && name !== 'متطوع' ? name.charAt(0) : 'ع';
+
+    th += '<div class="team-member">'+
+      '<div class="tm-av" style="background:#4060c8;">'+initial+'</div>'+
+'<div class="tm-info">'+
+          '<div class="tm-name">'+name+'</div>'+
+        (whatsappPhone(phone) || '<div class="tm-phone" dir="ltr">'+phone+'</div>')+
+      '</div>'+
+      '<span class="tm-role">عضو</span>'+
+    '</div>';
+  }
+
+  return th || '<div class="mdesc">لا يوجد أعضاء مسجلين للفريق</div>';
+}
+async function openLog(id){
+    var MY_OPS = window.MY_OPS || [];
   var r = null;
   MY_OPS.forEach(function(o){ if(o.id === id) r = o; });
   if(!r || !r.closed) return;
@@ -2821,27 +2992,21 @@ document.getElementById('mlFound').textContent =
     '<div class="tl-item"><div class="tl-dot found">✅</div><div class="tl-content"><div class="tl-lbl">تم العثور على المفقودين</div><div class="tl-time">'+r.foundDate+'</div><div class="tl-dur">'+r.foundAt+'</div></div></div>'+
     '<div class="tl-item"><div class="tl-dot close">🔒</div><div class="tl-content"><div class="tl-lbl">اغلاق البلاغ</div><div class="tl-time">'+r.closeDate+'</div><div class="tl-dur">المدة الاجمالية: '+r.duration+'</div></div></div>';
 
-  var th = '';
-  r.mbr.forEach(function(m){
-    var info = TEAM[m.i] || {n:'متطوع',p:'—',c:m.c};
-    var isMe = (m.i === 'أن' || m.i === 'يو');
-    var nm = isMe ? 'يوسف الدوسري' : info.n;
+  document.getElementById('modalLog').classList.add('on');
 
-    th += '<div class="team-member">'+
-            '<div class="tm-av" style="background:'+m.c+';">'+m.i+'</div>'+
-            '<div style="flex:1;min-width:0;"><div class="tm-name">'+nm+'</div><div class="tm-phone" dir="ltr">'+info.p+'</div></div>'+
-            '<span class="tm-role">عضو</span>'+
-          '</div>';
-  });
+document.getElementById('mlTeam').innerHTML = '<div class="mdesc">جاري تحميل الفريق...</div>';
 
-  document.getElementById('mlTeam').innerHTML = th;
-  document.getElementById('mlFoot').innerHTML =
+try {
+  document.getElementById('mlTeam').innerHTML = await buildTeamHTML(r);
+} catch (e) {
+  console.error('buildTeamHTML error:', e);
+  document.getElementById('mlTeam').innerHTML = '<div class="mdesc">تعذر تحميل الفريق</div>';
+}  document.getElementById('mlFoot').innerHTML =
   `<button class="op-act act-green"
     style="width:100%;padding:13px;border-radius:14px;background:rgba(245,239,230,0.95);border:1.5px solid rgba(166,124,82,0.45);color:#7a5732;font-family:Tajawal,sans-serif;font-size:14px;font-weight:700;cursor:pointer;"
     onclick="closeModal('modalLog')">
     إغلاق السجل
   </button>`;
-  document.getElementById('modalLog').classList.add('on');
 }
 
 function closeModal(id){
