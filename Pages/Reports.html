@@ -1687,7 +1687,7 @@ function render() {
   document.getElementById('cntA').textContent = toAr(filteredAR.length) + ' بلاغ';
 
   var gNew = document.getElementById('gNew');
-  gNew.className = (TAB === 'all') ? 'scroll-row' : 'grid';
+  gNew.className = 'scroll-row'; 
 
   if (sN) {
     var sliceN = (TAB === 'all') ? filteredNR : pageSlice(filteredNR, pageNew);
