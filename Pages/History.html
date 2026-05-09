@@ -611,8 +611,11 @@
 function docToCase(docSnap, reporterData = null) {    const d = docSnap.data();
 
     const reportDt = tsToDate(d.LoggedAt);
-    const closedDt = tsToDate(d.closedAt) || tsToDate(d.lastUpdateAt) || reportDt;
-    const durationHours = calcDurationHours(reportDt, closedDt);
+const closedDt =
+  tsToDate(d.closedAt) ||
+  tsToDate(d.lastUpdateAt) ||
+  tsToDate(d.lastUpdate) ||
+  reportDt;    const durationHours = calcDurationHours(reportDt, closedDt);
     const outcome = resolveOutcome(d);
 
     // Build status log from ReportStatusLog sub-collection data or statusLog array
