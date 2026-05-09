@@ -365,13 +365,7 @@
           <div class="stat-desc">تم العثور عليهم</div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon duration"><i class="fas fa-clock-rotate-left"></i></div>
-        <div class="stat-info">
-          <div class="stat-num loading" id="statAvgHours">—</div>
-          <div class="stat-desc">متوسط ساعات الإنقاذ</div>
-        </div>
-      </div>
+      
     </div>
 
     <!-- Error banner -->
@@ -415,8 +409,7 @@
             <select class="sort-select" id="sortSelect" aria-label="ترتيب النتائج">
               <option value="newest">الأحدث أولاً</option>
               <option value="oldest">الأقدم أولاً</option>
-              <option value="duration-asc">مدة أقصر</option>
-              <option value="duration-desc">مدة أطول</option>
+              
             </select>
           </div>
         </div>
@@ -719,12 +712,11 @@ reporterPhone: reporterData?.Phone || '—',
       ? (ALL_CASES.reduce((s, c) => s + c.durationHours, 0) / total).toFixed(1)
       : 0;
 
-    ['statTotal','statFound','statAvgHours'].forEach(id => {
+    ['statTotal','statFound'].forEach(id => {
       document.getElementById(id).classList.remove('loading');
     });
     document.getElementById('statTotal').textContent    = toAr(total);
     document.getElementById('statFound').textContent    = toAr(found);
-    document.getElementById('statAvgHours').textContent = toAr(avgHrs);
   }
 
   /* ── Filter + sort ────────────────────────────────────── */
@@ -841,10 +833,7 @@ c.reporterPhone && c.reporterPhone !== '—'
                 <div class="detail-label">تاريخ الإغلاق</div>
                 <div class="detail-value">${c.closedDate}</div>
               </div>
-              <div class="detail-item">
-                <div class="detail-label">مدة العملية</div>
-                <div class="detail-value">${c.duration}</div>
-              </div>
+             
               <div class="detail-item">
                 <div class="detail-label">المتطوعون</div>
                 <div class="detail-value">${c.volunteers}</div>
@@ -985,7 +974,6 @@ ${[
   ['الموقع', c.location],
   ['تاريخ البلاغ', c.reportDate],
   ['تاريخ الإغلاق', c.closedDate],
-  ['مدة العملية', c.duration],
   ['المتطوعون', c.volunteers],
   ['قائد الفريق', c.leader || '—'],
   ['هاتف القائد', c.leaderPhone || '—'],
@@ -1104,64 +1092,60 @@ ${[
   }
 
   /* ── Load all closed reports from Firestore ──────────── */
-  async function loadClosedReports(userRole) {
-    try {
-      // Build queries for each closed status
-      // Firestore doesn't support OR on different values in one query without composite indices,
-      // so we run multiple queries and merge.
-      const statusValues = ['rescued', 'found', 'closed', 'notfound', 'not_found'];
-      const promises = statusValues.map(st =>
-        getDocs(query(collection(db, 'Report'), where('status', '==', st)))
-      );
+ async function loadClosedReports(userRole) {
+  try {
+    const snap = await getDocs(collection(db, 'Report'));
+    const seen = new Set();
+    const cases = [];
 
-      const snapshots = await Promise.all(promises);
-      const seen = new Set();
-      const cases = [];
+    for (const docSnap of snap.docs) {
+      if (seen.has(docSnap.id)) continue;
+      seen.add(docSnap.id);
 
-      for (const snap of snapshots) {
-       for (const docSnap of snap.docs) {
+      const d = docSnap.data();
 
-  if (seen.has(docSnap.id)) continue;
-  seen.add(docSnap.id);
+      const st = String(d.Status || d.status || '').trim().toLowerCase();
 
-  const d = docSnap.data();
+if (
+  st !== 'rescued' &&
+  st !== 'found' &&
+  st !== 'closed' &&
+  st !== 'report_closed' &&
+  st !== 'notfound' &&
+  st !== 'not_found'
+) continue;
 
-  // Volunteers only see reports they're part of; admins see all
-  if (userRole !== 'admin') {
+      let reporterData = null;
 
-    const members = Array.isArray(d.teamMembers) ? d.teamMembers : [];
+      try {
+        const reporterSnap = await getDocs(
+          query(
+            collection(db, 'Reporter'),
+            where('reportIds', 'array-contains', d.reportId || docSnap.id)
+          )
+        );
 
-    // if (!members.includes(currentUid)) continue;
-  }
-
-  let reporterData = null;
-
-  const reporterSnap = await getDocs(
-    query(
-      collection(db, 'Reporter'),
-      where('reportIds', 'array-contains', d.reportId || docSnap.id)
-    )
-  );
-
-  if (!reporterSnap.empty) {
-    reporterData = reporterSnap.docs[0].data();
-  }
-
-  cases.push(docToCase(docSnap, reporterData));
-}
+        if (!reporterSnap.empty) {
+          reporterData = reporterSnap.docs[0].data();
+        }
+      } catch (e) {
+        console.warn('Reporter fetch skipped:', e);
       }
 
-      ALL_CASES = cases;
-      updateStats();
-      updateRegionSelect();
-      showLoaded();
-      renderCases();
-
-    } catch (err) {
-      console.error('Firestore error:', err);
-      showError('تعذّر تحميل البيانات. تأكد من اتصالك بالإنترنت.');
+      cases.push(docToCase(docSnap, reporterData));
     }
+
+    ALL_CASES = cases;
+    updateStats();
+    updateRegionSelect();
+    showLoaded();
+    renderCases();
+
+  } catch (err) {
+    console.error('Firestore error:', err);
+    showError('تعذّر تحميل البيانات. تأكد من اتصالك بالإنترنت.');
   }
+}
 
   /* ── Auth + bootstrap ─────────────────────────────────── */
   bindControls();
