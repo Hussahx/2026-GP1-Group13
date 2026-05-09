@@ -94,7 +94,7 @@ export async function loginAndRedirect(email, password) {
         ).toLowerCase();
         if (accountStatus !== "valid" && accountStatus !== "active") {
           await signOut(auth);
-          return { success: false, error: "حسابك معلّق. تواصل مع الإدارة." };
+          return { success: false, error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
         }
       }
     }
@@ -125,8 +125,8 @@ export async function loginAndRedirect(email, password) {
           return {
             success: false,
             error: approvalStatus === "pending" || approvalStatus === ""
-              ? "حسابك لا يزال قيد المراجعة. يرجى الانتظار حتى يتم القبول."
-              : "حسابك لم يتم قبوله أو غير نشط. تواصل مع الإدارة."
+              ? "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+              : "البريد الإلكتروني أو كلمة المرور غير صحيحة."
           };
         }
       }
@@ -185,13 +185,13 @@ export async function logout() {
 function firebaseErrorToArabic(code) {
   const map = {
     "auth/invalid-email":          "البريد الإلكتروني غير صالح.",
-    "auth/user-not-found":         "لا يوجد حساب بهذا البريد الإلكتروني.",
+    "auth/user-not-found":         "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "auth/wrong-password":         "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "auth/invalid-credential":     "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "auth/too-many-requests":      "تم تجاوز عدد المحاولات. حاول مجددًا لاحقًا.",
     "auth/network-request-failed": "خطأ في الاتصال بالشبكة. تحقق من اتصالك بالإنترنت.",
     "auth/user-disabled":          "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
-    "permission-denied":            "خطأ في صلاحيات قاعدة البيانات. تواصل مع المطور.",
+    "permission-denied":            "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   };
   return map[code] || "حدث خطأ غير متوقع. حاول مجددًا.";
 }
