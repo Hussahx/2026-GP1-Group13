@@ -470,6 +470,73 @@ body.reports-page .bov{
     .empty .empty-title { font-size:15px; font-weight:800; color:#5a3e20; margin-bottom:5px; }
     .empty .empty-sub { font-size:13px; color:#b89870; }
 
+/* ══ Pagination — راصد ══ */
+.pag-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 0 8px;
+  flex-wrap: wrap;
+}
+
+.pag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(166, 124, 82, 0.25);
+  background: rgba(245, 239, 230, 0.75);
+  color: #7a5828;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.14s;
+  user-select: none;
+}
+
+.pag-btn:hover:not(:disabled) {
+  background: rgba(166, 124, 82, 0.18);
+  border-color: rgba(166, 124, 82, 0.50);
+  transform: translateY(-1px);
+}
+
+.pag-btn.active {
+  background: linear-gradient(135deg, #A67C52, #8B6B47);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(139, 107, 71, 0.30);
+  pointer-events: none;
+}
+
+.pag-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+  transform: none;
+}
+
+.pag-dots {
+  color: #b89870;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 36px;
+  padding: 0 2px;
+  user-select: none;
+}
+.pag-counter {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--t300);
+  letter-spacing: 1px;
+  margin: 0 4px;
+  user-select: none;
+}
+
 
     
   </style>
@@ -547,7 +614,7 @@ body.reports-page .bov{
   </aside>
     <main class="page-body">
       <div class="page-heading">
-        <div class="page-heading-eyebrow" aria-hidden="true"><span></span>__ لوحة البلاغات الميداني __<span></span></div>
+        <div class="page-heading-eyebrow" aria-hidden="true"><span></span> لوحة البلاغات الميداني<span></span></div>
         <h2>بلاغات البحث والإنقاذ</h2>
         <p>تتبّع وانضم وأدر عمليات البحث عن المفقودين في الصحراء</p>
       </div>
@@ -575,10 +642,12 @@ body.reports-page .bov{
       <div class="sec" id="sNew">
         <div class="sec-head"><div class="sec-dot" style="background:var(--ndot);"></div><h2>بلاغات جديدة</h2><div class="sec-line"></div><div class="sec-cnt" id="cntN"></div></div>
         <div class="grid" id="gNew"></div>
+        <div class="pag-wrap" id="pagNew"></div>
       </div>
       <div class="sec" id="sAct">
         <div class="sec-head"><div class="sec-dot" style="background:var(--adot);animation:pulse 1.4s infinite;"></div><h2>جارٍ العمل عليها</h2><div class="sec-line"></div><div class="sec-cnt" id="cntA"></div></div>
         <div class="grid" id="gAct"></div>
+        <div class="pag-wrap" id="pagAct"></div>
       </div>
 
     </div>
@@ -1470,9 +1539,8 @@ await updateDoc(doc(db, 'Report', docId), {
                '<div class="info-item"><span class="il">تاريخ الفقدان</span><span class="iv">'+(r.det['تاريخ الفقدان']||'—')+'</span></div>';
         } else if(type==='active'){
           rows='<div class="info-item"><span class="il">اسم المفقود</span><span class="iv">'+r.nm+'</span></div>'+
-               '<div class="info-item"><span class="il">القائد</span><span class="iv">'+r.ldr+'</span></div>'+
-               '<div class="info-item"><span class="il">الحالة الصحية</span><span class="iv">'+r.hlth+'</span></div>'+
-               '<div class="info-item"><span class="il">آخر تحديث</span><span class="iv">'+r.upd+'</span></div>';
+     '<div class="info-item"><span class="il">القائد</span><span class="iv">'+r.ldr+'</span></div>'+
+     '<div class="info-item"><span class="il">الحالة الصحية</span><span class="iv">'+r.hlth+'</span></div>';
         } else {
           rows='<div class="info-item"><span class="il">اسم المفقود</span><span class="iv">'+r.nm+'</span></div>'+
                '<div class="info-item"><span class="il">دورك</span><span class="iv">'+(r.role==='leader'?'قائد الفريق':'عضو')+'</span></div>'+
@@ -1524,33 +1592,118 @@ await updateDoc(doc(db, 'Report', docId), {
       return h;
     }
 
-    function render(){
-  var sN = TAB==='all' || TAB==='new';
-  var sA = TAB==='all' || TAB==='active';
+    /* ══ Pagination state ══ */
+var PAGE_SIZE = 6;
+var pageNew = 1;
+var pageAct = 1;
+
+/* ══ Pagination builder ══ */
+function buildPag(total, current, onPage, containerId) {
+  var wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  var pages = Math.ceil(total / PAGE_SIZE);
+  if (pages <= 1) { wrap.innerHTML = ''; return; }
+
+  var h = '';
+  h += '<button class="pag-btn" ' + (current <= 1 ? 'disabled' : '') +
+       ' onclick="(' + onPage + ')(' + (current - 1) + ')">' +
+       '<i class="fas fa-chevron-right"></i></button>';
+
+  var range = buildPageRange(pages, current);
+  for (var i = 0; i < range.length; i++) {
+    if (range[i] === '…') {
+      h += '<span class="pag-dots">…</span>';
+    } else {
+      var p = range[i];
+      h += '<button class="pag-btn' + (p === current ? ' active' : '') + '"' +
+           (p !== current ? ' onclick="(' + onPage + ')(' + p + ')"' : '') +
+           '>' + toAr(p) + '</button>';
+    }
+  }
+
+  h += '<button class="pag-btn" ' + (current >= pages ? 'disabled' : '') +
+       ' onclick="(' + onPage + ')(' + (current + 1) + ')">' +
+       '<i class="fas fa-chevron-left"></i></button>';
+
+  h += '<span class="pag-counter">' + toAr(current) + ' / ' + toAr(pages) + '</span>';
+
+  wrap.innerHTML = h;
+}
+
+function buildPageRange(pages, current) {
+  if (pages <= 7) {
+    var r = [];
+    for (var i = 1; i <= pages; i++) r.push(i);
+    return r;
+  }
+  var result = [1];
+  if (current > 3) result.push('…');
+  var lo = Math.max(2, current - 1);
+  var hi = Math.min(pages - 1, current + 1);
+  for (var j = lo; j <= hi; j++) result.push(j);
+  if (current < pages - 2) result.push('…');
+  result.push(pages);
+  return result;
+}
+
+function pageSlice(arr, page) {
+  var start = (page - 1) * PAGE_SIZE;
+  return arr.slice(start, start + PAGE_SIZE);
+}
+
+function goPageNew(p) {
+  pageNew = p;
+  render();
+  document.getElementById('sNew').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function goPageAct(p) {
+  pageAct = p;
+  render();
+  document.getElementById('sAct').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ══ render() الجديدة ══ */
+function render() {
+  var sN = TAB === 'all' || TAB === 'new';
+  var sA = TAB === 'all' || TAB === 'active';
 
   document.getElementById('sNew').style.display = sN ? '' : 'none';
   document.getElementById('sAct').style.display = sA ? '' : 'none';
 
-  var sortedNR = applySort(NR);
-  var sortedAR = applySort(AR);
-
+  var sortedNR   = applySort(NR);
+  var sortedAR   = applySort(AR);
   var filteredNR = applyFilter(sortedNR);
   var filteredAR = applyFilter(sortedAR);
 
-  // تحديث العدادات العلوية
+  if (filteredNR.length <= (pageNew - 1) * PAGE_SIZE) pageNew = 1;
+  if (filteredAR.length <= (pageAct - 1) * PAGE_SIZE) pageAct = 1;
+
   document.getElementById('tcn').textContent = toAr(NR.length);
   document.getElementById('tck').textContent = toAr(AR.length);
   document.getElementById('tca').textContent = toAr(NR.length + AR.length);
 
-  // تحديث عدادات الأقسام
   document.getElementById('cntN').textContent = toAr(filteredNR.length) + ' بلاغ';
   document.getElementById('cntA').textContent = toAr(filteredAR.length) + ' بلاغ';
 
   var gNew = document.getElementById('gNew');
-  gNew.className = (TAB==='all') ? 'scroll-row' : 'grid';
+  gNew.className = (TAB === 'all') ? 'scroll-row' : 'grid';
 
-  if(sN) gNew.innerHTML = buildCards(filteredNR, 'new');
-  if(sA) document.getElementById('gAct').innerHTML = buildCards(filteredAR, 'active');
+  if (sN) {
+    var sliceN = (TAB === 'all') ? filteredNR : pageSlice(filteredNR, pageNew);
+    gNew.innerHTML = buildCards(sliceN, 'new');
+    if (TAB !== 'all') {
+      buildPag(filteredNR.length, pageNew, 'goPageNew', 'pagNew');
+    } else {
+      document.getElementById('pagNew').innerHTML = '';
+    }
+  }
+
+  if (sA) {
+    var sliceA = pageSlice(filteredAR, pageAct);
+    document.getElementById('gAct').innerHTML = buildCards(sliceA, 'active');
+    buildPag(filteredAR.length, pageAct, 'goPageAct', 'pagAct');
+  }
 }
 
     // ── doTakeOver — now calls Firebase; UI update comes via onSnapshot ──
