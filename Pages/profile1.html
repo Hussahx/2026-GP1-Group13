@@ -121,6 +121,7 @@ body {
   z-index: 1;
 }
 
+
 .profile-page .hero-inner {
   max-width: 900px;
   margin: 0 auto;
@@ -772,13 +773,20 @@ background: rgba(255,255,255,0.96);
   pointer-events: all;
 }
 
-.p-modal {
-  background: #fff;
-  border-radius: 20px 20px 0 0;
+.p-modal{
+  background: rgba(255, 250, 242, 0.96);
+
+  border: 1px solid rgba(166,124,82,0.20);
+
+  border-radius: 18px;
+
+  box-shadow: 0 24px 70px rgba(42, 31, 18, 0.25);
+
   width: 100%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
+
   transform: translateY(40px);
   transition: transform .3s ease;
 }
@@ -795,13 +803,27 @@ background: rgba(255,255,255,0.96);
   margin: 10px auto 0;
 }
 
-.p-modal .mhead {
+.p-modal .mhead{
   padding: 14px 18px 13px;
-  border-bottom: 1px solid var(--sand-100);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
+
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+
+  background: rgba(255, 250, 242, 0.96);
+
+  border-bottom: 1px solid rgba(166,124,82,0.14);
+}
+.p-modal #mlName,
+.p-modal #mtName{
+  font-family:'Tajawal',sans-serif !important;
+
+  font-size:1.15rem !important;
+
+  font-weight:900 !important;
+
+  color:#3E2F1C !important;
 }
 
 .p-modal .mclose {
@@ -819,7 +841,10 @@ background: rgba(255,255,255,0.96);
   justify-content: center;
 }
 
-.p-modal .mbody { padding: 16px 18px; }
+.p-modal .mbody {
+  padding: 16px 18px;
+  background: rgba(255,250,242,0.96);
+}
 .p-modal .msec  { margin-bottom: 18px; }
 
 .p-modal .mstitle {
@@ -838,11 +863,14 @@ background: rgba(255,255,255,0.96);
 }
 
 .p-modal .p-di {
-  background: var(--sand-50);
+  background: rgba(245,239,230,0.75);
+
+  border: 1px solid rgba(166,124,82,0.14);
+
   border-radius: 9px;
+
   padding: 10px 12px;
 }
-
 .p-modal .p-di .dl {
   font-size: 9.5px;
   color: var(--t300);
@@ -862,8 +890,13 @@ background: rgba(255,255,255,0.96);
   font-size: 13px;
   color: var(--ink-mid);
   line-height: 1.8;
-  background: var(--sand-50);
+
+  background: rgba(245,239,230,0.75);
+
+  border: 1px solid rgba(166,124,82,0.14);
+
   border-radius: 9px;
+
   padding: 12px;
 }
 
@@ -879,8 +912,13 @@ background: rgba(255,255,255,0.96);
   display: flex;
   align-items: center;
   gap: 9px;
-  background: var(--sand-50);
+
+  background: rgba(245,239,230,0.75);
+
+  border: 1px solid rgba(166,124,82,0.14);
+
   border-radius: 10px;
+
   padding: 10px 12px;
 }
 
