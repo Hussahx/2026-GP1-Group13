@@ -209,20 +209,23 @@
     .cd-trigger.open .cd-arrow { transform: rotate(180deg); }
 
     .cd-panel {
-      display: none;
-      position: absolute;
-      top: calc(100% + 5px);
-      right: 0;
-      left: 0;
-      min-width: 100%;
-      z-index: 9999;
-      background: #fff;
-      border: 1.5px solid rgba(166,124,82,0.45);
-      border-radius: 16px;
-      box-shadow: 0 12px 40px rgba(62,47,28,0.14), 0 2px 8px rgba(62,47,28,0.06);
-      overflow: hidden;
-      animation: cdSlideDown 0.18s cubic-bezier(0.22,1,0.36,1) both;
-    }
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  margin-top: 0;
+  min-width: 180px;
+  z-index: 99999;
+  background: #fff;
+  border: 1.5px solid rgba(166,124,82,0.45);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(62,47,28,0.14), 0 2px 8px rgba(62,47,28,0.06);
+  animation: cdSlideDown 0.18s cubic-bezier(0.22,1,0.36,1) both;
+}
+.cd-panel .cd-list {
+  border-radius: 16px;
+  overflow: visible;
+}
 
     .cd-panel.open { display: block; }
 
@@ -279,6 +282,8 @@
     .cd-full { display: block; width: 100%; }
     .cd-full .cd-trigger { border-radius: 14px; height: 48px; font-size: 0.93rem; }
     .cd-full .cd-panel   { border-radius: 14px; }
+    .custom-dropdown {
+  position: relative;}
 
   </style>
 </head>
@@ -1304,22 +1309,46 @@ if (userChip && currentRole !== 'admin') {
       }
 
       function openPanel() {
-        isOpen = true; buildList();
-        panel.classList.add('open');
-        trigger.classList.add('open');
-        var items = listEl.querySelectorAll('.cd-option');
-        focusedIdx = -1;
-        items.forEach(function(o, i) { if (o.classList.contains('selected')) focusedIdx = i; });
-        requestAnimationFrame(function() { if (focusedIdx >= 0) setFocused(focusedIdx); });
-      }
+  isOpen = true; buildList();
+
+  // انقل الـ panel لـ body حتى لا يتأثر بـ overflow hidden
+  document.body.appendChild(panel);
+
+  var rect = trigger.getBoundingClientRect();
+  panel.style.position = 'fixed';
+  panel.style.top = rect.bottom + 'px';
+  panel.style.right    = (window.innerWidth - rect.right) + 'px';
+  panel.style.width    = rect.width + 'px';
+  panel.style.zIndex   = '999999';
+
+  panel.classList.add('open');
+  trigger.classList.add('open');
+
+  var items = listEl.querySelectorAll('.cd-option');
+  focusedIdx = -1;
+  items.forEach(function(o, i) { if (o.classList.contains('selected')) focusedIdx = i; });
+  requestAnimationFrame(function() { if (focusedIdx >= 0) setFocused(focusedIdx); });
+}
 
       function closePanel() {
-        isOpen = false;
-        panel.classList.remove('open');
-        trigger.classList.remove('open');
-        focusedIdx = -1;
-        listEl.querySelectorAll('.cd-option.focused').forEach(function(o) { o.classList.remove('focused'); });
-      }
+  isOpen = false;
+  panel.classList.remove('open');
+  trigger.classList.remove('open');
+  focusedIdx = -1;
+  listEl.querySelectorAll('.cd-option.focused').forEach(function(o) { o.classList.remove('focused'); });
+
+  // أعد الـ panel لمكانه الأصلي
+  if (panel.parentNode === document.body) {
+    wrapper.appendChild(panel);
+  }
+}
+window.addEventListener('scroll', function() {
+  if (isOpen) {
+    var rect = trigger.getBoundingClientRect();
+    panel.style.top = rect.bottom + 'px';
+    panel.style.right = (window.innerWidth - rect.right) + 'px';
+  }
+}, true);
 
       function setFocused(idx) {
         var items = listEl.querySelectorAll('.cd-option');
