@@ -1013,7 +1013,7 @@ if (tsDate) {
           'جهة التواصل':    reporterEmail
         },
         desc: data.Details || data.description || 'لا توجد تفاصيل إضافية.',
-        teamCount: teamMembers.length, // placeholder — updated after active-check
+        teamCount: 0,// placeholder — updated after active-check
         _rawTeamUids: teamMembers,
         mbr:  [],   // visual avatars — kept empty (team shown via mTeam section)
         // بيانات ملف الدليل — EvidanceFile هو الاسم الفعلي في Firestore
@@ -1088,13 +1088,37 @@ if (!visibleStatuses.includes(dbStatus)) return;
         const uniqueReports = allReports.filter((r, i, arr) => arr.findIndex(x => x._docId === r._docId) === i);
 
         Promise.all(uniqueReports.map(async r => {
-          const uids = r._rawTeamUids || [];
-          if (uids.length === 0) return { r, count: 0 };
-          const checks = await Promise.all(uids.map(uid =>
-            window._fbGetVolunteerByUid ? window._fbGetVolunteerByUid(uid).then(v => v ? 1 : 0).catch(() => 0) : Promise.resolve(1)
-          ));
-          return { r, count: checks.reduce((a, b) => a + b, 0) };
-        })).then(results => {
+
+  const uids = [...new Set(r._rawTeamUids || [])];
+
+  if (uids.length === 0) {
+    return { r, count: 0 };
+  }
+
+  const checks = await Promise.all(
+    uids.map(async uid => {
+
+      try {
+
+        const volunteer = await window._fbGetVolunteerByUid(uid);
+
+        return volunteer ? 1 : 0;
+
+      } catch {
+
+        return 0;
+      }
+    })
+  );
+
+  const activeCount = checks.reduce((a, b) => a + b, 0);
+
+  return {
+    r,
+    count: activeCount
+  };
+
+})).then(results => {
           let changed = false;
           results.forEach(({ r, count }) => {
             if (r.teamCount !== count) { r.teamCount = count; changed = true; }
