@@ -202,9 +202,9 @@
 
  .btn{
   min-height:28px;
-  min-width:120px;
-
-  padding:4px 12px;
+  min-width:80px !important;
+height: 37px;
+  padding:0px 10px !important;
 
   background: rgba(245,239,230,0.95);
 
@@ -212,9 +212,9 @@
 
   border: 1.5px solid rgba(62,154,90,0.42);
   box-shadow: 0 3px 10px rgba(62,154,90,0.08);
+ line-height:1 !important;
 
-
-  border-radius:20px;
+  border-radius:999px;
 
   font-size:12px;
   font-weight:700;
@@ -469,8 +469,28 @@
   
     /* ── Tag status colors ── */
     .tag-pend { background:#fde8d0; color:#c05820; }
-    .tag-acc  { background:#d4f0dc; color:#1a6830; }
-    .tag-rej  { background:#fde0e0; color:#962d22; }
+    /* مطابق صفحة البلاغات 100% */
+.tag-acc{
+  background:#edfaf3;
+  color:#1e8040;
+  border:1px solid #a0d8b0;
+  border-radius:20px;
+  padding:4px 11px;
+  font-size:11px;
+  font-weight:800;
+  line-height:1;
+}
+
+.tag-rej{
+  background:#fef2f2;
+  color:#c0392b;
+  border:1px solid #ffc0b8;
+  border-radius:20px;
+  padding:4px 11px;
+  font-size:11px;
+  font-weight:800;
+  line-height:1;
+}
     /* ── Sticky + search ── */
     .sticky{position:relative;background:transparent;border-bottom:none;}
     .s-inner{max-width:860px;margin:0 auto;padding:0 20px;}
