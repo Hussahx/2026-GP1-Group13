@@ -2636,9 +2636,6 @@ input[type="file"] {
 }
 @media (max-width: 479px) {
   .nav-actions .btn-primary {
-    display: inline-flex !important;
-    padding: 0.35rem 0.65rem !important;
-    font-size: 0.75rem !important;
-    min-height: 32px !important;
+    display: none !important;
   }
 }

@@ -1934,3 +1934,6 @@ try {
 })();
 
 });
+document.getElementById('openLoginModal2')?.addEventListener('click', () => {
+  document.getElementById('loginModal').classList.add('is-open');
+});
