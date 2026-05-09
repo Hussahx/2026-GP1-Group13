@@ -109,6 +109,134 @@
     .sinput::placeholder{color:var(--t300);}
     .sselect{flex-shrink:0;padding:9px 2.2rem 9px 0.95rem;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%23A67C52' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat left 0.9rem center / 11px 7px, rgba(245,239,230,0.85);border:1.5px solid rgba(166,124,82,0.28);border-radius:22px;font-family:'Tajawal',sans-serif;font-size:12px;font-weight:700;color:#5C4530;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;direction:rtl;box-shadow:0 2px 8px rgba(62,47,28,0.06);transition:border-color 0.22s;}
     .cnt-bar{font-size:12px;color:var(--t300);font-weight:600;padding:6px 0 10px;text-align:left;}
+    /* ══ Custom Dropdown ══ */
+.cd-native-hidden { display: none !important; }
+
+.custom-dropdown {
+  position: relative;
+  font-family: 'Tajawal', sans-serif;
+  direction: rtl;
+  display: inline-block;
+}
+
+.cd-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 120px;
+  height: 40px;
+  padding: 0 0.9rem;
+  border: 1.5px solid rgba(166,124,82,0.28);
+  border-radius: 22px;
+  background: rgba(245,239,230,0.85);
+  color: #5C4530;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.22s ease, background-color 0.22s ease, box-shadow 0.22s ease;
+  outline: none;
+  user-select: none;
+  text-align: right;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(62,47,28,0.06);
+}
+
+.cd-trigger:hover {
+  border-color: rgba(166,124,82,0.52);
+  background: rgba(245,239,230,1);
+}
+
+.cd-trigger.open,
+.cd-trigger:focus {
+  border-color: rgba(166,124,82,0.70);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(166,124,82,0.13), 0 2px 8px rgba(62,47,28,0.08);
+}
+
+.cd-trigger-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cd-arrow {
+  flex-shrink: 0;
+  margin-right: 0.55rem;
+  color: #A67C52;
+  font-size: 0.72rem;
+  transition: transform 0.22s ease;
+}
+
+.cd-trigger.open .cd-arrow { transform: rotate(180deg); }
+
+.cd-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  left: 0;
+  min-width: 100%;
+  z-index: 9999;
+  background: #fff;
+  border: 1.5px solid rgba(166,124,82,0.45);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(62,47,28,0.14), 0 2px 8px rgba(62,47,28,0.06);
+  overflow: hidden;
+  animation: cdSlideDown 0.18s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.cd-panel.open { display: block; }
+
+@keyframes cdSlideDown {
+  from { opacity: 0; transform: translateY(-6px) scaleY(0.96); }
+  to   { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+.cd-list {
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.3rem 0;
+}
+
+.cd-list::-webkit-scrollbar { width: 4px; }
+.cd-list::-webkit-scrollbar-track { background: transparent; }
+.cd-list::-webkit-scrollbar-thumb { background: rgba(166,124,82,0.28); border-radius: 4px; }
+
+.cd-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.91rem;
+  font-family: 'Tajawal', sans-serif;
+  color: #5C4530;
+  cursor: pointer;
+  transition: background 0.13s ease, color 0.13s ease;
+  direction: rtl;
+  text-align: right;
+}
+
+.cd-option:hover,
+.cd-option.focused { background: rgba(166,124,82,0.09); color: #A67C52; }
+
+.cd-option.selected {
+  background: rgba(166,124,82,0.13);
+  color: #8B6B47;
+  font-weight: 700;
+}
+
+.cd-option.selected::after {
+  content: '\f00c';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 0.72rem;
+  color: #A67C52;
+  margin-right: auto;
+  padding-right: 0.5rem;
+}
 
     /* Status panel overlay */
     #statusPanel{display:none;position:fixed;inset:0;background:rgba(20,10,0,.55);z-index:99995;align-items:flex-end;justify-content:center;}
@@ -116,6 +244,73 @@
     @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,158,82,.5);}70%{box-shadow:0 0 0 6px rgba(45,158,82,0);}100%{box-shadow:0 0 0 0 rgba(45,158,82,0);}}
     @media(max-width:767px){.s-inner{padding:0 14px;}.main{padding:16px 14px 36px;}.grid{grid-template-columns:1fr;gap:11px;}}
     @media(max-width:380px){.s-inner{padding:0 11px;}.main{padding:14px 12px 30px;}}
+    /* ══ Pagination ══ */
+.pag-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 0 8px;
+  flex-wrap: wrap;
+}
+
+.pag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(166, 124, 82, 0.25);
+  background: rgba(245, 239, 230, 0.75);
+  color: #7a5828;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.14s;
+  user-select: none;
+}
+
+.pag-btn:hover:not(:disabled) {
+  background: rgba(166, 124, 82, 0.18);
+  border-color: rgba(166, 124, 82, 0.50);
+  transform: translateY(-1px);
+}
+
+.pag-btn.active {
+  background: linear-gradient(135deg, #A67C52, #8B6B47);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(139, 107, 71, 0.30);
+  pointer-events: none;
+}
+
+.pag-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+  transform: none;
+}
+
+.pag-dots {
+  color: #b89870;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 36px;
+  padding: 0 2px;
+  user-select: none;
+}
+
+.pag-counter {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--t300);
+  letter-spacing: 1px;
+  margin: 0 4px;
+  user-select: none;
+}
   </style>
 </head>
 
@@ -174,7 +369,7 @@
 
     <main class="page-body">
       <div class="page-heading">
-        <div class="page-heading-eyebrow" aria-hidden="true"><span></span>__ البلاغات المنضمّ إليها والتي تقودها __<span></span></div>
+        <div class="page-heading-eyebrow" aria-hidden="true"><span></span>البلاغات المنضمّ إليها والتي تقودها <span></span></div>
         <h2>البلاغات المسندة</h2>
         <p>تابع سير العمليات الميدانية.</p>
       </div>
@@ -199,6 +394,7 @@
         <div class="cnt-bar" id="cntBar" style="padding:0;white-space:nowrap;">جارٍ التحميل...</div>
       </div>
       <div class="grid" id="myGrid"></div>
+      <div class="pag-wrap" id="pagMy"></div>
     </div>
 
     <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
@@ -491,29 +687,105 @@
     }
 
     function applySort(arr){
-      const s = arr.slice();
-      if(SORT==='oldest') s.sort((a,b)=>a.dt-b.dt);
-      else s.sort((a,b)=>b.dt-a.dt);
-      return s;
-    }
+  const s = arr.slice();
+  if(SORT === 'oldest'){
+    s.sort((a,b) => a.dt - b.dt);
+  } else if(SORT === 'urgent'){
+    s.sort((a,b) => {
+      if(a.priority !== b.priority) return a.priority - b.priority;
+      return b.dt - a.dt;
+    });
+  } else {
+    s.sort((a,b) => b.dt - a.dt);
+  }
+  return s;
+}
+/* ══ Pagination ══ */
+var PAGE_SIZE = 6;
+var pageCurrent = 1;
 
+function buildPag(total, current, containerId) {
+  var wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  var pages = Math.ceil(total / PAGE_SIZE);
+  if (pages <= 1) { wrap.innerHTML = ''; return; }
+
+  var h = '';
+  h += '<button class="pag-btn" ' + (current <= 1 ? 'disabled' : '') +
+       ' onclick="goPage(' + (current - 1) + ')">' +
+       '<i class="fas fa-chevron-right"></i></button>';
+
+  var range = buildPageRange(pages, current);
+  for (var i = 0; i < range.length; i++) {
+    if (range[i] === '…') {
+      h += '<span class="pag-dots">…</span>';
+    } else {
+      var p = range[i];
+      h += '<button class="pag-btn' + (p === current ? ' active' : '') + '"' +
+           (p !== current ? ' onclick="goPage(' + p + ')"' : '') +
+           '>' + toAr(p) + '</button>';
+    }
+  }
+
+  h += '<button class="pag-btn" ' + (current >= pages ? 'disabled' : '') +
+       ' onclick="goPage(' + (current + 1) + ')">' +
+       '<i class="fas fa-chevron-left"></i></button>';
+
+  h += '<span class="pag-counter">' + toAr(current) + ' / ' + toAr(pages) + '</span>';
+
+  wrap.innerHTML = h;
+}
+
+function buildPageRange(pages, current) {
+  if (pages <= 7) {
+    var r = [];
+    for (var i = 1; i <= pages; i++) r.push(i);
+    return r;
+  }
+  var result = [1];
+  if (current > 3) result.push('…');
+  var lo = Math.max(2, current - 1);
+  var hi = Math.min(pages - 1, current + 1);
+  for (var j = lo; j <= hi; j++) result.push(j);
+  if (current < pages - 2) result.push('…');
+  result.push(pages);
+  return result;
+}
+
+function pageSlice(arr, page) {
+  var start = (page - 1) * PAGE_SIZE;
+  return arr.slice(start, start + PAGE_SIZE);
+}
+
+function goPage(p) {
+  pageCurrent = p;
+  render();
+  document.getElementById('myGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+window.goPage = goPage;
     // ── Render ────────────────────────────────────────────────────────
     function render(){
-      const filtered = applyFilter(applySort(MY_REPORTS));
-      const cnt = document.getElementById('cntBar');
-      const grid = document.getElementById('myGrid');
+  const filtered = applyFilter(applySort(MY_REPORTS));
+  const cnt  = document.getElementById('cntBar');
+  const grid = document.getElementById('myGrid');
 
-      if(cnt) cnt.textContent = toAr(filtered.length) + ' بلاغ';
+  if(cnt) cnt.textContent = toAr(filtered.length) + ' بلاغ';
 
-      if(!filtered.length){
-        grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">
-          <div class="ei">📋</div>
-          <p>لم تنضَم لأي بلاغ بعد.<br>تولّ بلاغاً جديداً أو انضم لبلاغ جارٍ من صفحة البلاغات.</p>
-        </div>`;
-        return;
-      }
-      grid.innerHTML = filtered.map(buildCard).join('');
-    }
+  if(filtered.length <= (pageCurrent - 1) * PAGE_SIZE) pageCurrent = 1;
+
+  if(!filtered.length){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">
+      <div class="ei">📋</div>
+      <p>لم تنضَم لأي بلاغ بعد.<br>تولّ بلاغاً جديداً أو انضم لبلاغ جارٍ من صفحة البلاغات.</p>
+    </div>`;
+    buildPag(0, 1, 'pagMy');
+    return;
+  }
+
+  const sliced = pageSlice(filtered, pageCurrent);
+  grid.innerHTML = sliced.map(buildCard).join('');
+  buildPag(filtered.length, pageCurrent, 'pagMy');
+}
 
     // ── Click handler ─────────────────────────────────────────────────
     document.addEventListener('click', function(e){
@@ -534,7 +806,11 @@
 
     // ── Search & Sort inputs ──────────────────────────────────────────
     document.getElementById('srch').addEventListener('input', function(){ SRCH=this.value; render(); });
-    document.getElementById('srt').addEventListener('change', function(){ SORT=this.value; render(); });
+    document.getElementById('srt').addEventListener('change', function(){
+  SORT = this.value;
+  pageCurrent = 1;
+  render();
+});
 
     // ── Firestore listener ────────────────────────────────────────────
     let unsub = null;
@@ -600,6 +876,8 @@
             hlth:    data.HealthStatus || data.healthStatus || 'لا يوجد',
             status:  currentStatus || 'accepted',
             teamCount: teamUIDs.length, // placeholder — updated after active-check
+            priority: (parseInt(String(data.Age || data.age || '0')) || 0) < 16 || (parseInt(String(data.Age || data.age || '0')) || 0) > 60 ? ((data.HealthStatus || data.healthStatus || '') && (data.HealthStatus || data.healthStatus || '') !== 'لا يوجد' && (data.HealthStatus || data.healthStatus || '') !== 'جيدة' ? 0 : 1) : ((data.HealthStatus || data.healthStatus || '') && (data.HealthStatus || data.healthStatus || '') !== 'لا يوجد' && (data.HealthStatus || data.healthStatus || '') !== 'جيدة' ? 1 : 2),
+role:    isLeader ? 'leader' : 'member',
             role:    isLeader ? 'leader' : 'member',
             ldr:     data.leader || '—',
             lph:     data.leaderPhone || '—',
@@ -693,6 +971,114 @@
     }
   });
   </script>
+<script>
+(function() {
+  function initCustomDropdown(selectEl, opts) {
+    opts = opts || {};
+    if (!selectEl || selectEl._cdInit) return;
+    selectEl._cdInit = true;
+    selectEl.classList.add('cd-native-hidden');
 
+    var wrapper = document.createElement('div');
+    wrapper.className = 'custom-dropdown' + (opts.fullWidth ? ' cd-full' : '');
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'cd-trigger';
+
+    var triggerText = document.createElement('span');
+    triggerText.className = 'cd-trigger-text';
+
+    var arrow = document.createElement('i');
+    arrow.className = 'fas fa-chevron-down cd-arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+
+    trigger.appendChild(triggerText);
+    trigger.appendChild(arrow);
+
+    var panel = document.createElement('div');
+    panel.className = 'cd-panel';
+
+    var listEl = document.createElement('div');
+    listEl.className = 'cd-list';
+    panel.appendChild(listEl);
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(panel);
+    selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+
+    var isOpen = false;
+    var focusedIdx = -1;
+
+    function getOptions() {
+      return Array.from(selectEl.options).filter(function(o) { return o.value !== ''; });
+    }
+
+    function setLabel() {
+      var cur = selectEl.options[selectEl.selectedIndex];
+      if (cur && cur.value !== '') {
+        triggerText.textContent = cur.text;
+      } else {
+        triggerText.textContent = opts.placeholder || 'اختر...';
+      }
+    }
+
+    function buildList() {
+      listEl.innerHTML = '';
+      focusedIdx = -1;
+      getOptions().forEach(function(o) {
+        var div = document.createElement('div');
+        div.className = 'cd-option' + (o.value === selectEl.value ? ' selected' : '');
+        div.textContent = o.text;
+        div.setAttribute('data-value', o.value);
+        div.addEventListener('mousedown', function(e) { e.preventDefault(); pick(o.value); });
+        listEl.appendChild(div);
+      });
+    }
+
+    function pick(val) {
+      selectEl.value = val;
+      selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+      setLabel(); closePanel(); trigger.focus(); buildList();
+    }
+
+    function openPanel() {
+      isOpen = true; buildList();
+      panel.classList.add('open');
+      trigger.classList.add('open');
+    }
+
+    function closePanel() {
+      isOpen = false;
+      panel.classList.remove('open');
+      trigger.classList.remove('open');
+    }
+
+    trigger.addEventListener('click', function() { isOpen ? closePanel() : openPanel(); });
+
+    trigger.addEventListener('keydown', function(e) {
+      var items = listEl.querySelectorAll('.cd-option');
+      if (!isOpen) {
+        if (['Enter',' ','ArrowDown','ArrowUp'].indexOf(e.key) !== -1) { e.preventDefault(); openPanel(); }
+        return;
+      }
+      if (e.key === 'ArrowDown') { e.preventDefault(); focusedIdx = Math.min(focusedIdx+1, items.length-1); items.forEach(function(o,i){o.classList.toggle('focused',i===focusedIdx);}); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); focusedIdx = Math.max(focusedIdx-1, 0); items.forEach(function(o,i){o.classList.toggle('focused',i===focusedIdx);}); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (focusedIdx >= 0 && items[focusedIdx]) pick(items[focusedIdx].dataset.value); }
+      else if (e.key === 'Escape') { e.preventDefault(); closePanel(); }
+    });
+
+    document.addEventListener('mousedown', function(e) { if (isOpen && !wrapper.contains(e.target)) closePanel(); });
+
+    setLabel();
+  }
+
+  window.initCustomDropdown = initCustomDropdown;
+})();
+</script>
+
+<script>
+  (function(){ var el = document.getElementById('srt'); if(el) initCustomDropdown(el, {}); })();
+</script>
 </body>
 </html>
