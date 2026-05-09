@@ -1,0 +1,1264 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F5EFE6" />
+  <title>راصد – الصفحة الرئيسية</title>
+    <link rel="icon" href="/assest/logoo.PNG" type="image/png">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- AOS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+
+  <!-- Swiper -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.css" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/CSS/index.css" />
+</head>
+<body>
+
+  <!-- Skip to content for accessibility -->
+  <a href="#hero" class="skip-link">الانتقال إلى المحتوى الرئيسي</a>
+
+  <!-- ===== NAVBAR ===== -->
+  <header class="navbar" id="navbar">
+    <div class="container nav-container">
+      <div class="nav-brand">
+        <img src="/assest/logoo.PNG" alt="شعار راصد" class="nav-logo" />
+      
+      </div>
+
+      <nav class="nav-links" id="navLinks" aria-label="القائمة الرئيسية">
+        <a href="#hero" class="nav-link active">الرئيسية</a>
+        <a href="#about" class="nav-link">عن راصد</a>
+        <a href="#features" class="nav-link">المميزات</a>
+        <a href="#how" class="nav-link">كيف يعمل</a>
+        <a href="#preview" class="nav-link">معاينة النظام</a>
+        <a href="#stats" class="nav-link">الإحصائيات</a>
+
+        <!-- Primary CTA -->
+        <a href="#reports" class="nav-link nav-cta" id="navReportCta" aria-label="بلّغ الآن">
+          <i class="fas fa-bullhorn"></i> بلّغ الآن
+        </a>
+
+        <a href="#contact" class="nav-link">تواصل معنا</a>
+      </nav>
+
+      <div class="nav-actions">
+        <!-- Login Trigger -->
+        <button type="button" class="btn-primary btn-sm" id="openLoginModal">
+          تسجيل الدخول
+        </button>
+
+        <button class="menu-toggle" id="menuToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="navLinks">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="hero">
+      <div class="hero-bg-pattern"></div>
+      <div class="container hero-container">
+        <div class="hero-content" data-aos="fade-left" data-aos-duration="900">
+          <div class="hero-badge"><i class="fas fa-satellite-dish"></i> نظام رصد متقدم</div>
+          <h1 class="hero-title">راصد – <span class="highlight">عين الصحراء</span></h1>
+          <p class="hero-sub">
+            <span id="typed-text"></span>
+          </p>
+          <p class="hero-desc"> نظام ذكي متكامل يعمل على طائرات درون لرصد المفقودين في البيئات الصحراوية وتحديد مواقعهم بدقة عالية.</p>
+          <div class="hero-btns">
+            <a href="#preview" class="btn-primary"><i class="fas fa-play-circle"></i> عرض المراقبة المباشرة</a>
+            <a href="#features" class="btn-outline"><i class="fas fa-rocket"></i> استكشاف المميزات</a>
+          </div>
+          <div class="hero-stats">
+            <div class="h-stat"><span>88%</span><small>دقة الكشف</small></div>
+            <div class="h-stat-divider"></div>
+            <div class="h-stat"><span>5ث</span><small>وقت الاستجابة</small></div>
+            <div class="h-stat-divider"></div>
+            <div class="h-stat"><span>24/7</span><small>مراقبة مستمرة</small></div>
+          </div>
+        </div>
+
+        <div class="hero-illustration" data-aos="fade-right" data-aos-duration="1000" data-aos-delay="200">
+          <div class="radar-ring r1"></div>
+          <div class="radar-ring r2"></div>
+          <div class="radar-ring r3"></div>
+          <div class="radar-sweep"></div>
+          <div class="drone-body">
+            <div class="drone-arm arm-tl"><div class="prop"></div></div>
+            <div class="drone-arm arm-tr"><div class="prop"></div></div>
+            <div class="drone-arm arm-bl"><div class="prop"></div></div>
+            <div class="drone-arm arm-br"><div class="prop"></div></div>
+            <div class="drone-core">
+              <i class="fas fa-crosshairs"></i>
+            </div>
+          </div>
+          <div class="map-pin pin1"><i class="fas fa-map-marker-alt"></i></div>
+          <div class="map-pin pin2"><i class="fas fa-map-marker-alt"></i></div>
+          <div class="map-pin pin3"><i class="fas fa-map-marker-alt"></i></div>
+          <div class="signal-wave"></div>
+        </div>
+      </div>
+      <div class="hero-scroll-indicator">
+        <span>مرر للأسفل</span>
+        <div class="scroll-arrow"><i class="fas fa-chevron-down"></i></div>
+      </div>
+    </section>
+
+    <!-- ===== ABOUT ===== -->
+    <section class="about" id="about">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">عن المشروع</span>
+          <h2>ما هو راصد؟</h2>
+          <p class="section-desc">منظومة متكاملة تجمع بين الذكاء الاصطناعي وتقنيات الطائرات المسيّرة لإنقاذ الأرواح</p>
+        </div>
+
+        <div class="about-grid">
+          <div class="about-text" data-aos="fade-left" data-aos-delay="100">
+            <p>
+      <strong>راصد – عيون الصحراء:</strong> هو منصة بحث وإنقاذ ذكية تُسخّر الطائرات المسيّرة وتقنيات الذكاء الاصطناعي لدعم فرق الإنقاذ في البيئات الصحراوية. يهدف النظام إلى رفع سرعة الاستجابة ودقة اتخاذ القرار عبر توفير رؤية ميدانية أوضح ومعلومات موثوقة تساعد على توجيه الجهود بكفاءة أكبر.
+            </p>
+            <p>يتضمن النظام لوحة تحكم احترافية تعرض نتائج الرصد على خريطة تفاعلية مباشرة، مما يمكّن فرق الإنقاذ من اتخاذ قرارات سريعة ودقيقة.</p>
+            <a href="#features" class="btn-text-link">اكتشف المميزات <i class="fas fa-arrow-left"></i></a>
+          </div>
+
+          <div class="about-cards" data-aos="fade-right" data-aos-delay="200">
+            <div class="glass-card about-card">
+              <div class="card-icon"><i class="fas fa-brain"></i></div>
+              <h3>ذكاء اصطناعي</h3>
+              <p>نظام ذكاء اصطناعي للكشف الفوري عن الأشخاص بدقة تتجاوز 88% </p>
+            </div>
+            <div class="glass-card about-card">
+              <div class="card-icon"><i class="fas fa-helicopter"></i></div>
+              <h3>درون (UAV)</h3>
+              <p>طائرات مسيّرة عالية الكفاءة</p>
+            </div>
+            <div class="glass-card about-card">
+              <div class="card-icon"><i class="fas fa-map-marked-alt"></i></div>
+              <h3>GPS دقيق</h3>
+              <p>تحديد الإحداثيات الجغرافية لحظيًا ومشاركتها فوريًا</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FEATURES ===== -->
+    <section class="features" id="features">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">القدرات</span>
+          <h2>مميزات راصد</h2>
+          <p class="section-desc">تقنيات متقدمة مدمجة في منظومة واحدة متكاملة</p>
+        </div>
+
+        <div class="swiper features-swiper" data-aos="fade-up" data-aos-delay="150">
+          <div class="swiper-wrapper">
+            <div class="swiper-slide">
+              <div class="feature-card glass-card">
+                <div class="feat-icon"><i class="fas fa-user-secret"></i></div>
+                <h3>كشف الأشخاص </h3>
+                <p>كشف الأشخاص في الوقت الفعلي من الفيديو المباشر باستخدام تقنيات الذكاء الاصطناعي المتقدمة بدقة استثنائية.</p>
+                <div class="feat-tag">Real-Time AI</div>
+              </div>
+            </div>
+            <div class="swiper-slide">
+              <div class="feature-card glass-card">
+                <div class="feat-icon"><i class="fas fa-location-crosshairs"></i></div>
+                <h3>إحداثيات GPS لحظيًا</h3>
+                <p>تحديد الموقع الجغرافي الدقيق للشخص المكتشف وإرساله فورًا للفرق الميدانية.</p>
+                <div class="feat-tag">Precision GPS</div>
+              </div>
+            </div>
+            <div class="swiper-slide">
+              <div class="feature-card glass-card">
+                <div class="feat-icon"><i class="fas fa-video"></i></div>
+                <h3>بث درون مباشر</h3>
+                <p>مشاهدة البث الحي من الطائرة المسيّرة مع تراكب نتائج الكشف على الفيديو في الوقت الفعلي.</p>
+                <div class="feat-tag">Live Stream</div>
+              </div>
+            </div>
+            <div class="swiper-slide">
+              <div class="feature-card glass-card">
+                <div class="feat-icon"><i class="fas fa-bell"></i></div>
+                <h3>تنبيهات فورية</h3>
+                <p>إرسال تنبيهات فورية لفرق الإنقاذ عند اكتشاف أي شخص.</p>
+                <div class="feat-tag">Instant Alerts</div>
+              </div>
+            </div>
+            <div class="swiper-slide">
+              <div class="feature-card glass-card">
+                <div class="feat-icon"><i class="fas fa-map"></i></div>
+                <h3>عرض مباشر على الخريطة</h3>
+                <p>عرض جميع نقاط الاكتشاف على خريطة تفاعلية مع إمكانية التتبع المستمر للمهمة.</p>
+                <div class="feat-tag">Live Map</div>
+              </div>
+            </div>
+            <div class="swiper-slide">
+              <div class="feature-card glass-card">
+                <div class="feat-icon"><i class="fas fa-clipboard-list"></i></div>
+                <h3>سجل المهام</h3>
+                <p>أرشيف كامل لجميع العمليات مع تقارير تفصيلية .</p>
+                <div class="feat-tag">Mission Log</div>
+              </div>
+            </div>
+          </div>
+          <div class="swiper-pagination"></div>
+          <div class="swiper-button-next"></div>
+          <div class="swiper-button-prev"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HOW IT WORKS ===== -->
+    <section class="how-it-works" id="how">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">العملية</span>
+          <h2>كيف يعمل راصد؟</h2>
+          <p class="section-desc">خمس خطوات متسلسلة من الإطار حتى الإنقاذ</p>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-line" id="timelineLine"></div>
+
+          <div class="timeline-item" data-aos="fade-left" data-aos-delay="0">
+            <div class="timeline-number">01</div>
+            <div class="timeline-content glass-card">
+              <div class="tl-icon"><i class="fas fa-camera"></i></div>
+              <h3>التقاط فيديو مباشر</h3>
+              <p>تقوم الطائرة المسيّرة بتصوير المنطقة المستهدفة بكاميرا عالية الدقة وإرسال البث الحي للنظام.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item" data-aos="fade-right" data-aos-delay="100">
+            <div class="timeline-number">02</div>
+            <div class="timeline-content glass-card">
+              <div class="tl-icon"><i class="fas fa-microchip"></i></div>
+              <h3>تحليل فوري للفيديو</h3>
+              <p> يقوم النظام بمراجعة كل إطار للكشف عن الأشخاص بسرعة ودقة عالية.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item" data-aos="fade-left" data-aos-delay="200">
+            <div class="timeline-number">03</div>
+            <div class="timeline-content glass-card">
+              <div class="tl-icon"><i class="fas fa-person-circle-check"></i></div>
+              <h3>اكتشاف شخص وتحديد موقعه</h3>
+              <p>عند اكتشاف شخص، يحدد النظام فوريًا الإحداثيات الجغرافية الدقيقة باستخدام GPS.</p>
+            </div>
+          </div>
+
+          <div class="timeline-item" data-aos="fade-right" data-aos-delay="300">
+            <div class="timeline-number">04</div>
+            <div class="timeline-content glass-card">
+              <div class="tl-icon"><i class="fas fa-bell-concierge"></i></div>
+              <h3>إرسال تنبيه للفريق</h3>
+              <p>إرسال تنبيه فوري مع الإحداثيات وصورة الاكتشاف لفريق الإنقاذ عبر لوحة التحكم .</p>
+            </div>
+          </div>
+
+          <div class="timeline-item" data-aos="fade-left" data-aos-delay="400">
+            <div class="timeline-number">05</div>
+            <div class="timeline-content glass-card">
+              <div class="tl-icon"><i class="fas fa-desktop"></i></div>
+              <h3>عرض النتيجة في لوحة التحكم والخريطة</h3>
+              <p>ظهور نقطة الاكتشاف على الخريطة التفاعلية مع تفاصيل المهمة في لوحة التحكم المركزية.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SYSTEM PREVIEW ===== -->
+    <section class="preview" id="preview">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">معاينة</span>
+          <h2>لوحة التحكم</h2>
+          <p class="section-desc">واجهة متكاملة لإدارة العمليات ومتابعة الرصد بشكل مباشر</p>
+        </div>
+
+        <div class="dashboard-mockup" data-aos="zoom-in" data-aos-delay="100">
+          <div class="dash-header">
+            <div class="dash-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="dash-title">راصد – لوحة التحكم المركزية</div>
+            <div class="dash-status"><span class="status-live"></span> مباشر</div>
+          </div>
+          <div class="dash-body">
+
+            <!-- Video Panel -->
+            <div class="dash-video-panel">
+              <div class="panel-header"><i class="fas fa-video"></i> البث المباشر</div>
+              <div class="video-screen">
+                <div class="video-overlay">
+                  <div class="detection-box"></div>
+                  <div class="detection-label">شخص مكتشف · 82.3%</div>
+                </div>
+                <div class="video-grid-lines"></div>
+                <div class="video-info">
+                  <span><i class="fas fa-circle text-red"></i> REC</span>
+                  <span>1080p · 30fps</span>
+                  <span>00:12:47</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Map Panel -->
+            <div class="dash-map-panel">
+              <div class="panel-header"><i class="fas fa-map"></i> الخريطة التفاعلية</div>
+              <div class="map-screen">
+                <div class="map-grid"></div>
+                <div class="map-marker m1 pulse-marker"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="map-marker m2"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="map-marker m3 pulse-marker"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="drone-icon-map"><i class="fas fa-helicopter"></i></div>
+                <div class="map-coords">24.7136° N, 46.6753° E</div>
+              </div>
+            </div>
+
+            <!-- Alerts Panel -->
+            <div class="dash-alerts-panel">
+              <div class="panel-header"><i class="fas fa-bell"></i> التنبيهات <span class="badge-count">3</span></div>
+              <div class="alerts-list">
+                <div class="alert-item alert-new">
+                  <div class="alert-dot new"></div>
+                  <div class="alert-info">
+                    <span class="alert-title">شخص مكتشف</span>
+                    <span class="alert-coords">24.71° N · 46.67° E</span>
+                    <span class="alert-time">منذ 2 دقيقة</span>
+                  </div>
+                  <span class="alert-tag new-tag">جديد</span>
+                </div>
+                <div class="alert-item">
+                  <div class="alert-dot process"></div>
+                  <div class="alert-info">
+                    <span class="alert-title">رصد منطقة الشرق</span>
+                    <span class="alert-coords">24.69° N · 46.71° E</span>
+                    <span class="alert-time">منذ 15 دقيقة</span>
+                  </div>
+                  <span class="alert-tag process-tag">قيد المتابعة</span>
+                </div>
+                <div class="alert-item">
+                  <div class="alert-dot new"></div>
+                  <div class="alert-info">
+                    <span class="alert-title">تنبيه GPS</span>
+                    <span class="alert-coords">24.73° N · 46.65° E</span>
+                    <span class="alert-time">منذ 28 دقيقة</span>
+                  </div>
+                  <span class="alert-tag new-tag">جديد</span>
+                </div>
+                <div class="alert-item">
+                  <div class="alert-dot closed"></div>
+                  <div class="alert-info">
+                    <span class="alert-title">مهمة اكتملت</span>
+                    <span class="alert-coords">24.68° N · 46.74° E</span>
+                    <span class="alert-time">منذ 1 ساعة</span>
+                  </div>
+                  <span class="alert-tag closed-tag">مغلق</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== STATS + CHARTS ===== -->
+    <section class="stats" id="stats">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">الأداء</span>
+          <h2>إحصائيات راصد</h2>
+          <p class="section-desc">أرقام تعكس قوة النظام وكفاءته الميدانية</p>
+        </div>
+
+        <div class="counters-grid" data-aos="fade-up" data-aos-delay="100">
+          <div class="counter-card glass-card">
+            <div class="counter-icon"><i class="fas fa-tasks"></i></div>
+            <div class="counter-value" data-target="247">0</div>
+            <div class="counter-label">عدد المهام المنفذة</div>
+          </div>
+          <div class="counter-card glass-card">
+            <div class="counter-icon"><i class="fas fa-users"></i></div>
+            <div class="counter-value" data-target="83">0</div>
+            <div class="counter-label">المتطوعون النشطون</div>
+          </div>
+          <div class="counter-card glass-card">
+            <div class="counter-icon"><i class="fas fa-eye"></i></div>
+            <div class="counter-value" data-target="1520">0</div>
+            <div class="counter-label">عمليات الرصد</div>
+          </div>
+          <div class="counter-card glass-card">
+            <div class="counter-icon"><i class="fas fa-chart-pie"></i></div>
+            <div class="counter-value" data-target="88" data-suffix="%">0</div>
+            <div class="counter-label">نسبة الدقة</div>
+          </div>
+        </div>
+
+        <div class="charts-grid" data-aos="fade-up" data-aos-delay="200">
+          <div class="chart-card glass-card">
+            <div class="chart-card-header">
+              <h3><i class="fas fa-chart-line"></i> الرصد خلال الأسبوع</h3>
+              <span class="chart-badge">آخر 7 أيام</span>
+            </div>
+            <canvas id="lineChart"></canvas>
+          </div>
+          <div class="chart-card glass-card">
+            <div class="chart-card-header">
+              <h3><i class="fas fa-chart-pie"></i> توزيع الحالات</h3>
+              <span class="chart-badge">إجمالي</span>
+            </div>
+            <canvas id="doughnutChart"></canvas>
+            <div class="doughnut-legend">
+              <span class="leg-item"><span class="leg-dot" style="background:#C2A477"></span>جديد (42%)</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#8B6B47"></span>قيد المعالجة (35%)</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#7A9A7A"></span>مغلق (23%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CTA ===== -->
+    <section class="cta-section" id="cta">
+      <div class="container">
+        <div class="cta-box" data-aos="zoom-in">
+          <div class="cta-deco"></div>
+          <div class="cta-content">
+            <div class="cta-icon"><i class="fas fa-satellite-dish"></i></div>
+            <h2>"مع راصد… القرار أسرع، والرؤية أوضح، والأثر أكبر."</h2>
+            <p>انضم إلى منظومة البحث والإنقاذ الأكثر تطورًا في المملكة العربية السعودية</p>
+            <a href="VolunteerRegister.html" class="btn-primary btn-large"><i class="fas fa-tachometer-alt"></i>انضم معنا!</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== REPORT SECTION ===== -->
+    <section class="report-section" id="reports">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">البلاغات</span>
+          <h2>بلّغ الآن</h2>
+          <p class="section-desc">إذا رصدت حالة مشتبه بها أو تحتاج فريق الإنقاذ، ارفع بلاغك الآن وسيتم توجيهه للجهة المختصة.</p>
+        </div>
+
+
+        <div class="report-grid" data-aos="fade-up" data-aos-delay="120">
+          <div class="report-card glass-card">
+            <div class="report-icon">
+              <i class="fas fa-triangle-exclamation"></i>
+            </div>
+            <h3>رفع بلاغ سريع</h3>
+            <p>املأ البيانات الأساسية وسنقوم بتحويل البلاغ مباشرةً للجهة المختصة، مع إمكانية إضافة الموقع والوصف.</p>
+
+            <button type="button" class="btn-primary btn-large report-cta-btn" id="openReportModal">
+              <i class="fas fa-flag"></i> ارفع بلاغ
+            </button>
+            <p class="track-link">
+  لديك رقم بلاغ سابق؟
+  <a href="track-report.html">تتبع البلاغ</a>
+</p>
+
+            <div class="report-note">
+              <i class="fas fa-shield-halved"></i>
+              <span>ملاحظة: يتم التحقق من البلاغ واعتماده قبل تحويله رسميًا إلى الجهة المختصة.</span>
+            </div>
+          </div>
+
+          <div class="report-aside glass-card">
+            <div class="aside-row">
+              <div class="aside-ico"><i class="fas fa-location-dot"></i></div>
+              <div class="aside-txt">
+                <strong>أضف موقعًا أدق</strong>
+                <span>اسم منطقة أو إحداثيات تقريبية تساعد الفريق.</span>
+              </div>
+            </div>
+            <div class="aside-row">
+              <div class="aside-ico"><i class="fas fa-clipboard-check"></i></div>
+              <div class="aside-txt">
+                <strong>وصف مختصر وواضح</strong>
+                <span>ما الذي رصدته؟ متى؟ وأي تفاصيل تساعد.</span>
+              </div>
+            </div>
+            <div class="aside-row">
+              <div class="aside-ico"><i class="fas fa-phone"></i></div>
+              <div class="aside-txt">
+                <strong>وسيلة تواصل</strong>
+                <span>رقم هاتف أو بريد إلكتروني للمتابعة عند الحاجة.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CONTACT ===== -->
+    <section class="contact" id="contact">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">التواصل</span>
+          <h2>تواصل معنا</h2>
+          <p class="section-desc">نحن هنا للإجابة على استفساراتك   </p>
+        </div>
+        <div class="contact-grid" data-aos="fade-up" data-aos-delay="100">
+          <div class="contact-info glass-card">
+            <div class="contact-item">
+              <div class="ci-icon"><i class="fas fa-envelope"></i></div>
+              <div>
+                <strong>البريد الإلكتروني</strong>
+                <span><a href="mailto:rasidsupport@gmail.com">rasidsupport@gmail.com</a></span>
+              </div>
+            </div>
+            <div class="contact-item">
+              <div class="ci-icon"><i class="fas fa-phone"></i></div>
+              <div>
+                <strong>الهاتف</strong>
+                <span style="direction:ltr;display:inline-block;">+966 55 457869</span>
+              </div>
+            </div>
+            <div class="contact-item">
+              <div class="ci-icon"><i class="fas fa-location-dot"></i></div>
+              <div>
+                <strong>الموقع</strong>
+                <span>  المملكة العربية السعودية, الرياض</span>
+              </div>
+            </div>
+          </div>
+          <form class="contact-form glass-card" novalidate>
+            <div class="form-group">
+              <label for="cName">الاسم الكامل</label>
+              <input type="text" id="name" name="cName" placeholder="أدخل اسمك الكامل" required />
+            </div>
+            <div class="form-group">
+              <label for="cEmail">البريد الإلكتروني</label>
+              <input type="email" id="email" name="cEmail" placeholder="أدخل بريدك الإلكتروني" required />
+            </div>
+            <div class="form-group">
+              <label for="cMessage">الرسالة</label>
+              <textarea id="message" name="cMessage" rows="4" placeholder="اكتب رسالتك هنا..." required></textarea>
+            </div>
+            <button type="submit" class="btn-primary w-full"><i class="fas fa-paper-plane"></i> إرسال الرسالة</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast" id="toast" aria-live="polite" aria-atomic="true" hidden></div>
+
+  <!-- ===== REPORT MODAL ===== -->
+  <div class="modal" id="reportModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+    <div class="modal-backdrop" data-close="true"></div>
+    <div class="modal-dialog" role="document">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-badge"><i class="fas fa-bullhorn"></i></div>
+          <h3 id="reportModalTitle">رفع بلاغ</h3>
+        </div>
+        <button class="modal-close" type="button" aria-label="إغلاق النافذة" data-close="true">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- NEW: Scrollable content wrapper (header stays sticky, actions can be sticky) -->
+        <div class="modal-scroll" data-modal-scroll="true">
+          <p class="modal-sub">
+            رجاءً أدخل بياناتك الأساسية وموقع الحالة ووصفًا مختصرًا.
+          </p>
+
+          <form id="reportForm" class="report-form" novalidate>
+            <div class="form-grid">
+              <div class="form-group">
+                 <label for="rName">اسم المفقود <span style="color:#c0392b;">*</span></label>
+                
+                <input type="text" id="rName" name="rName" placeholder="مثال: محمد عبدالله" required minlength="2" />
+                <small class="field-error" id="rNameErr" aria-live="polite"></small>
+              </div>
+              <div class="form-group">
+  <label for="rAge">العمر<span style="color:#c0392b;">*</span></label>
+
+  <input type="number" id="rAge" name="rAge" placeholder="مثال: 35" min="1" max="120" required/>
+  <small class="field-error" id="rAgeErr" aria-live="polite"></small>
+</div>
+
+<div class="form-group form-group--full">
+  <label>هل يعاني المفقود من أي أمراض؟ <span style="color:#c0392b;">*</span></label>
+  <div style="display:flex;gap:24px;margin:8px 0 10px;">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:15px;">
+      <input type="radio" name="rHealthRadio" id="rHealthYes" value="yes"
+        style="accent-color:#8B6914;width:18px;height:18px;cursor:pointer;" />
+      نعم
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:15px;">
+      <input type="radio" name="rHealthRadio" id="rHealthNo" value="no"
+        style="accent-color:#8B6914;width:18px;height:18px;cursor:pointer;" />
+      لا
+    </label>
+  </div>
+  <div id="rHealthTextWrap" style="display:none;">
+    <textarea id="rHealth" name="rHealth" rows="3"
+      placeholder="مثال: مريض بالسكري، يحتاج دواء"
+      style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(180,140,80,0.2);font-family:'Tajawal',sans-serif;font-size:14px;resize:vertical;"></textarea>
+  </div>
+  <small class="field-error" id="rHealthErr" aria-live="polite"></small>
+</div>
+
+<div class="form-group">
+  <label for="rVehicle">المركبة</label>
+  <input type="text" id="rVehicle" name="rVehicle" placeholder="مثال: تويوتا لاندكروزر، أبيض" required />
+  <small class="field-error" id="rVehicleErr" aria-live="polite"></small>
+</div>
+
+              <div class="form-group" style="position:relative;">
+                
+  <label>تاريخ الفقدان <span style="color:#c0392b;">*</span></label>
+  <input type="text" id="rLostDateDisplay" readonly placeholder="اختر تاريخ الفقدان"
+    style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(180,140,80,0.2);font-family:'Tajawal',sans-serif;font-size:14px;background:#fff;color:#2a1e0e;cursor:pointer;outline:none;"
+    onclick="toggleDatePicker()" />
+  <input type="hidden" id="rLostDate" name="rLostDate" />
+  <div id="customDatePicker" style="display:none;position:absolute;top:calc(100% + 6px);right:0;left:0;z-index:9999;background:#fff;border:1.5px solid rgba(166,124,82,0.35);border-radius:12px;box-shadow:0 8px 32px rgba(62,47,28,0.13);padding:10px;font-family:'Tajawal',sans-serif;direction:rtl;">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <button type="button" onclick="changeMonth(1)" style="background:rgba(166,124,82,0.1);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#8b6b47;font-size:16px;">‹</button>
+      <span id="dpMonthYear" style="font-weight:800;font-size:15px;color:#3e2810;"></span>
+      <button type="button" onclick="changeMonth(-1)" style="background:rgba(166,124,82,0.1);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#8b6b47;font-size:16px;">›</button>
+    </div>
+    <!-- Day names -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px;">
+      <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:3px 0;">Su</div>
+      <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:3px 0;">Mo</div>
+      <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:3px 0;">Tu</div>
+      <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:3px 0;">We</div>
+      <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:3px 0;">Th</div>
+      <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:3px 0;">Fr</div>
+      <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:3px 0;">Sa</div>
+    </div>
+    <!-- Days grid -->
+    <div id="dpDays" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
+  </div>
+  <small class="field-error" id="rLostDateErr" aria-live="polite"></small>
+</div>
+
+              <div class="form-group">
+                <label for="rRegion">المنطقة <span style="color:#c0392b;">*</span></label>
+                <select id="rRegion" name="rRegion" required style="display:none!important;">
+  <option value="">— اختر المنطقة —</option>
+  <option value="الرياض">الرياض</option>
+  <option value="مكة المكرمة">مكة المكرمة</option>
+  <option value="المدينة المنورة">المدينة المنورة</option>
+  <option value="القصيم">القصيم</option>
+  <option value="المنطقة الشرقية">المنطقة الشرقية</option>
+  <option value="عسير">عسير</option>
+  <option value="تبوك">تبوك</option>
+  <option value="حائل">حائل</option>
+  <option value="الحدود الشمالية">الحدود الشمالية</option>
+  <option value="جازان">جازان</option>
+  <option value="نجران">نجران</option>
+  <option value="الباحة">الباحة</option>
+  <option value="الجوف">الجوف</option>
+</select>
+
+<div class="custom-dropdown" id="regionDropdown" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+  <button type="button" class="cd-trigger" id="regionTrigger" aria-haspopup="listbox" aria-expanded="false">
+    <span class="cd-trigger-text" id="regionTriggerText">— اختر المنطقة —</span>
+    <i class="fas fa-chevron-down cd-arrow"></i>
+  </button>
+  <div class="cd-panel" id="regionPanel" role="listbox" style="top:calc(100% + 5px)!important; bottom:auto!important; box-shadow:0 8px 32px rgba(62,47,28,0.13)!important;">
+    <div class="cd-list" id="regionList"></div>
+  </div>
+</div>
+<small class="field-error" id="rRegionErr" aria-live="polite"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="rContact">
+  </div>
+</div>
+              <div class="form-group">
+                <label for="rContact">البريد الإلكتروني <span style="color:#c0392b;">*</span></label>
+                <input type="email" id="rContact" name="rContact" placeholder="مثال: name@email.com" required />
+                <small class="field-error" id="rContactErr" aria-live="polite"></small>
+              </div>
+
+              <!-- [ADDED] رقم الهاتف — مطلوب لتتبع صاحب البلاغ والتواصل معه -->
+              <div class="form-group">
+                <label for="rPhone">رقم الجوال <span style="color:#c0392b;">*</span></label>
+                <input type="tel" id="rPhone" name="rPhone" placeholder="مثال: 0501234567" required pattern="[0-9]{10}" />
+                <small class="field-error" id="rPhoneErr" aria-live="polite"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="rLocation">الموقع (آخر مكان شوهد فيه المفقود) <span style="color:#c0392b;">*</span></label>
+                <input type="text" id="rLocation" name="rLocation" placeholder="مثال: طريق القصيم - قرب مخرج 10" required />
+                <small class="field-error" id="rLocationErr" aria-live="polite"></small>
+              </div>
+
+              <!-- [ADDED] وصف الموقع التفصيلي — يساعد فرق البحث على تحديد المنطقة بدقة -->
+              <div class="form-group form-group--full">
+                <label for="rLocationDesc">وصف الموقع التفصيلي</label>
+                <textarea id="rLocationDesc" name="rLocationDesc" rows="2"
+                  placeholder="مثال: منطقة رملية، بالقرب من برج كهرباء، يُشاهد منها جبل صغير ناحية الشمال"
+                  style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid rgba(180,140,80,0.2);font-family:'Tajawal',sans-serif;font-size:14px;resize:vertical;"></textarea>
+                <small class="field-error" id="rLocationDescErr" aria-live="polite"></small>
+              </div>
+
+              <div class="form-group form-group--full">
+                <label for="rDesc">وصف البلاغ<span style="color:#c0392b;">*</span></label>
+                <textarea id="rDesc" name="rDesc" rows="4" placeholder="اكتب تفاصيل مختصرة وواضحة..." required minlength="10"></textarea>
+                <small class="field-error" id="rDescErr" aria-live="polite"></small>
+              </div>
+
+              <!-- NEW: File Upload -->
+              <div class="form-group form-group--full">
+                <label for="rFile">إرفاق محضر <span style="color:#c0392b;">*</span></label>
+              <!-- إرفاق محضر -->
+<div class="form-group" style="grid-column:1/-1">
+
+  <label for="rFile" id="fileLabel">
+   
+  </label>
+
+  <div class="file-wrap" role="group" aria-labelledby="fileLabel">
+
+    <label class="file-label" for="rFile">
+      <i class="fas fa-cloud-arrow-up"></i>
+      <span class="file-name" id="rFileName">
+        اضغط لاختيار ملف (PDF، JPG، PNG)
+      </span>
+    </label>
+
+    <input
+      type="file"
+      id="rFile"
+      name="rFile"
+      accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+    />
+
+  </div>
+
+  <span class="field-hint">
+    الحد الأقصى للحجم: 5 ميغابايت
+  </span>
+
+  <span class="field-error" id="rFileErr"></span>
+
+</div>
+
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-outline modal-btn" data-close="true">
+                <i class="fas fa-arrow-right"></i> إلغاء
+              </button>
+              <button type="submit" class="btn-primary modal-btn" id="submitReportBtn">
+                <i class="fas fa-paper-plane"></i> إرسال البلاغ
+              </button>
+            </div>
+
+            <!-- Success (hidden by default) -->
+            <div class="form-success" id="reportSuccess" hidden>
+              <div class="success-icon"><i class="fas fa-circle-check"></i></div>
+              <div class="success-text">
+                <strong>تم استلام البلاغ بنجاح</strong>
+                <span>شكرًا لك — سيتم توجيه البلاغ للجهة المختصة.</span>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===== LOGIN MODAL ===== -->
+  <div class="modal" id="loginModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+    <div class="modal-backdrop" data-close="true"></div>
+    <div class="modal-dialog" role="document">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-badge"><i class="fas fa-right-to-bracket"></i></div>
+          <h3 id="loginModalTitle">تسجيل الدخول</h3>
+        </div>
+        <button class="modal-close" type="button" aria-label="إغلاق النافذة" data-close="true">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-sub">أدخل بيانات حسابك لتسجيل الدخول</p>
+
+       <!-- index.html (ONLY the relevant updated parts shown; replace in your file) -->
+
+<!-- داخل Login Modal: استبدل زر "نسيت كلمة المرور؟" بالرابط التالي + رسالة inline -->
+<form id="loginForm" class="report-form" novalidate>
+  <div class="form-grid">
+    <div class="form-group form-group--full">
+      <label for="lEmail">البريد الإلكتروني</label>
+      <input type="email" id="lEmail" name="lEmail" placeholder="name@email.com" required />
+      <small class="field-error" id="lEmailErr" aria-live="polite"></small>
+    </div>
+
+    <div class="form-group form-group--full">
+      <label for="lPass">كلمة المرور</label>
+
+      <!-- NEW: password input group + eye button (RTL: eye on left inside input) -->
+      <div class="input-group">
+        <input type="password" id="lPass" name="lPass" placeholder="••••••••" required />
+        <button type="button" class="toggle-password" id="toggleLoginPassword" aria-label="إظهار/إخفاء كلمة المرور">
+          <i class="fas fa-eye"></i>
+        </button>
+      </div>
+
+      <small class="field-error" id="lPassErr" aria-live="polite"></small>
+
+      <!-- NEW: semantic link -->
+      <a href="#" class="forgot-link" id="forgotLink">نسيت كلمة المرور؟</a>
+      
+    </div>
+  </div>
+
+  <div class="modal-actions">
+    <button type="button" class="btn-outline modal-btn" data-close="true">
+      <i class="fas fa-arrow-right"></i> إلغاء
+    </button>
+    <button type="submit" class="btn-primary modal-btn" id="submitLoginBtn">
+      <i class="fas fa-unlock-keyhole"></i> دخول
+    </button>
+  </div>
+</form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FORGOT PASSWORD MODAL – 3-Step Reset Flow ===== -->
+  <div class="modal" id="forgotModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="forgotModalTitle">
+    <div class="modal-backdrop" data-close="true"></div>
+    <div class="modal-dialog modal-dialog--sm" role="document">
+
+      <!-- Header (dynamic title + icon update via JS) -->
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-badge" id="fgBadge"><i class="fas fa-lock-open"></i></div>
+          <h3 id="forgotModalTitle">إعادة تعيين كلمة المرور</h3>
+        </div>
+        <button class="modal-close" type="button" aria-label="إغلاق النافذة" data-close="true">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- ── STEP 1: Email ──────────────────────────── -->
+        <div class="fg-panel" id="fgPanel1" aria-live="polite">
+          <p class="modal-sub">أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور. </p>
+          <form id="fgFormEmail" class="report-form" novalidate>
+            <div class="form-group form-group--full">
+              <label for="fgEmail">البريد الإلكتروني</label>
+              <input
+                type="email"
+                id="fgEmail"
+                name="fgEmail"
+                placeholder="name@email.com"
+                autocomplete="email"
+                required
+              />
+              <small class="field-error" id="fgEmailErr" aria-live="polite"></small>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-outline modal-btn" data-close="true">
+                <i class="fas fa-arrow-right"></i> إلغاء
+              </button>
+              <button type="submit" class="btn-primary modal-btn" id="fgSendBtn">
+                <i class="fas fa-paper-plane"></i> إرسال الرابط
+              </button>
+            </div>
+          </form>
+        </div>
+
+
+        <!-- ── SUCCESS panel ─────────────────────────── -->
+        <div class="fg-panel fg-panel--hidden" id="fgPanelSuccess" aria-live="assertive">
+          <div class="form-success fg-success-box">
+            <div class="success-icon"><i class="fas fa-circle-check"></i></div>
+            <div class="success-text">
+              <strong>تمت إعادة التعيين بنجاح</strong>
+              <span>يمكنك الآن تسجيل الدخول بكلمة مرورك الجديدة.</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.modal-body -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /#forgotModal -->
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="/assest/logoo.PNG" alt="شعار راصد" class="footer-logo" />
+          <h3>راصد</h3>
+          <p>نظام بحث وإنقاذ ذكي يعتمد الذكاء الاصطناعي والطائرات المسيّرة لإنقاذ الأرواح في البيئات الصحراوية.</p>
+          
+        </div>
+
+        <div class="footer-links">
+          <h4>روابط سريعة</h4>
+          <ul>
+            <li><a href="#hero">الرئيسية</a></li>
+            <li><a href="#about">عن راصد</a></li>
+            <li><a href="#features">المميزات</a></li>
+            <li><a href="#how">كيف يعمل</a></li>
+            <li><a href="#preview">معاينة النظام</a></li>
+            <li><a href="#stats">الإحصائيات</a></li>
+            <li><a href="#reports">بلّغ الآن</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links">
+          <h4>التقنيات المستخدمة</h4>
+          <ul>
+           
+            <li><a href="#">Drone Technology</a></li>
+            <li><a href="#">GPS Integration</a></li>
+            <li><a href="#">Real-Time Dashboard</a></li>
+            <li><a href="#">Computer Vision</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 راصد – عين الصحراء. جميع الحقوق محفوظة | جامعة الملك سعود</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.16/typed.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <!-- EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="/JS/index.js"></script>
+
+  <!-- ================================================================
+       FIREBASE — Report Submission + Login
+       ================================================================
+       WHAT CHANGED & WHY:
+       1. Report Submission: saves to Firestore 'Report' collection with
+          Status:"Report Received" (default), includes new Phone and
+          LocationDescription fields matching updated DB schema.
+       2. Login: queries the correct collection ('Admin','Volunteer','Reporter')
+          using the exact Firestore field names (Email, Password) from the DB
+          schema shown in screenshots. Previously the code likely used
+          mismatched field names causing auth failures.
+  ================================================================ -->
+  <script type="module">
+    import { initializeApp, getApps }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+      authDomain:        'rasid-1bb06.firebaseapp.com',
+      projectId:         'rasid-1bb06',
+      storageBucket:     'rasid-1bb06.firebasestorage.app',
+      messagingSenderId: '668525115587',
+      appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+      measurementId:     'G-MZ3KB7WBK4'
+    };
+
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    /* ──────────────────────────────────────────────────────────
+       HELPER: Generate report ID  e.g. RASID-48291
+    ────────────────────────────────────────────────────────── */
+    function genReportId() {
+      return 'RASID-' + Math.floor(10000 + Math.random() * 90000);
+    }
+
+    /* ──────────────────────────────────────────────────────────
+       HEALTH RADIO TOGGLE
+    ────────────────────────────────────────────────────────── */
+    document.addEventListener('change', function(e) {
+      if (e.target.name === 'rHealthRadio') {
+        const wrap = document.getElementById('rHealthTextWrap');
+        if (e.target.value === 'yes') {
+          wrap.style.display = 'block';
+          document.getElementById('rHealth').focus();
+        } else {
+          wrap.style.display = 'none';
+          const ta = document.getElementById('rHealth');
+          if (ta) ta.value = '';
+        }
+        document.getElementById('rHealthErr').textContent = '';
+      }
+    });
+
+    /* ──────────────────────────────────────────────────────────
+       REPORT FORM SUBMISSION
+       - Saves document to Firestore 'Report' collection
+       - Default Status: "Report Received"  (matches new DB schema)
+       - Includes all new fields: Phone, LocationDescription
+       - Field names match DB schema exactly (PascalCase)
+    ────────────────────────────────────────────────────────── */
+    
+    /* ══════════════════════════════════════════════════════════
+       LOGIN FORM — delegates entirely to firebase.js
+       loginAndRedirect handles:
+         Admin/{uid}               → AdminControlPanel.html
+         Volunteer (AuthUID==uid)  → Reports.html
+       ══════════════════════════════════════════════════════════ */
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const emailVal = (document.getElementById('lEmail')?.value || '').trim();
+        const passVal  = (document.getElementById('lPass')?.value  || '').trim();
+        const emailErr = document.getElementById('lEmailErr');
+        const passErr  = document.getElementById('lPassErr');
+
+        if (emailErr) emailErr.textContent = '';
+        if (passErr)  passErr.textContent  = '';
+
+        if (!emailVal) { if (emailErr) emailErr.textContent = 'البريد الإلكتروني مطلوب'; return; }
+        if (!passVal)  { if (passErr)  passErr.textContent  = 'كلمة المرور مطلوبة';      return; }
+
+        const submitBtn = document.getElementById('submitLoginBtn');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ التحقق...'; }
+
+        try {
+          const { loginAndRedirect } = await import('/JS/firebase.js');
+          const result = await loginAndRedirect(emailVal, passVal);
+
+          if (!result.success) {
+            const errEl = document.getElementById('lEmailErr');
+            if (errEl) errEl.textContent = result.error || 'حدث خطأ غير متوقع. حاول مجدداً.';
+          }
+          // On success, loginAndRedirect already redirected the page — nothing else to do.
+
+        } catch (err) {
+          console.error('Login error:', err.code, err.message);
+          const errEl = document.getElementById('lEmailErr');
+          if (errEl) errEl.textContent = 'حدث خطأ غير متوقع. حاول مجدداً.';
+
+        } finally {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-unlock-keyhole"></i> دخول'; }
+        }
+      });
+    }
+
+  </script>
+  <!-- ===== REPORT SUCCESS BANNER ===== -->
+<div id="reportSuccessBanner" style="
+  display:none;
+  position:fixed;
+  bottom:40px;
+  left:50%;
+  transform:translateX(-50%);
+  align-items:center;
+  gap:12px;
+  background:linear-gradient(135deg,#2d6a4f,#40916c);
+  color:#fff;
+  font-family:'Tajawal',sans-serif;
+  font-size:1rem;
+  font-weight:700;
+  padding:16px 40px;
+  border-radius:50px;
+  box-shadow:0 8px 32px rgba(45,106,79,0.4);
+  z-index:99999;
+  direction:rtl;
+  white-space:nowrap;
+  flex-direction:column;
+  text-align:center;
+">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <i class="fas fa-circle-check" style="font-size:1.3rem;"></i>
+    <span>تم استلام البلاغ بنجاح</span>
+  </div>
+  <span style="font-size:0.82rem;font-weight:400;opacity:0.88;margin-top:4px;">
+تم ارسال رقم التتبع على الايميل
+  </span>
+</div>
+<style>
+  /* Region dropdown في modal البلاغ */
+#reportModal .custom-dropdown { position: relative; width: 100%; }
+#reportModal .cd-trigger {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; height: 44px; padding: 0 0.9rem;
+  border: 1.5px solid rgba(180,140,80,0.2);
+  border-radius: 10px;
+  background: #fff; color: #2a1e0e;
+  font-family: 'Tajawal', sans-serif; font-size: 14px;
+  cursor: pointer; direction: rtl; text-align: right;
+  transition: all 0.22s ease; outline: none;
+}
+#reportModal .cd-trigger:hover { border-color: rgba(166,124,82,0.45); }
+#reportModal .cd-trigger.open { border-color: rgba(166,124,82,0.65); box-shadow: 0 0 0 3px rgba(166,124,82,0.11); }
+#reportModal .cd-trigger.is-invalid { border-color: rgba(155,58,58,0.5) !important; }
+#reportModal .cd-trigger-text { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#reportModal .cd-arrow { flex-shrink:0; margin-right:0.4rem; color:#a67c52; font-size:0.65rem; transition:transform 0.22s ease; }
+#reportModal .cd-trigger.open .cd-arrow { transform:rotate(180deg); }
+#reportModal .cd-panel {
+  display:none; position:absolute;
+  top:calc(100% + 5px)!important; bottom:auto!important;
+  left:0!important; right:0!important; width:100%!important;
+  z-index:9999; background:#fff;
+  border:1.5px solid rgba(166,124,82,0.45);
+  border-radius:10px;
+  box-shadow:0 8px 32px rgba(62,47,28,0.13)!important;
+  overflow:hidden;
+}
+#reportModal .cd-panel.open { display:block; }
+#reportModal .cd-list { max-height:180px; overflow-y:auto; padding:0.3rem 0; }
+#reportModal .cd-list::-webkit-scrollbar { width:4px; }
+#reportModal .cd-list::-webkit-scrollbar-thumb { background:rgba(166,124,82,0.28); border-radius:4px; }
+#reportModal .cd-option {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0.55rem 0.9rem; font-size:13px; color:#5c4530;
+  cursor:pointer; direction:rtl; text-align:right;
+  font-family:'Tajawal',sans-serif;
+  transition:background 0.13s, color 0.13s;
+}
+#reportModal .cd-option:hover, #reportModal .cd-option.focused { background:rgba(166,124,82,0.09); color:#a67c52; }
+#reportModal .cd-option.selected { background:rgba(166,124,82,0.13); color:#8b6b47; font-weight:700; }
+#reportModal .cd-option.selected::after { content:'\f00c'; font-family:'Font Awesome 6 Free'; font-weight:900; font-size:0.65rem; color:#a67c52; margin-right:auto; padding-right:0.4rem; }
+</style>
+<script>
+  document.getElementById('rLostDate').max = new Date().toISOString().split('T')[0];
+</script>
+<script>
+var _dpDate = new Date();
+var _dpSelected = null;
+
+var _arMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                 'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+function toggleDatePicker() {
+  var dp = document.getElementById('customDatePicker');
+  var isHidden = dp.style.display === 'none' || dp.style.display === '';
+  if (isHidden) {
+    dp.style.display = 'block';
+    renderDatePicker();
+  } else {
+    dp.style.display = 'none';
+  }
+}
+function renderDatePicker() {
+  var y = _dpDate.getFullYear();
+  var m = _dpDate.getMonth();
+  var today = new Date();
+  today.setHours(0,0,0,0);
+
+  document.getElementById('dpMonthYear').textContent = _arMonths[m] + ' ' + y;
+
+  var firstDay = new Date(y, m, 1).getDay();
+  var daysInMonth = new Date(y, m+1, 0).getDate();
+  var html = '';
+
+  for (var i = 0; i < firstDay; i++) {
+    html += '<div></div>';
+  }
+
+  for (var d = 1; d <= daysInMonth; d++) {
+    var thisDate = new Date(y, m, d);
+    thisDate.setHours(0,0,0,0);
+    var isFuture = thisDate > today;
+    var isSelected = _dpSelected &&
+      _dpSelected.getDate() === d &&
+      _dpSelected.getMonth() === m &&
+      _dpSelected.getFullYear() === y;
+
+var baseStyle = 'text-align:center;padding:5px 2px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;';
+    if (isFuture) {
+      html += '<div style="' + baseStyle + 'color:rgba(166,124,82,0.3);cursor:not-allowed;">' + d + '</div>';
+    } else if (isSelected) {
+      html += '<div style="' + baseStyle + 'background:linear-gradient(135deg,#a67c52,#8b6b47);color:#fff;" onclick="selectDate(' + y + ',' + m + ',' + d + ')">' + d + '</div>';
+    } else {
+      html += '<div style="' + baseStyle + 'color:#3e2810;" onmouseover="this.style.background=\'rgba(166,124,82,0.12)\'" onmouseout="this.style.background=\'\'" onclick="selectDate(' + y + ',' + m + ',' + d + ')">' + d + '</div>';
+    }
+  }
+
+  document.getElementById('dpDays').innerHTML = html;
+}
+
+function changeMonth(dir) {
+  _dpDate.setMonth(_dpDate.getMonth() + dir);
+  renderDatePicker();
+}
+
+function selectDate(y, m, d) {
+  var selected = new Date(y, m, d);
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  if (selected > today) return;
+
+  _dpSelected = selected;
+
+  var mm = String(m+1).padStart(2,'0');
+  var dd = String(d).padStart(2,'0');
+
+  document.getElementById('rLostDate').value = y + '-' + mm + '-' + dd;
+  document.getElementById('rLostDateDisplay').value = dd + ' ' + _arMonths[m] + ' ' + y;
+  document.getElementById('rLostDateDisplay').style.borderColor = 'rgba(166,124,82,0.45)';
+  document.getElementById('customDatePicker').style.display = 'none';
+
+  var errEl = document.getElementById('rLostDateErr');
+  if (errEl) errEl.textContent = '';
+}
+
+document.addEventListener('click', function(e) {
+  var dp = document.getElementById('customDatePicker');
+  var display = document.getElementById('rLostDateDisplay');
+  if (!dp || !display) return;
+  if (!dp.contains(e.target) && e.target !== display) {
+    dp.style.display = 'none';
+  }
+});
+
+// Reset on modal open
+document.getElementById('openReportModal')?.addEventListener('click', function() {
+  _dpSelected = null;
+  _dpDate = new Date();
+  var display = document.getElementById('rLostDateDisplay');
+  var hidden  = document.getElementById('rLostDate');
+  if (display) { display.value = ''; display.style.borderColor = ''; }
+  if (hidden)  hidden.value = '';
+  var dp = document.getElementById('customDatePicker');
+  if (dp) dp.style.display = 'none';
+});
+</script>
+</body>
+</html>

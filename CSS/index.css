@@ -397,7 +397,7 @@ section { padding: var(--section-py) 0; }
 
 /* CTA in nav — hide text on very small screens */
 .nav-actions .btn-primary {
-  display: none;
+  display: inline-flex;
 }
 
 /* Hamburger button */
