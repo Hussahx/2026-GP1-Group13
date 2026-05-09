@@ -512,7 +512,47 @@
     // ── Helpers ───────────────────────────────────────────────────────
     function toAr(n){ return String(n).replace(/\d/g, d=>'٠١٢٣٤٥٦٧٨٩'[+d]); }
     function a2w(s){ return String(s).replace(/[٠١٢٣٤٥٦٧٨٩]/g,d=>d.charCodeAt(0)-0x0660); }
+function calcDaysAgo(value) {
+  if (!value) return null;
+  var date = null;
 
+  // Firebase Timestamp
+  if (typeof value === 'object' && typeof value.toDate === 'function') {
+    date = value.toDate();
+
+  // String — YYYY-MM-DD أو YYYY/MM/DD → parse محلي لتجنب UTC shift
+  } else if (typeof value === 'string') {
+    var s = value.trim();
+    var m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (m) {
+      // ✅ new Date(y, m, d) = local time — لا UTC
+      date = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    } else {
+      var fb = new Date(s);
+      if (!isNaN(fb.getTime())) date = fb;
+    }
+
+  // Milliseconds
+  } else if (typeof value === 'number') {
+    date = new Date(value);
+  }
+
+  if (!date || isNaN(date.getTime())) return null;
+
+  // ✅ مقارنة بالأيام المحلية — نفس منطق صفحة البلاغات
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var dateMid = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  // ✅ Math.floor وليس Math.round — لتجنب "منذ اليوم" الغلط
+  var diff = Math.floor((today - dateMid) / 86400000);
+  if (diff < 0) diff = 0;
+
+  if (diff === 0) return 'منذ اليوم';
+  if (diff === 1) return 'منذ يوم';
+  var ar = String(diff).replace(/\d/g, function(d) { return '٠١٢٣٤٥٦٧٨٩'[+d]; });
+  return diff <= 10 ? 'منذ ' + ar + ' أيام' : 'منذ ' + ar + ' يوماً';
+}
     const STATUS_LABELS = {
       'new':           'جديد',
       'accepted':      'مقبول',
@@ -841,26 +881,10 @@ window.goPage = goPage;
           const rid = data.reportId || docSnap.id;
 
           // حساب الأيام — يدعم ReportDate (string) و reportTime (Timestamp)
-          let daysText = '—';
-          let dtMs = 0;
-          if(data.ReportDate){
-            const parsed = new Date(data.ReportDate);
-            if(!isNaN(parsed)){
-              dtMs = parsed.getTime();
-              const diff = Math.floor((Date.now()-dtMs)/86400000);
-              if(diff===0) daysText='منذ اليوم';
-              else if(diff===1) daysText='منذ يوم';
-              else if(diff<=10) daysText='منذ '+toAr(diff)+' أيام';
-              else daysText='منذ '+toAr(diff)+' يوماً';
-            }
-          } else if(data.reportTime?.toDate){
-            dtMs = data.reportTime.toDate().getTime();
-            const diff = Math.floor((Date.now()-dtMs)/86400000);
-            if(diff===0) daysText='منذ اليوم';
-            else if(diff===1) daysText='منذ يوم';
-            else if(diff<=10) daysText='منذ '+toAr(diff)+' أيام';
-            else daysText='منذ '+toAr(diff)+' يوماً';
-          }
+          var daysText = calcDaysAgo(data.ReportDate) || calcDaysAgo(data.reportTime) || calcDaysAgo(data.LostDate) || calcDaysAgo(data.LoggedAt) || '—';
+var dtMs = 0;
+if (data.reportTime && typeof data.reportTime.toDate === 'function') dtMs = data.reportTime.toDate().getTime();
+else if (data.ReportDate) { var _d = new Date(data.ReportDate); if (!isNaN(_d)) dtMs = _d.getTime(); }
 
           // البلاغات المغلقة لا تظهر هنا — تروح للسجل
           const currentStatus = data.Status || data.status || '';
