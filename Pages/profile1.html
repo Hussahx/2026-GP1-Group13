@@ -811,8 +811,7 @@ background: rgba(255,255,255,0.96);
   justify-content:space-between;
   gap:8px;
 
-  background: rgba(255, 250, 242, 0.96);
-
+background: #F5EFE6;
   border-bottom: 1px solid rgba(166,124,82,0.14);
 }
 .p-modal #mlName,
@@ -2657,8 +2656,11 @@ onAuthStateChanged(auth, function(user) {
         days:      daysText,
         ld:        reportTimeStr,
         role:      isLeader ? 'leader' : 'member',
-teamCount: d.CurrentVolunteers || d.currentVolunteers || (Array.isArray(d.teamMembers) ? d.teamMembers.length : 0),        closed:    closedStatuses.includes(currentStatus),
-        hlth:      d.HealthStatus      || d.healthStatus        || 'لا يوجد',
+teamCount: Array.isArray(d.teamMembers)
+  ? d.teamMembers.length
+  : (d.CurrentVolunteers || d.currentVolunteers || 0),
+
+closed: closedStatuses.includes(currentStatus),        hlth:      d.HealthStatus      || d.healthStatus        || 'لا يوجد',
         veh:       d.Vehicle           || d.vehicle             || '—',
         age:       d.Age               || d.age                 || '—',
         ldr:       d.leader            || '—',
@@ -2838,7 +2840,7 @@ var opCls = r.closed
       avs += '<div class="p-av" style="background:#a67c52;">+'+toAr(r.mbr.length-5)+'</div>';
     }
 
-        var volBadge = '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--t700,#5a3e20);background:rgba(245,239,230,0.9);border:1px solid rgba(180,140,80,0.2);border-radius:8px;padding:2px 8px;">👥 '+(r.teamCount||0)+' متطوع</span>';
+        var volBadge = '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--t700,#5a3e20);background:rgba(245,239,230,0.9);border:1px solid rgba(180,140,80,0.2);border-radius:8px;padding:2px 8px;">👥 '+toAr(r.teamCount || 0)+' متطوع</span>';
     var actBtn = r.closed
       ? '<button class="op-act act-green" onclick="openLog(\''+r.id+'\')">📋 عرض السجل</button>'
       : '<span style="display:none;" onclick="openTrack(\''+r.id+'\'")">تفاصيل العملية</button>';
@@ -2867,8 +2869,9 @@ var opCls = r.closed
           '<div class="op-foot">'+
             '<div style="display:flex;align-items:center;gap:8px;">'+
               '<div class="p-avs">'+avs+'</div>'+
-              '<span style="font-size:11.5px;color:var(--ink-muted);">👥 '+toAr(r.teamCount||r.mbr.length||0)+' متطوع</span>'+
-            '</div>'+
+'<span style="font-size:11.5px;color:var(--ink-muted);">👥 '+
+toAr(r.teamCount || 0)+
+' متطوع</span>'+            '</div>'+
             '<div class="p-dtag">⏱ '+r.days+'</div>'+
           '</div>'+
         '</div>';
