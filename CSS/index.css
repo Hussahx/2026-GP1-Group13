@@ -2634,3 +2634,11 @@ input[type="file"] {
 #forgotModal .modal-dialog {
   width: min(500px, calc(100% - 2rem));
 }
+@media (max-width: 479px) {
+  .nav-actions .btn-primary {
+    display: inline-flex !important;
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.75rem !important;
+    min-height: 32px !important;
+  }
+}
