@@ -638,6 +638,18 @@ position:relative;
       } catch { return '—'; }
     }
 
+    function reformatLoggedAt(str) {
+      if (!str) return '—';
+      try {
+        // Parse Arabic date string like "٢٠٢٦/٥/١٠ ص ١٢:٢٣"
+        const latin = str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+        const d = new Date(latin.replace(/(\d+)\/(\d+)\/(\d+)/, '$1-$2-$3'));
+        const date = d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+        const time = d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+        return date + ' — ' + time;
+      } catch { return str; }
+    }
+
     function mapStatus(status) {
       /* ══════════════════════════════════════════════════════════
          WHAT CHANGED & WHY:
@@ -800,7 +812,7 @@ position:relative;
       document.getElementById('logList').innerHTML = logEntries.map(e => `
         <div class="log-entry">
           <div class="log-dot ${e.type}"></div>
-          <div class="log-time">${e.time}</div>
+          <div class="log-time">${e.time !== '—' ? e.time : ''}</div>
           <div class="log-text">${e.text}</div>
         </div>
       `).join('');
@@ -838,7 +850,7 @@ position:relative;
          This is ALWAYS the first chronological event (index 0 = oldest).
          It is written here unconditionally so it never gets lost. */
       const receivedEntry = {
-        time: formatTime(data.reportTime),
+        time: formatDateTime(data.LoggedAt || data.reportTime),
         text: 'تم استلام البلاغ وتسجيله في النظام.',
         type: 'done'
       };
@@ -865,7 +877,7 @@ position:relative;
         filtered.forEach((e, idx) => {
           const isLatest = idx === filtered.length - 1;
           updates.push({
-            time: e.loggedAt || '—',
+            time: e.timestamp ? formatDateTime(e.timestamp) : (e.loggedAt || '—'),
             text: e.note     || e.label || '—',
             /* Latest entry is 'active' (pulsing dot) unless report is closed */
             type: (isLatest && !isClosed) ? 'active' : 'done'
@@ -876,14 +888,14 @@ position:relative;
         if (['org', 'active', 'rescued', 'found', 'closed', 'rejected',
              'Under Review', 'Rejected', 'In Progress'].includes(status)) {
           updates.push({
-            time: '—',
+            time: formatDateTime(data.LoggedAt || data.reportTime),
             text: 'تمت مراجعة البلاغ والتحقق من بياناته.',
             type: (['active', 'rescued', 'found', 'closed', 'Under Review', 'In Progress'].includes(status)) ? 'done' : 'active'
           });
         }
-        if (['active', 'rescued', 'found', 'closed', 'In Progress'].includes(status)) {
+        if (['active', 'In Progress'].includes(status)) {
           updates.push({
-            time: '—',
+            time: formatDateTime(data.LoggedAt || data.reportTime),
             text: 'عملية البحث جارية في المنطقة المحددة.',
             type: (['rescued', 'found', 'closed'].includes(status)) ? 'done' : 'active'
           });
