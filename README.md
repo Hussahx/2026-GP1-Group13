@@ -4,6 +4,90 @@
 ### AI-Powered Drone-Based Search & Rescue System
 
 ---
+2026-GP1-Group13/
+│
+├── assets/                        # Static assets and images
+│   ├── New-logo.JPG.jpeg
+│   ├── logo.PNG
+│   └── logoo.PNG
+│
+├── css/                           # Stylesheets
+│   ├── Control-panel.css
+│   ├── History.css
+│   ├── Rasid.css
+│   └── index.css
+│
+├── js/                            # JavaScript files
+│   ├── AdminControlPanel.js
+│   ├── ReportDetails.js
+│   ├── firebase.js
+│   ├── index.js
+│   └── sidebar-menu.js
+│
+├── pages/                         # HTML pages
+│   ├── AdminControlPanel.html
+│   ├── Control-panel.html
+│   ├── Control.html
+│   ├── DroneNotification.html
+│   ├── History.html
+│   ├── MyReports.html
+│   ├── RealTimeReportDetails.html
+│   ├── Reports.html
+│   ├── VolunteerRegister.html
+│   ├── base.html
+│   ├── index.html
+│   ├── profile1.html
+│   ├── reset-password.html
+│   └── track-report.html
+│
+├── Release-1/                     # Sprint / Release 1 deliverables
+│   
+│
+├── AUTHORS                        # Project contributors
+├── README.md                      # Project documentation
+└── .gitignore                     # Ignored system/generated files
+
+---
+Launch Instructions
+Prerequisites
+
+Visual Studio Code installed on your machine
+Live Server extension installed in VS Code
+
+
+Step 1 – Install VS Code
+Download and install VS Code from the official website:
+👉 https://code.visualstudio.com/
+
+Step 2 – Install the Live Server Extension
+
+Open VS Code
+Click the Extensions icon in the sidebar or press Ctrl+Shift+X
+Search for: Live Server
+Click Install on the extension by Ritwick Dey
+
+
+Step 3 – Run the Project
+
+Open the project folder in VS Code:
+
+   File → Open Folder → Select the rasid folder
+
+Open index.html
+Right-click the file and select "Open with Live Server"
+— or —
+Click the Go Live button in the bottom status bar
+Your browser will open automatically at:
+
+   http://127.0.0.1:5500/index.html
+
+Notes
+
+Any saved change in your code will automatically reload the browser (Live Reload)
+Make sure port 5500 is not blocked on your machine
+No internet connection is required to run the project locally
+
+---
 
 ## Abstract
 
