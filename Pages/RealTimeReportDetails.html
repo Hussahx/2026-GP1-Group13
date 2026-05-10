@@ -1603,8 +1603,8 @@ async function fetchActiveVolunteer(uid) {
         <i class="fas fa-arrow-right"></i>
         إلغاء
       </button>
-      <button onclick="submitStatusUpdate()" type="button" id="usConfirmBtn" disabled class="us-btn-primary">
-        <i class="fa-solid fa-check"></i>
+<button onclick="openUpdateConfirm()" type="button" id="usConfirmBtn" disabled class="us-btn-primary">
+          <i class="fa-solid fa-check"></i>
         تأكيد التحديث
       </button>
     </div>
@@ -1612,6 +1612,50 @@ async function fetchActiveVolunteer(uid) {
   </div>
 </div>
 
+<!-- ═════════ CONFIRM UPDATE MODAL ═════════ -->
+<div id="updateConfirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(42,31,18,.52);backdrop-filter:blur(6px);z-index:999999;align-items:center;justify-content:center;padding:20px;">
+
+  <div style="background:rgba(255,250,242,.96);border:1px solid rgba(166,124,82,.20);border-radius:18px;width:min(470px,92%);overflow:hidden;box-shadow:0 24px 70px rgba(42,31,18,.25);font-family:'Tajawal',sans-serif;">
+
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:18px 18px 14px;border-bottom:1px solid rgba(166,124,82,.14);background:linear-gradient(135deg,rgba(194,164,119,.16),rgba(139,107,71,.10));">
+
+      <div style="width:44px;height:44px;border-radius:14px;background:#2f9b59;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 10px 24px rgba(47,155,89,.22);flex-shrink:0;">
+        <i class="fa-solid fa-check"></i>
+      </div>
+
+      <div style="flex:1;">
+        <div style="font-size:1rem;font-weight:900;color:#3E2F1C;margin-bottom:6px;">
+          تحديث حالة البلاغ
+        </div>
+        <div id="updateConfirmText" style="font-size:.95rem;color:#7A6245;line-height:1.9;font-weight:500;"></div>
+      </div>
+
+      <button onclick="closeUpdateConfirm()" type="button"
+        style="width:54px;height:54px;border-radius:14px;border:1px solid rgba(166,124,82,.18);background:rgba(255,255,255,.55);cursor:pointer;color:#3E2F1C;font-size:22px;flex-shrink:0;">
+        <i class="fas fa-xmark"></i>
+      </button>
+
+    </div>
+
+  <div style="display:flex;gap:14px;padding:14px 18px 18px;border-top:1px solid rgba(166,124,82,.12);">
+
+  <button onclick="closeUpdateConfirm()" type="button"
+    style="flex:1;height:56px;border-radius:999px;border:1.5px solid rgba(166,124,82,.22);background:transparent;color:#3E2F1C;font-family:'Tajawal',sans-serif;font-size:1.02rem;font-weight:800;cursor:pointer;">
+    <i class="fas fa-arrow-right"></i>
+    إلغاء
+  </button>
+
+  <button onclick="executeStatusUpdate()" type="button"
+    style="flex:1;height:56px;border-radius:999px;border:1.5px solid rgba(47,155,89,.28);background:transparent;color:#2f9b59;font-family:'Tajawal',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;">
+    تأكيد التحديث
+  </button>
+
+</div>
+
+    </div>
+
+  </div>
+</div>
 <script>
 /* ═══════════════════════════════════════════════════════════
    STATUS MODAL — Full Logic
@@ -1674,8 +1718,24 @@ function onUsStatusChange() {
   else     { btn.disabled = true;  btn.style.opacity = '.42'; btn.style.cursor = 'not-allowed'; }
 }
 
-async function submitStatusUpdate() {
-  // ── Security guard: only the confirmed leader may submit ──────────
+function openUpdateConfirm() {
+
+  const missingName =
+    document.getElementById('missingName')?.textContent || 'المفقود';
+
+  document.getElementById('updateConfirmText').innerHTML =
+  `هل أنت متأكد من تحديث حالة البلاغ للمفقود <strong>${missingName}</strong> وإنهائها؟`;
+
+  document.getElementById('updateConfirmOverlay').style.display = 'flex';
+}
+
+function closeUpdateConfirm() {
+  document.getElementById('updateConfirmOverlay').style.display = 'none';
+}
+
+async function executeStatusUpdate(){
+
+ // ── Security guard: only the confirmed leader may submit ──────────
   if (window._isLeader !== true) {
     _showToast('فقط قائد الفريق يمكنه تحديث حالة البلاغ.');
     closeStatusModal();
