@@ -2842,7 +2842,7 @@ var opCls = r.closed
   : (r.role === 'leader'
       ? 'op open leader-card'
       : 'op open');    var bCls  = r.role === 'leader' ? 'bl' : 'bm';
-    var bLbl  = r.closed ? '✅ منجزة' : (r.role === 'leader' ? 'قائد' : 'عضو');
+    var bLbl  = r.closed ? ' منجزة' : (r.role === 'leader' ? 'قائد' : 'عضو');
     var pfCls = r.closed ? 'pf pf-green' : 'pf pf-blue';
     var pfClr = r.closed ? '#1e8040' : '#4060c8';
     var avs = '';
@@ -2865,7 +2865,7 @@ var opCls = r.closed
             '<div class="op-head-left">'+
               '<div class="op-badges">'+
                 '<span class="op-badge '+bCls+'">'+bLbl+'</span>'+
-                (r.closed ? '<span class="op-badge bc">✅ مغلقة</span>' : '')+
+                (r.closed ? '<span class="op-badge bc"> مغلقة</span>' : '')+
               '</div>'+
               '<div class="op-id">'+r.ar+'</div>'+
               '<div class="op-loc">📍 '+r.loc+'</div>'+
@@ -2914,7 +2914,7 @@ function openTrack(id){
   document.getElementById('mtName').textContent = r.nm;
   document.getElementById('mtLoc').textContent  = '📍 ' + r.loc;
 
-  var keys = ['العمر','الحالة الصحية','المركبة','تاريخ الفقدان','المدة','قائد الفريق'];
+  var keys = ['العمر','الحالة الصحية','المركبة','تاريخ رفع البلاغ  ','المدة','قائد الفريق'];
   var vals = [r.age+' سنة', r.hlth, r.veh, r.ld, r.days, r.ldr];
   var dh = '';
 
@@ -3031,12 +3031,12 @@ async function openLog(id){
   MY_OPS.forEach(function(o){ if(o.id === id) r = o; });
   if(!r || !r.closed) return;
 
-  document.getElementById('mlBadge').innerHTML = '<span class="op-badge bc">✅ مغلقة — منجزة</span>';
+  document.getElementById('mlBadge').innerHTML = '<span class="op-badge bc"> مغلقة — منجزة</span>';
   document.getElementById('mlName').textContent = r.nm;
   document.getElementById('mlLoc').textContent  = '📍 ' + r.loc;
 
-  var keys = ['العمر','الحالة الصحية','المركبة','تاريخ الفقدان','قائد الفريق','عدد المتطوعين','نتيجة العملية'];
-var vals = [r.age+' سنة', r.hlth, r.veh, r.ld, r.ldr, toAr(r.teamCount || 0)+' أفراد', 'تم الانقاذ بنجاح ✅'];
+  var keys = ['العمر','الحالة الصحية','المركبة','تاريخ رفع البلاغ ','قائد الفريق','عدد المتطوعين','نتيجة العملية'];
+var vals = [r.age+' سنة', r.hlth, r.veh, r.ld, r.ldr, toAr(r.teamCount || 0)+' أفراد', 'تم الانقاذ بنجاح '];
   var dh = '';
 
   for(var i=0; i<keys.length; i++){
