@@ -1543,6 +1543,116 @@ async function fetchActiveVolunteer(uid) {
     background: rgba(166,124,82,0.07);
     transform: translateY(-2px);
   }
+
+  /* ═════════ BUTTON PRESS EFFECT ═════════ */
+
+.us-close,
+.us-btn-outline,
+.us-btn-primary {
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    background .16s ease,
+    border-color .16s ease,
+    color .16s ease;
+}
+
+/* Hover */
+.us-close:hover,
+.us-btn-outline:hover,
+.us-btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+/* Click / Press */
+.us-close:active,
+.us-btn-outline:active,
+.us-btn-primary:active {
+  transform: scale(.90);
+  filter: brightness(.92);
+  box-shadow:
+    inset 0 3px 8px rgba(0,0,0,.18),
+    0 1px 4px rgba(0,0,0,.10);
+}
+.us-close,
+.us-btn-outline,
+.us-btn-primary {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Focus glow */
+.us-close:focus-visible,
+.us-btn-outline:focus-visible,
+.us-btn-primary:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(166,124,82,.18),
+    0 8px 22px rgba(0,0,0,.12);
+}
+#updateConfirmOverlay button {
+  transition: all .18s ease !important;
+}
+
+#updateConfirmOverlay button{
+  transition: all .18s ease !important;
+}
+
+/* hover خفيف */
+#updateConfirmOverlay button:hover{
+  transform: translateY(-1px) !important;
+}
+
+/* زر تأكيد التحديث */
+#updateConfirmOverlay button[onclick*="executeStatusUpdate"]:hover{
+
+  background: rgba(47,155,89,.07) !important;
+
+  border-color: rgba(47,155,89,.28) !important;
+
+  color: #2f9b59 !important;
+
+  box-shadow:
+    inset 0 0 0 999px rgba(47,155,89,.03) !important;
+}
+
+/* ضغط الزر */
+#updateConfirmOverlay button:active{
+
+  transform: scale(.97) !important;
+
+  filter: brightness(.98) !important;
+
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,.10) !important;
+}
+
+#updateConfirmOverlay button:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(166,124,82,.22) !important;
+}
+
+#updateConfirmOverlay > div > div:last-child{
+  display:flex !important;
+  flex-direction: row-reverse !important;
+}
+
+/* إلغاء + X فقط */
+#updateConfirmOverlay button[onclick*="closeUpdateConfirm"]:hover,
+#updateConfirmOverlay button[onclick*="closeUpdateConfirm"]:active{
+  background: rgba(166,124,82,.08) !important;
+  border-color: rgba(166,124,82,.20) !important;
+}
+
+/* تأكيد التحديث يبقى أخضر */
+#updateConfirmOverlay button[onclick*="executeStatusUpdate"]:hover,
+#updateConfirmOverlay button[onclick*="executeStatusUpdate"]:active{
+  background: rgba(47,155,89,.07) !important;
+  border-color: rgba(47,155,89,.28) !important;
+  color: #2f9b59 !important;
+  box-shadow: inset 0 0 0 999px rgba(47,155,89,.03) !important;
+}
+/* زر X لحاله */
+
 </style>
 
 <div id="usBackdrop">
@@ -1617,44 +1727,49 @@ async function fetchActiveVolunteer(uid) {
 
   <div style="background:rgba(255,250,242,.96);border:1px solid rgba(166,124,82,.20);border-radius:18px;width:min(470px,92%);overflow:hidden;box-shadow:0 24px 70px rgba(42,31,18,.25);font-family:'Tajawal',sans-serif;">
 
-    <div style="display:flex;align-items:flex-start;gap:14px;padding:18px 18px 14px;border-bottom:1px solid rgba(166,124,82,.14);background:linear-gradient(135deg,rgba(194,164,119,.16),rgba(139,107,71,.10));">
+    <!-- HEADER -->
+    <div style="display:flex;align-items:center;gap:14px;padding:18px 18px 16px;border-bottom:1px solid rgba(166,124,82,.14);background:linear-gradient(135deg,rgba(194,164,119,.16),rgba(139,107,71,.10));">
 
-      <div style="width:44px;height:44px;border-radius:14px;background:#2f9b59;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 10px 24px rgba(47,155,89,.22);flex-shrink:0;">
+      <div style="width:44px;height:44px;border-radius:14px;background:#2f9b59;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 10px 24px rgba(47,155,89,.22);flex-shrink:0;">
         <i class="fa-solid fa-check"></i>
       </div>
 
-      <div style="flex:1;">
-        <div style="font-size:1rem;font-weight:900;color:#3E2F1C;margin-bottom:6px;">
-          تحديث حالة البلاغ
-        </div>
-        <div id="updateConfirmText" style="font-size:.95rem;color:#7A6245;line-height:1.9;font-weight:500;"></div>
+      <div style="flex:1;font-size:1.1rem;font-weight:900;color:#3E2F1C;">
+        تحديث حالة البلاغ
       </div>
 
       <button onclick="closeUpdateConfirm()" type="button"
-        style="width:54px;height:54px;border-radius:14px;border:1px solid rgba(166,124,82,.18);background:rgba(255,255,255,.55);cursor:pointer;color:#3E2F1C;font-size:22px;flex-shrink:0;">
+      style="width:50px;height:50px;border-radius:14px;border:1px solid rgba(166,124,82,.18);background:rgba(255,255,255,.55);cursor:pointer;color:#3E2F1C;font-size:20px;flex-shrink:0;transition:.22s;">
         <i class="fas fa-xmark"></i>
       </button>
 
     </div>
 
-  <div style="display:flex;gap:14px;padding:14px 18px 18px;border-top:1px solid rgba(166,124,82,.12);">
+    <!-- BODY -->
+    <div style="padding:18px 18px 16px;">
+      <div id="updateConfirmText"
+      style="font-size:.93rem;color:#7A6245;line-height:1.9;font-weight:600;text-align:right;background:rgba(245,239,230,.55);border:1px solid rgba(166,124,82,.14);border-radius:12px;padding:14px;">
+      </div>
+    </div>
 
-  <button onclick="closeUpdateConfirm()" type="button"
-    style="flex:1;height:56px;border-radius:999px;border:1.5px solid rgba(166,124,82,.22);background:transparent;color:#3E2F1C;font-family:'Tajawal',sans-serif;font-size:1.02rem;font-weight:800;cursor:pointer;">
-    <i class="fas fa-arrow-right"></i>
-    إلغاء
-  </button>
+    <!-- ACTIONS -->
+    <div style="display:flex;gap:14px;padding:0 18px 18px;">
 
-  <button onclick="executeStatusUpdate()" type="button"
-    style="flex:1;height:56px;border-radius:999px;border:1.5px solid rgba(47,155,89,.28);background:transparent;color:#2f9b59;font-family:'Tajawal',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;">
-    تأكيد التحديث
-  </button>
+      <button onclick="executeStatusUpdate()" type="button"
+      style="flex:1;height:54px;border-radius:999px;border:1.5px solid rgba(47,155,89,.30);background:transparent;color:#2f9b59;font-family:'Tajawal',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;transition:.22s;">
+        تأكيد التحديث
+      </button>
 
-</div>
+      <button onclick="closeUpdateConfirm()" type="button"
+      style="flex:1;height:54px;border-radius:999px;border:1.5px solid rgba(166,124,82,.22);background:transparent;color:#3E2F1C;font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;transition:.22s;">
+        <i class="fas fa-arrow-right"></i>
+        إلغاء
+      </button>
 
     </div>
 
   </div>
+</div>
 </div>
 <script>
 /* ═══════════════════════════════════════════════════════════
