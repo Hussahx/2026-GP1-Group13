@@ -705,7 +705,8 @@
               <!-- [ADDED] رقم الهاتف — مطلوب لتتبع صاحب البلاغ والتواصل معه -->
               <div class="form-group">
                 <label for="rPhone">رقم الجوال <span style="color:#c0392b;">*</span></label>
-                <input type="tel" id="rPhone" name="rPhone" placeholder="مثال: 0501234567" required pattern="[0-9]{10}" />
+                <input type="tel" id="rPhone" name="rPhone" placeholder="05xxxxxxxx" maxlength="10" autocomplete="tel" />
+                <small class="field-hint" id="rPhoneHint" style="color:#888;font-size:12px;display:block;margin-top:4px;">يبدأ بـ 05 ويتكون من 10 أرقام</small>
                 <small class="field-error" id="rPhoneErr" aria-live="polite"></small>
               </div>
 
@@ -725,8 +726,8 @@
               </div>
 
               <div class="form-group form-group--full">
-                <label for="rDesc">وصف البلاغ<span style="color:#c0392b;">*</span></label>
-                <textarea id="rDesc" name="rDesc" rows="4" placeholder="اكتب تفاصيل مختصرة وواضحة..." required minlength="10"></textarea>
+                <label for="rDesc">وصف مظهر المفقود <span style="color:#c0392b;">*</span></label>
+                <textarea id="rDesc" name="rDesc" rows="4" placeholder="اكتب تفاصيل مختصرة وواضحة مثال: طول 1.75 متر، حنطي، يرتدي ثوب ..." required minlength="10"></textarea>
                 <small class="field-error" id="rDescErr" aria-live="polite"></small>
               </div>
 

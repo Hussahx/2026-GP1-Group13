@@ -916,6 +916,24 @@ if (!rFile || !rFile.files.length) {
           'الرجاء إدخال وصف البلاغ (10 أحرف على الأقل).'); ok = false;
       } else { setFieldError(rDesc, document.getElementById('rDescErr'), ''); }
 
+      // ── التحقق من رقم الجوال ──────────────────────────────
+      const phoneVal = String(rPhone?.value || '').trim().replace(/\s/g, '');
+      if (!phoneVal) {
+        setFieldError(rPhone, document.getElementById('rPhoneErr'),
+          'الرجاء إدخال رقم الجوال.'); ok = false;
+      } else if (!/^\d+$/.test(phoneVal)) {
+        setFieldError(rPhone, document.getElementById('rPhoneErr'),
+          'رقم الجوال يجب أن يحتوي على أرقام فقط.'); ok = false;
+      } else if (!phoneVal.startsWith('05')) {
+        setFieldError(rPhone, document.getElementById('rPhoneErr'),
+          'رقم الجوال يجب أن يبدأ بـ 05.'); ok = false;
+      } else if (phoneVal.length !== 10) {
+        setFieldError(rPhone, document.getElementById('rPhoneErr'),
+          'رقم الجوال يجب أن يتكون من 10 أرقام بالضبط.'); ok = false;
+      } else {
+        setFieldError(rPhone, document.getElementById('rPhoneErr'), '');
+      }
+      
       // ── التحقق من الملف ───────────────────────────────────
       if (!rFile || !rFile.files.length) {
         ok = false;
