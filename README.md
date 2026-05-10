@@ -6,44 +6,46 @@
 ---
 2026-GP1-Group13/
 │
-├── assest/                        # Static assets
+├── assets/                        # Static assets and images
 │   ├── New-logo.JPG.jpeg
 │   ├── logo.PNG
 │   └── logoo.PNG
 │
-├── CSS/                           # Stylesheets
+├── css/                           # Stylesheets
 │   ├── Control-panel.css
 │   ├── History.css
 │   ├── Rasid.css
 │   └── index.css
 │
-├── JS/                            # JavaScript logic
+├── js/                            # JavaScript files
 │   ├── AdminControlPanel.js
 │   ├── ReportDetails.js
 │   ├── firebase.js
 │   ├── index.js
 │   └── sidebar-menu.js
 │
-├── AdminControlPanel.html         # Admin dashboard
-├── Control-panel.html             # Control panel view
-├── Control.html                   # Controls page
-├── DroneNotification.html         # Drone alert page
-├── History.html                   # Report history
-├── MyReports.html                 # Volunteer's personal reports
-├── RealTimeReportDetails.html     # Live report details
-├── Reports.html                   # All reports view
-├── VolunteerRegister.html         # Volunteer registration
-├── base.html                      # Shared base layout
-├── index.html                     # Landing / login page
-├── profile1.html                  # User profile
-├── reset-password.html            # Password reset
-├── track-report.html              # Report tracking
+├── pages/                         # HTML pages
+│   ├── AdminControlPanel.html
+│   ├── Control-panel.html
+│   ├── Control.html
+│   ├── DroneNotification.html
+│   ├── History.html
+│   ├── MyReports.html
+│   ├── RealTimeReportDetails.html
+│   ├── Reports.html
+│   ├── VolunteerRegister.html
+│   ├── base.html
+│   ├── index.html
+│   ├── profile1.html
+│   ├── reset-password.html
+│   └── track-report.html
 │
-├── Release-1                    # Release 1 deliverables
-│   
+├── Release-1/                     # Sprint / Release 1 deliverables
+│  
+│
 ├── AUTHORS                        # Project contributors
-└── README.md
-
+├── README.md                      # Project documentation
+└── .gitignore                     # Ignored system/generated files
 ---
 Launch Instructions
 Prerequisites
