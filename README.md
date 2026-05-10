@@ -1,4 +1,4 @@
-![Rasid Logo](assets/New-logo.JPG.jpeg)
+![Rasid Logo](../assets/New-logo.JPG.jpeg)
 
 # Rasid – Eye of the Desert
 ### AI-Powered Drone-Based Search & Rescue System
