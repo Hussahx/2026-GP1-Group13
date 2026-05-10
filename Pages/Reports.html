@@ -1730,42 +1730,39 @@ function render() {
   }
 }
 
-    // ── doTakeOver — now calls Firebase; UI update comes via onSnapshot ──
-    function doTakeOver(id){
-      var idx=-1;
-      for(var i=0;i<NR.length;i++) if(NR[i].id===id){idx=i;break;}
-      if(idx<0) return;
-      for(var j=0;j<MR.length;j++) if(MR[j].id===id){notify('أنت بالفعل مسجّل في هذا البلاغ','i');return;}
+    // ── doTakeOver — opens confirmation first ──
+function doTakeOver(id){
+  var idx=-1;
+  for(var i=0;i<NR.length;i++) if(NR[i].id===id){idx=i;break;}
+  if(idx<0) return;
 
-      var r = NR[idx];
-      var uid = window._fbCurrentUid || null;
-
-      // Write to Firestore → onSnapshot will re-render automatically
-      if(window._fbTakeOver && r._docId){
-        window._fbTakeOver(r._docId, uid);
-      }
-
-      notify('تولّيت البلاغ '+r.ar+' — أنت الآن القائد','s');
+  for(var j=0;j<MR.length;j++) {
+    if(MR[j].id===id){
+      notify('أنت بالفعل مسجّل في هذا البلاغ','i');
+      return;
     }
+  }
 
-    // ── doJoin — now calls Firebase; UI update comes via onSnapshot ──────
-    function doJoin(id){
-      var idx=-1;
-      for(var i=0;i<AR.length;i++) if(AR[i].id===id){idx=i;break;}
-      if(idx<0) return;
-      for(var j=0;j<MR.length;j++) if(MR[j].id===id){notify('أنت منضم لهذا البلاغ بالفعل','i');return;}
+  var r = NR[idx];
+  openTakeOverConfirm(id, r.nm);
+}
 
-      var r = AR[idx];
-      var uid = window._fbCurrentUid || null;
+   // ── doJoin — opens confirmation first ──
+function doJoin(id){
+  var idx=-1;
+  for(var i=0;i<AR.length;i++) if(AR[i].id===id){idx=i;break;}
+  if(idx<0) return;
 
-      // Write to Firestore → onSnapshot will re-render automatically
-      if(window._fbJoin && r._docId){
-        window._fbJoin(r._docId, uid);
-      }
-
-      notify('انضممت لبلاغ '+r.ar+' كعضو في فريق '+r.ldr,'s');
+  for(var j=0;j<MR.length;j++) {
+    if(MR[j].id===id){
+      notify('أنت منضم لهذا البلاغ بالفعل','i');
+      return;
     }
+  }
 
+  var r = AR[idx];
+  openJoinTeamConfirm(id, r.nm);
+}
     function openModal(id,type){
       var r=null, pool=type==='new'?NR:type==='active'?AR:MR;
       for(var i=0;i<pool.length;i++) if(pool[i].id===id){r=pool[i];break;}
@@ -1889,6 +1886,71 @@ if (teamEl) teamEl.innerHTML = th;})();
     }
 
     function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+    function closeJoinConfirm(){
+  document.getElementById('joinConfirmOverlay').style.display='none';
+}
+
+/* ───────── TAKE OVER CONFIRM ───────── */
+function openTakeOverConfirm(id, missingName){
+
+  document.getElementById('joinConfirmTitle').innerHTML =
+    'تولّي البلاغ';
+
+  document.getElementById('joinConfirmText').innerHTML =
+    `هل أنت متأكد من تولّي بلاغ المفقود <strong>${missingName}</strong>؟<br>
+    سيتم تعيينك كقائد لفريق البحث والإنقاذ لهذا البلاغ.`;
+
+  document.getElementById('joinConfirmBtn').onclick = function(){
+
+    closeJoinConfirm();
+
+    var idx=-1;
+    for(var i=0;i<NR.length;i++) if(NR[i].id===id){idx=i;break;}
+    if(idx<0) return;
+
+    var r = NR[idx];
+    var uid = window._fbCurrentUid || null;
+
+    if(window._fbTakeOver && r._docId){
+      window._fbTakeOver(r._docId, uid);
+    }
+
+    notify('تولّيت البلاغ '+r.ar+' — أنت الآن القائد','s');
+  };
+
+  document.getElementById('joinConfirmOverlay').style.display='flex';
+}
+
+/* ───────── JOIN TEAM CONFIRM ───────── */
+function openJoinTeamConfirm(id, missingName){
+
+  document.getElementById('joinConfirmTitle').innerHTML =
+    'الانضمام للفريق';
+
+  document.getElementById('joinConfirmText').innerHTML =
+    `هل أنت متأكد من الانضمام لبلاغ المفقود <strong>${missingName}</strong>؟<br>
+    ستصبح عضوًا ضمن فريق البحث والإنقاذ لهذا البلاغ.`;
+
+  document.getElementById('joinConfirmBtn').onclick = function(){
+
+    closeJoinConfirm();
+
+    var idx=-1;
+    for(var i=0;i<AR.length;i++) if(AR[i].id===id){idx=i;break;}
+    if(idx<0) return;
+
+    var r = AR[idx];
+    var uid = window._fbCurrentUid || null;
+
+    if(window._fbJoin && r._docId){
+      window._fbJoin(r._docId, uid);
+    }
+
+    notify('انضممت لبلاغ '+r.ar+' كعضو في فريق '+r.ldr,'s');
+  };
+
+  document.getElementById('joinConfirmOverlay').style.display='flex';
+}
 
     // ── لوحة تعديل الحالة (للقائد فقط) ──────────────────────────────
     var STATUS_LABELS = {
@@ -2012,7 +2074,61 @@ if (teamEl) teamEl.innerHTML = th;})();
     render();
   </script>
 
+<!-- ═════════ JOIN / TAKEOVER CONFIRM MODAL ═════════ -->
+<div id="joinConfirmOverlay"
+style="display:none;position:fixed;inset:0;background:rgba(42,31,18,.52);backdrop-filter:blur(6px);z-index:999999;align-items:center;justify-content:center;padding:20px;">
 
+  <div style="background:rgba(255,250,242,.96);border:1px solid rgba(166,124,82,.20);border-radius:18px;width:min(470px,92%);overflow:hidden;box-shadow:0 24px 70px rgba(42,31,18,.25);font-family:'Tajawal',sans-serif;">
+
+    <!-- HEADER فقط بيج -->
+    <div style="display:flex;align-items:center;gap:14px;padding:18px 18px 16px;border-bottom:1px solid rgba(166,124,82,.14);background:linear-gradient(135deg,rgba(194,164,119,.16),rgba(139,107,71,.10));">
+
+      <div style="width:44px;height:44px;border-radius:14px;background:#2f9b59;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 10px 24px rgba(47,155,89,.22);flex-shrink:0;">
+        <i class="fa-solid fa-check"></i>
+      </div>
+
+      <div id="joinConfirmTitle"
+        style="flex:1;font-size:1.1rem;font-weight:900;color:#3E2F1C;">
+      </div>
+
+      <button onclick="closeJoinConfirm()" type="button"
+      style="width:50px;height:50px;border-radius:14px;border:1px solid rgba(166,124,82,.18);background:rgba(255,255,255,.55);cursor:pointer;color:#3E2F1C;font-size:20px;flex-shrink:0;transition:.22s;"
+      onmouseover="this.style.background='rgba(166,124,82,.10)';this.style.transform='translateY(-2px)'"
+      onmouseout="this.style.background='rgba(255,255,255,.55)';this.style.transform='translateY(0)'">
+        <i class="fas fa-xmark"></i>
+      </button>
+
+    </div>
+
+    <!-- BODY أبيض -->
+    <div style="padding:18px 18px 16px;">
+      <div id="joinConfirmText"
+      style="font-size:.93rem;color:#7A6245;line-height:1.9;font-weight:600;text-align:right;background:rgba(245,239,230,.55);border:1px solid rgba(166,124,82,.14);border-radius:12px;padding:14px;">
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div style="display:flex;gap:14px;padding:0 18px 18px;">
+
+      <button onclick="closeJoinConfirm()" type="button"
+      style="flex:1;height:54px;border-radius:999px;border:1.5px solid rgba(166,124,82,.22);background:transparent;color:#3E2F1C;font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;transition:.22s;"
+      onmouseover="this.style.background='rgba(166,124,82,.07)';this.style.borderColor='#A67C52';this.style.transform='translateY(-2px)'"
+      onmouseout="this.style.background='transparent';this.style.borderColor='rgba(166,124,82,.22)';this.style.transform='translateY(0)'">
+        <i class="fas fa-arrow-right"></i>
+        إلغاء
+      </button>
+
+      <button id="joinConfirmBtn" type="button"
+      style="flex:1;height:54px;border-radius:999px;border:1.5px solid rgba(47,155,89,.30);background:transparent;color:#2f9b59;font-family:'Tajawal',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;transition:.22s;"
+      onmouseover="this.style.background='rgba(47,155,89,.08)';this.style.borderColor='rgba(47,155,89,.55)';this.style.transform='translateY(-2px)'"
+      onmouseout="this.style.background='transparent';this.style.borderColor='rgba(47,155,89,.30)';this.style.transform='translateY(0)'">
+        تأكيد
+      </button>
+
+    </div>
+
+  </div>
+</div>
 <script type="module">
   import { auth, db } from '/JS/firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
