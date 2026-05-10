@@ -362,16 +362,19 @@
     .aoverlay.on { opacity: 1; pointer-events: all; }
 
     .amodal {
-      background: rgba(255, 250, 242, 0.96);
-      border: 1px solid rgba(166,124,82,0.20);
-      border-radius: 18px;
-      width: min(520px, 100%);
-      box-shadow: 0 24px 70px rgba(42, 31, 18, 0.25);
-      overflow: hidden;
-      transform: translateY(14px);
-      opacity: 0;
-      transition: transform 0.22s ease-out, opacity 0.22s ease-out;
-    }
+  background: rgba(255, 250, 242, 0.96);
+  border: 1px solid rgba(166,124,82,0.20);
+  border-radius: 18px;
+  width: min(520px, 100%);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 70px rgba(42, 31, 18, 0.25);
+  overflow: hidden;
+  transform: translateY(14px);
+  opacity: 0;
+  transition: transform 0.22s ease-out, opacity 0.22s ease-out;
+}
     .aoverlay.on .amodal { transform: translateY(0); opacity: 1; }
 
     .mhandle { display: none; }
@@ -414,7 +417,7 @@
     }
     .mclose:hover { background: rgba(166,124,82,0.10); transform: translateY(-1px); }
 
-    .mbody { padding: 1.1rem; max-height: 55vh; overflow-y: auto; }
+    .mbody { padding: 1.1rem; overflow-y: auto; flex: 1; min-height: 0; }
     .mbody::-webkit-scrollbar { width: 5px; }
     .mbody::-webkit-scrollbar-track { background: rgba(245,239,230,0.6); border-radius: 4px; }
     .mbody::-webkit-scrollbar-thumb { background: rgba(166,124,82,0.35); border-radius: 4px; }
@@ -436,11 +439,28 @@
     }
 
     .mfoot {
-      display: flex;
-      gap: 0.65rem;
-      padding: 0 1.1rem 1.2rem;
-    }
+  display: flex;
+  gap: 0.65rem;
+  padding: 1rem 1.1rem 1.4rem;
+  border-top: 1px solid rgba(166,124,82,0.10);
+  margin-top: 4px;
+}
 
+.mbtn-primary {
+  background: linear-gradient(135deg, #A67C52, #8B6B47);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 18px rgba(139,107,71,0.28);
+}
+.mbtn-primary:hover {
+  background: linear-gradient(135deg, #9C7A4F, #5C4530);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(139,107,71,0.40);
+}
+.mbtn-primary:active {
+  transform: translateY(0);
+  opacity: 0.78;
+}
     /* Primary button — pill style like login */
     .mbtn {
       flex: 1;
@@ -868,7 +888,7 @@
           <div class="stat-card sc-pend">
             <div class="stat-icon si-pend"><i class="fas fa-clock"></i></div>
             <div class="stat-val" id="statPend">٠</div>
-            <div class="stat-lbl">مقبول</div>
+            <div class="stat-lbl">قيد المراجعة</div>
           </div>
           <div class="stat-card sc-acc">
             <div class="stat-icon si-acc"><i class="fas fa-circle-check"></i></div>
@@ -998,8 +1018,8 @@
 <div id="vEvidence"></div>
       </div>
       <div class="mfoot">
-        <button class="mbtn mbtn-cancel" onclick="closeView()" type="button" style="width:100%;"><i class="fas fa-xmark"></i> إغلاق</button>
-      </div>
+  <button class="mbtn mbtn-primary" onclick="closeView()" type="button" style="width:100%;">إغلاق</button>
+</div>
     </div>
   </div>
 
