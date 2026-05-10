@@ -1262,7 +1262,7 @@
       return isNaN(ms) ? 0 : ms;
     }
 
-    function getFiltered(){
+function getFiltered(){
       var q   = (document.getElementById('searchInput').value||'').trim().toLowerCase();
       var srt = document.getElementById('sortSel').value || 'newest';
       var po  = {uv:0, uh:1, um:2};
@@ -1276,23 +1276,34 @@
         if (!match) return false;
         return TAB === 'all' || r.status === TAB;
       });
+
+      function pendingFirst(a, b){
+        if (TAB !== 'all') return 0;
+        var ap = a.status === 'pending' ? 0 : 1;
+        var bp = b.status === 'pending' ? 0 : 1;
+        return ap - bp;
+      }
+
       if (srt === 'oldest') {
-        // Oldest first: ascending by date; ties broken by id ascending
         list.sort(function(a, b){
+          var pd = pendingFirst(a, b);
+          if (pd !== 0) return pd;
           var diff = parseDateVal(a.date) - parseDateVal(b.date);
           return diff !== 0 ? diff : String(a.id).localeCompare(String(b.id));
         });
       } else if (srt === 'priority') {
-          // Highest priority first: uv(0) → uh(1) → um(2); unknown defaults to lowest (3); ties broken by newest date
           list.sort(function(a, b){
+            var pd = pendingFirst(a, b);
+            if (pd !== 0) return pd;
             var pa = (po[a.priority] !== undefined ? po[a.priority] : 3);
             var pb = (po[b.priority] !== undefined ? po[b.priority] : 3);
             var diff = pa - pb;
             return diff !== 0 ? diff : parseDateVal(b.date) - parseDateVal(a.date);
           });
       } else {
-        // Default: newest first (descending by date); ties broken by id descending
         list.sort(function(a, b){
+          var pd = pendingFirst(a, b);
+          if (pd !== 0) return pd;
           var diff = parseDateVal(b.date) - parseDateVal(a.date);
           return diff !== 0 ? diff : String(b.id).localeCompare(String(a.id));
         });
