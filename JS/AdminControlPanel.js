@@ -101,7 +101,7 @@ async function acceptRequest(id) {
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
   ]);
-  const { doc, getDoc, updateDoc, serverTimestamp } = fsMod;
+const { doc, getDoc, updateDoc, setDoc, deleteDoc, serverTimestamp } = fsMod;
   const { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } = authMod;
 
   const volRef  = doc(db, 'Volunteer', id);
@@ -122,15 +122,22 @@ async function acceptRequest(id) {
     if (err.code !== 'auth/email-already-in-use') throw err;
   }
 
-  await updateDoc(volRef, {
-    ApprovalStatus: 'approved',
-    AccountStutes:  'valid',
-    Status:         'active',
-    AuthUID:        uid,
-    role:           'volunteer',
-    approvedAt:     serverTimestamp()
-  });
+ const approvedData = {
+  ...volunteer,
+  ApprovalStatus: 'approved',
+  AccountStutes:  'valid',
+  Status:         'active',
+  UserID:         uid,
+  AuthUID:        uid,
+  role:           'volunteer',
+  approvedAt:     serverTimestamp()
+};
 
+await setDoc(doc(db, 'Volunteer', uid), approvedData);
+
+if (id !== uid) {
+  await deleteDoc(volRef);
+}
   await sendPasswordResetEmail(auth, email);
   return { email, fullName };
 }
