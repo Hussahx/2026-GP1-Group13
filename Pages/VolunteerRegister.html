@@ -128,7 +128,7 @@
       border: 1px solid var(--glass-border);
       border-radius: var(--radius-xl);
       box-shadow: var(--shadow-lg);
-      overflow: hidden;
+      overflow: visible;
       animation: cardReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
@@ -1578,7 +1578,11 @@ background:#fff;
   box-shadow:none;
 }
  
-
+  #dobDisplay.is-invalid {
+    border-color: var(--error-border) !important;
+    background: var(--error-bg) !important;
+    box-shadow: 0 0 0 3px rgba(155,58,58,0.07) !important;
+  }
 
   </style>
 
@@ -1777,11 +1781,42 @@ background:#fff;
               </div>
 
               <!-- تاريخ الميلاد -->
-              <div class="form-group">
-                <label for="dob">تاريخ الميلاد <span class="req-star" aria-hidden="true">*</span></label>
-                <input type="date" id="dob" name="dob"
+              <div class="form-group" style="position:relative;">
+                <label for="dobDisplay">تاريخ الميلاد <span class="req-star" aria-hidden="true">*</span></label>
+                <input type="text" id="dobDisplay" readonly placeholder="اختر تاريخ الميلاد"
+                  style="width:100%;height:46px;padding:0 0.9rem;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-family:var(--font);font-size:0.93rem;background:var(--bg-input);color:var(--text);cursor:pointer;outline:none;direction:rtl;"
+                  onclick="toggleDobPicker()"
                   aria-required="true"
-                  aria-describedby="e-dob" />
+                  aria-describedby="e-dob"
+                  aria-haspopup="dialog" />
+                <input type="hidden" id="dob" name="dob" />
+
+                <div id="dobPicker" style="display:none;position:absolute;top:calc(100% + 6px);right:0;left:0;z-index:9999;background:#fff;border:1.5px solid rgba(166,124,82,0.35);border-radius:12px;box-shadow:0 8px 32px rgba(62,47,28,0.13);padding:10px;font-family:var(--font);direction:rtl;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:10px;">
+                    <button type="button" onclick="dobChangeMonth(-1)" style="flex-shrink:0;background:rgba(166,124,82,0.1);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#8b6b47;font-size:16px;">‹</button>
+                    <div style="display:flex;align-items:center;gap:5px;flex:1;justify-content:center;">
+                      <select id="dobMonthSel" onchange="dobPickerMonthYearChange()" style="height:30px;padding:0 8px;border:1.5px solid rgba(166,124,82,0.3);border-radius:8px;background:rgba(245,239,230,0.9);font-family:var(--font);font-weight:800;font-size:13px;color:#3e2810;outline:none;cursor:pointer;">
+                        <option value="0">يناير</option><option value="1">فبراير</option><option value="2">مارس</option>
+                        <option value="3">أبريل</option><option value="4">مايو</option><option value="5">يونيو</option>
+                        <option value="6">يوليو</option><option value="7">أغسطس</option><option value="8">سبتمبر</option>
+                        <option value="9">أكتوبر</option><option value="10">نوفمبر</option><option value="11">ديسمبر</option>
+                      </select>
+                      <select id="dobYearSel" onchange="dobPickerMonthYearChange()" style="height:30px;width:64px;padding:0 6px;border:1.5px solid rgba(166,124,82,0.3);border-radius:8px;background:rgba(245,239,230,0.9);font-family:var(--font);font-weight:800;font-size:13px;color:#3e2810;outline:none;cursor:pointer;"></select>
+                    </div>
+                    <button type="button" onclick="dobChangeMonth(1)" style="flex-shrink:0;background:rgba(166,124,82,0.1);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#8b6b47;font-size:16px;">›</button>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">
+                    <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:2px 0;">Su</div>
+                    <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:2px 0;">Mo</div>
+                    <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:2px 0;">Tu</div>
+                    <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:2px 0;">We</div>
+                    <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:2px 0;">Th</div>
+                    <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:2px 0;">Fr</div>
+                    <div style="text-align:center;font-size:10px;font-weight:700;color:#a67c52;padding:2px 0;">Sa</div>
+                  </div>
+                  <div id="dobDays" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+                </div>
+
                 <span class="field-error" id="e-dob" role="alert"></span>
               </div>
 
@@ -1848,19 +1883,29 @@ background:#fff;
                 <div id="availabilitySchedule" style="display:flex;flex-direction:column;gap:10px;">
 
                   <!-- قالب لكل يوم -->
-                  <style>
-                  .avail-row{display:flex;align-items:center;gap:12px;background:rgba(245,239,230,0.5);border:1.5px solid rgba(180,140,80,0.15);border-radius:12px;padding:10px 14px;transition:background .2s;}
-                  .avail-row:has(.day-cb:checked){background:rgba(245,239,230,0.95);border-color:rgba(154,116,64,0.4);}
-                  .avail-row .day-name{min-width:70px;font-weight:700;font-size:13px;color:var(--ink,#2a1e0e);}
-                  .avail-row .time-select{flex:1;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(180,140,80,0.2);font-family:'Tajawal',sans-serif;font-size:13px;color:var(--ink,#2a1e0e);background:#fff;outline:none;opacity:0.4;pointer-events:none;transition:opacity .2s;}
-                  .avail-row:has(.day-cb:checked) .time-select{opacity:1;pointer-events:auto;}
-                  .avail-row .day-toggle{width:20px;height:20px;accent-color:var(--primary,#9a7440);cursor:pointer;flex-shrink:0;}
+                 <style>
+                    .avail-row{display:flex;align-items:center;gap:12px;background:var(--bg-input);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;transition:background .2s,border-color .2s;}
+                    .avail-row:has(.day-cb:checked){background:rgba(255,252,246,0.97);border-color:var(--border-focus);}
+                    .avail-row .day-name{min-width:60px;font-weight:700;font-size:13px;color:var(--text);}
+                    .avail-row .time-select{display:none;}
+                    .avail-row .time-trigger{flex:1;height:36px;padding:0 12px 0 32px;border-radius:var(--radius-xs);border:1.5px solid var(--border);font-family:var(--font);font-size:13px;color:var(--text-muted);background:var(--bg-input);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A67C52' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center;cursor:default;opacity:0.38;pointer-events:none;transition:opacity .2s,border-color .2s,color .2s;display:block;line-height:36px;direction:rtl;text-align:right;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+                    .avail-row:has(.day-cb:checked) .time-trigger{opacity:1;pointer-events:auto;color:var(--text-mid);border-color:var(--border-hover);cursor:pointer;}
+                    .avail-row:has(.day-cb:checked) .time-trigger:hover{border-color:var(--border-focus);}
+                    .avail-row .time-trigger.open{border-color:var(--border-focus);background-color:var(--bg-input-focus);box-shadow:0 0 0 3px rgba(166,124,82,0.11);}
+                    .time-panel{display:none;position:absolute;z-index:10000;background:#fff;border:1.5px solid var(--border-hover);border-radius:var(--radius-sm);box-shadow:0 8px 28px rgba(62,47,28,0.13);overflow:hidden;min-width:180px;}
+                    .time-panel.open{display:block;animation:cdSlideIn .16s cubic-bezier(0.22,1,0.36,1) both;}
+                    .time-opt{padding:9px 14px;font-family:var(--font);font-size:13px;color:var(--text-mid);cursor:pointer;direction:rtl;text-align:right;transition:background .12s,color .12s;}
+                    .time-opt:hover{background:rgba(166,124,82,0.09);color:var(--primary);}
+                    .time-opt.selected{background:rgba(166,124,82,0.13);color:var(--secondary);font-weight:700;}
+                    .time-opt.placeholder-opt{color:var(--text-muted);}
+                    .avail-row .day-toggle{width:18px;height:18px;accent-color:var(--primary);cursor:pointer;flex-shrink:0;}
+                    .time-wrap{flex:1;position:relative;}
                   </style>
 
                   <div class="avail-row">
                     <input class="day-toggle day-cb" type="checkbox" name="days" value="الأحد" id="day-sun">
                     <label class="day-name" for="day-sun">الأحد</label>
-                    <select class="time-select" name="time-الأحد">
+                    <select class="time-select" name="time-الأحد" id="sel-time-الأحد" tabindex="-1" aria-hidden="true">
                       <option value="">— اختر الوقت —</option>
                       <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
                       <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
@@ -1868,12 +1913,23 @@ background:#fff;
                       <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
                       <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
                     </select>
+                    <div class="time-wrap">
+                      <div class="time-trigger" id="trig-time-الأحد" onclick="timeTriggerClick(this,'time-الأحد')">— اختر الوقت —</div>
+                      <div class="time-panel" id="panel-time-الأحد">
+                        <div class="time-opt placeholder-opt" data-value="" onclick="timeOptSelect(this,'time-الأحد')">— اختر الوقت —</div>
+                        <div class="time-opt" data-value="صباح (6ص-12م)" onclick="timeOptSelect(this,'time-الأحد')">صباح (6ص - 12م)</div>
+                        <div class="time-opt" data-value="ظهر (12م-4م)" onclick="timeOptSelect(this,'time-الأحد')">ظهر (12م - 4م)</div>
+                        <div class="time-opt" data-value="مساء (4م-9م)" onclick="timeOptSelect(this,'time-الأحد')">مساء (4م - 9م)</div>
+                        <div class="time-opt" data-value="ليل (9م-12ل)" onclick="timeOptSelect(this,'time-الأحد')">ليل (9م - 12ل)</div>
+                        <div class="time-opt" data-value="طوارئ (أي وقت)" onclick="timeOptSelect(this,'time-الأحد')">طوارئ (أي وقت)</div>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="avail-row">
                     <input class="day-toggle day-cb" type="checkbox" name="days" value="الاثنين" id="day-mon">
                     <label class="day-name" for="day-mon">الاثنين</label>
-                    <select class="time-select" name="time-الاثنين">
+                    <select class="time-select" name="time-الاثنين" id="sel-time-الاثنين" tabindex="-1" aria-hidden="true">
                       <option value="">— اختر الوقت —</option>
                       <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
                       <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
@@ -1881,12 +1937,23 @@ background:#fff;
                       <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
                       <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
                     </select>
+                    <div class="time-wrap">
+                      <div class="time-trigger" id="trig-time-الاثنين" onclick="timeTriggerClick(this,'time-الاثنين')">— اختر الوقت —</div>
+                      <div class="time-panel" id="panel-time-الاثنين">
+                        <div class="time-opt placeholder-opt" data-value="" onclick="timeOptSelect(this,'time-الاثنين')">— اختر الوقت —</div>
+                        <div class="time-opt" data-value="صباح (6ص-12م)" onclick="timeOptSelect(this,'time-الاثنين')">صباح (6ص - 12م)</div>
+                        <div class="time-opt" data-value="ظهر (12م-4م)" onclick="timeOptSelect(this,'time-الاثنين')">ظهر (12م - 4م)</div>
+                        <div class="time-opt" data-value="مساء (4م-9م)" onclick="timeOptSelect(this,'time-الاثنين')">مساء (4م - 9م)</div>
+                        <div class="time-opt" data-value="ليل (9م-12ل)" onclick="timeOptSelect(this,'time-الاثنين')">ليل (9م - 12ل)</div>
+                        <div class="time-opt" data-value="طوارئ (أي وقت)" onclick="timeOptSelect(this,'time-الاثنين')">طوارئ (أي وقت)</div>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="avail-row">
                     <input class="day-toggle day-cb" type="checkbox" name="days" value="الثلاثاء" id="day-tue">
                     <label class="day-name" for="day-tue">الثلاثاء</label>
-                    <select class="time-select" name="time-الثلاثاء">
+                    <select class="time-select" name="time-الثلاثاء" id="sel-time-الثلاثاء" tabindex="-1" aria-hidden="true">
                       <option value="">— اختر الوقت —</option>
                       <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
                       <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
@@ -1894,12 +1961,23 @@ background:#fff;
                       <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
                       <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
                     </select>
+                    <div class="time-wrap">
+                      <div class="time-trigger" id="trig-time-الثلاثاء" onclick="timeTriggerClick(this,'time-الثلاثاء')">— اختر الوقت —</div>
+                      <div class="time-panel" id="panel-time-الثلاثاء">
+                        <div class="time-opt placeholder-opt" data-value="" onclick="timeOptSelect(this,'time-الثلاثاء')">— اختر الوقت —</div>
+                        <div class="time-opt" data-value="صباح (6ص-12م)" onclick="timeOptSelect(this,'time-الثلاثاء')">صباح (6ص - 12م)</div>
+                        <div class="time-opt" data-value="ظهر (12م-4م)" onclick="timeOptSelect(this,'time-الثلاثاء')">ظهر (12م - 4م)</div>
+                        <div class="time-opt" data-value="مساء (4م-9م)" onclick="timeOptSelect(this,'time-الثلاثاء')">مساء (4م - 9م)</div>
+                        <div class="time-opt" data-value="ليل (9م-12ل)" onclick="timeOptSelect(this,'time-الثلاثاء')">ليل (9م - 12ل)</div>
+                        <div class="time-opt" data-value="طوارئ (أي وقت)" onclick="timeOptSelect(this,'time-الثلاثاء')">طوارئ (أي وقت)</div>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="avail-row">
                     <input class="day-toggle day-cb" type="checkbox" name="days" value="الأربعاء" id="day-wed">
                     <label class="day-name" for="day-wed">الأربعاء</label>
-                    <select class="time-select" name="time-الأربعاء">
+                    <select class="time-select" name="time-الأربعاء" id="sel-time-الأربعاء" tabindex="-1" aria-hidden="true">
                       <option value="">— اختر الوقت —</option>
                       <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
                       <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
@@ -1907,12 +1985,23 @@ background:#fff;
                       <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
                       <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
                     </select>
+                    <div class="time-wrap">
+                      <div class="time-trigger" id="trig-time-الأربعاء" onclick="timeTriggerClick(this,'time-الأربعاء')">— اختر الوقت —</div>
+                      <div class="time-panel" id="panel-time-الأربعاء">
+                        <div class="time-opt placeholder-opt" data-value="" onclick="timeOptSelect(this,'time-الأربعاء')">— اختر الوقت —</div>
+                        <div class="time-opt" data-value="صباح (6ص-12م)" onclick="timeOptSelect(this,'time-الأربعاء')">صباح (6ص - 12م)</div>
+                        <div class="time-opt" data-value="ظهر (12م-4م)" onclick="timeOptSelect(this,'time-الأربعاء')">ظهر (12م - 4م)</div>
+                        <div class="time-opt" data-value="مساء (4م-9م)" onclick="timeOptSelect(this,'time-الأربعاء')">مساء (4م - 9م)</div>
+                        <div class="time-opt" data-value="ليل (9م-12ل)" onclick="timeOptSelect(this,'time-الأربعاء')">ليل (9م - 12ل)</div>
+                        <div class="time-opt" data-value="طوارئ (أي وقت)" onclick="timeOptSelect(this,'time-الأربعاء')">طوارئ (أي وقت)</div>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="avail-row">
                     <input class="day-toggle day-cb" type="checkbox" name="days" value="الخميس" id="day-thu">
                     <label class="day-name" for="day-thu">الخميس</label>
-                    <select class="time-select" name="time-الخميس">
+                    <select class="time-select" name="time-الخميس" id="sel-time-الخميس" tabindex="-1" aria-hidden="true">
                       <option value="">— اختر الوقت —</option>
                       <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
                       <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
@@ -1920,12 +2009,23 @@ background:#fff;
                       <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
                       <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
                     </select>
+                    <div class="time-wrap">
+                      <div class="time-trigger" id="trig-time-الخميس" onclick="timeTriggerClick(this,'time-الخميس')">— اختر الوقت —</div>
+                      <div class="time-panel" id="panel-time-الخميس">
+                        <div class="time-opt placeholder-opt" data-value="" onclick="timeOptSelect(this,'time-الخميس')">— اختر الوقت —</div>
+                        <div class="time-opt" data-value="صباح (6ص-12م)" onclick="timeOptSelect(this,'time-الخميس')">صباح (6ص - 12م)</div>
+                        <div class="time-opt" data-value="ظهر (12م-4م)" onclick="timeOptSelect(this,'time-الخميس')">ظهر (12م - 4م)</div>
+                        <div class="time-opt" data-value="مساء (4م-9م)" onclick="timeOptSelect(this,'time-الخميس')">مساء (4م - 9م)</div>
+                        <div class="time-opt" data-value="ليل (9م-12ل)" onclick="timeOptSelect(this,'time-الخميس')">ليل (9م - 12ل)</div>
+                        <div class="time-opt" data-value="طوارئ (أي وقت)" onclick="timeOptSelect(this,'time-الخميس')">طوارئ (أي وقت)</div>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="avail-row">
                     <input class="day-toggle day-cb" type="checkbox" name="days" value="الجمعة" id="day-fri">
                     <label class="day-name" for="day-fri">الجمعة</label>
-                    <select class="time-select" name="time-الجمعة">
+                    <select class="time-select" name="time-الجمعة" id="sel-time-الجمعة" tabindex="-1" aria-hidden="true">
                       <option value="">— اختر الوقت —</option>
                       <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
                       <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
@@ -1933,12 +2033,23 @@ background:#fff;
                       <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
                       <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
                     </select>
+                    <div class="time-wrap">
+                      <div class="time-trigger" id="trig-time-الجمعة" onclick="timeTriggerClick(this,'time-الجمعة')">— اختر الوقت —</div>
+                      <div class="time-panel" id="panel-time-الجمعة">
+                        <div class="time-opt placeholder-opt" data-value="" onclick="timeOptSelect(this,'time-الجمعة')">— اختر الوقت —</div>
+                        <div class="time-opt" data-value="صباح (6ص-12م)" onclick="timeOptSelect(this,'time-الجمعة')">صباح (6ص - 12م)</div>
+                        <div class="time-opt" data-value="ظهر (12م-4م)" onclick="timeOptSelect(this,'time-الجمعة')">ظهر (12م - 4م)</div>
+                        <div class="time-opt" data-value="مساء (4م-9م)" onclick="timeOptSelect(this,'time-الجمعة')">مساء (4م - 9م)</div>
+                        <div class="time-opt" data-value="ليل (9م-12ل)" onclick="timeOptSelect(this,'time-الجمعة')">ليل (9م - 12ل)</div>
+                        <div class="time-opt" data-value="طوارئ (أي وقت)" onclick="timeOptSelect(this,'time-الجمعة')">طوارئ (أي وقت)</div>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="avail-row">
                     <input class="day-toggle day-cb" type="checkbox" name="days" value="السبت" id="day-sat">
                     <label class="day-name" for="day-sat">السبت</label>
-                    <select class="time-select" name="time-السبت">
+                    <select class="time-select" name="time-السبت" id="sel-time-السبت" tabindex="-1" aria-hidden="true">
                       <option value="">— اختر الوقت —</option>
                       <option value="صباح (6ص-12م)">صباح (6ص - 12م)</option>
                       <option value="ظهر (12م-4م)">ظهر (12م - 4م)</option>
@@ -1946,6 +2057,17 @@ background:#fff;
                       <option value="ليل (9م-12ل)">ليل (9م - 12ل)</option>
                       <option value="طوارئ (أي وقت)">طوارئ (أي وقت)</option>
                     </select>
+                    <div class="time-wrap">
+                      <div class="time-trigger" id="trig-time-السبت" onclick="timeTriggerClick(this,'time-السبت')">— اختر الوقت —</div>
+                      <div class="time-panel" id="panel-time-السبت">
+                        <div class="time-opt placeholder-opt" data-value="" onclick="timeOptSelect(this,'time-السبت')">— اختر الوقت —</div>
+                        <div class="time-opt" data-value="صباح (6ص-12م)" onclick="timeOptSelect(this,'time-السبت')">صباح (6ص - 12م)</div>
+                        <div class="time-opt" data-value="ظهر (12م-4م)" onclick="timeOptSelect(this,'time-السبت')">ظهر (12م - 4م)</div>
+                        <div class="time-opt" data-value="مساء (4م-9م)" onclick="timeOptSelect(this,'time-السبت')">مساء (4م - 9م)</div>
+                        <div class="time-opt" data-value="ليل (9م-12ل)" onclick="timeOptSelect(this,'time-السبت')">ليل (9م - 12ل)</div>
+                        <div class="time-opt" data-value="طوارئ (أي وقت)" onclick="timeOptSelect(this,'time-السبت')">طوارئ (أي وقت)</div>
+                      </div>
+                    </div>
                   </div>
 
                 </div>
@@ -2322,8 +2444,9 @@ background:#fff;
   ok = false;
 }
         /* تاريخ الميلاد – required + min age 18 */
+        const dobDisplay = document.getElementById('dobDisplay');
         if (!dob.value) {
-          setErr(dob, 'e-dob', 'الرجاء تحديد تاريخ الميلاد.'); ok = false;
+          setErr(dobDisplay, 'e-dob', 'الرجاء تحديد تاريخ الميلاد.'); ok = false;
         } else {
           const today   = new Date();
           const birth   = new Date(dob.value);
@@ -2331,8 +2454,8 @@ background:#fff;
           const m = today.getMonth() - birth.getMonth();
           if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
           if (age < 18) {
-            setErr(dob, 'e-dob', 'يجب أن يكون العمر 18 سنة أو أكثر للتسجيل'); ok = false;
-          } else { setErr(dob, 'e-dob', ''); }
+            setErr(dobDisplay, 'e-dob', 'يجب أن يكون العمر 18 سنة أو أكثر للتسجيل'); ok = false;
+          } else { setErr(dobDisplay, 'e-dob', ''); }
         }
 
         /* الملف – required, max 5MB */
@@ -2967,6 +3090,162 @@ alert(error.message || 'حدث خطأ أثناء إرسال الطلب. حاول
        Init
        ───────────────────────────────────────────────────── */
     showStep(1);
+
+    (function initTimePickers() {
+      var _openPanel = null;
+
+      window.timeTriggerClick = function(trigEl, name) {
+        var panel = document.getElementById('panel-' + name);
+        if (!panel) return;
+        var isOpen = panel.classList.contains('open');
+        if (_openPanel && _openPanel !== panel) {
+          _openPanel.classList.remove('open');
+          var prevTrig = _openPanel.previousElementSibling;
+          if (prevTrig) prevTrig.classList.remove('open');
+          _openPanel = null;
+        }
+        if (isOpen) {
+          panel.classList.remove('open');
+          trigEl.classList.remove('open');
+          _openPanel = null;
+        } else {
+          var wrap = trigEl.parentElement;
+          var wrapRect = wrap.getBoundingClientRect();
+          var spaceBelow = window.innerHeight - wrapRect.bottom;
+          panel.style.top = spaceBelow < 200 ? 'auto' : 'calc(100% + 4px)';
+          panel.style.bottom = spaceBelow < 200 ? 'calc(100% + 4px)' : 'auto';
+          panel.style.right = '0';
+          panel.style.left = '0';
+          panel.classList.add('open');
+          trigEl.classList.add('open');
+          _openPanel = panel;
+        }
+      };
+
+      window.timeOptSelect = function(optEl, name) {
+        var val   = optEl.dataset.value;
+        var label = optEl.textContent;
+        var panel = document.getElementById('panel-' + name);
+        var trig  = document.getElementById('trig-' + name);
+        var sel   = document.getElementById('sel-' + name);
+        if (sel) sel.value = val;
+        if (trig) {
+          trig.textContent = val ? label : '— اختر الوقت —';
+          trig.style.color = val ? 'var(--text)' : '';
+        }
+        if (panel) {
+          panel.querySelectorAll('.time-opt').forEach(function(o) {
+            o.classList.toggle('selected', o.dataset.value === val);
+          });
+          panel.classList.remove('open');
+        }
+        if (trig) trig.classList.remove('open');
+        _openPanel = null;
+      };
+
+      document.addEventListener('mousedown', function(e) {
+        if (!_openPanel) return;
+        var wrap = _openPanel.parentElement;
+        if (wrap && !wrap.contains(e.target)) {
+          _openPanel.classList.remove('open');
+          var trig = _openPanel.previousElementSibling;
+          if (trig) trig.classList.remove('open');
+          _openPanel = null;
+        }
+      });
+    })();
+
+    (function initDobPicker() {
+      var _arMonthsDob = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                          'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+      var _dobDate     = new Date();
+      var _dobSelected = null;
+
+      function buildYearOptions() {
+        var sel = document.getElementById('dobYearSel');
+        if (!sel || sel.options.length > 1) return;
+        var now = new Date().getFullYear();
+        for (var y = now; y >= now - 100; y--) {
+          var opt = document.createElement('option');
+          opt.value = y; opt.textContent = y;
+          sel.appendChild(opt);
+        }
+      }
+
+      function syncSelects() {
+        var mSel = document.getElementById('dobMonthSel');
+        var ySel = document.getElementById('dobYearSel');
+        if (mSel) mSel.value = _dobDate.getMonth();
+        if (ySel) ySel.value = _dobDate.getFullYear();
+      }
+
+      function renderDobPicker() {
+        var y = _dobDate.getFullYear(), m = _dobDate.getMonth();
+        var today = new Date(); today.setHours(0,0,0,0);
+        syncSelects();
+        var firstDay = new Date(y, m, 1).getDay();
+        var daysInMonth = new Date(y, m+1, 0).getDate();
+        var html = '';
+        for (var i = 0; i < firstDay; i++) html += '<div></div>';
+        for (var d = 1; d <= daysInMonth; d++) {
+          var thisDate = new Date(y, m, d); thisDate.setHours(0,0,0,0);
+          var isFuture = thisDate > today;
+          var isSelected = _dobSelected &&
+            _dobSelected.getDate()===d && _dobSelected.getMonth()===m && _dobSelected.getFullYear()===y;
+          var base = 'text-align:center;padding:3px 1px;border-radius:5px;font-size:11.5px;font-weight:600;cursor:pointer;transition:all 0.15s;';
+          if (isFuture) {
+            html += '<div style="'+base+'color:rgba(166,124,82,0.28);cursor:not-allowed;">'+d+'</div>';
+          } else if (isSelected) {
+            html += '<div style="'+base+'background:linear-gradient(135deg,#a67c52,#8b6b47);color:#fff;" onclick="window._dobSelectDate('+y+','+m+','+d+')">'+d+'</div>';
+          } else {
+            html += '<div style="'+base+'color:#3e2810;" onmouseover="this.style.background=\'rgba(166,124,82,0.12)\'" onmouseout="this.style.background=\'\'" onclick="window._dobSelectDate('+y+','+m+','+d+')">'+d+'</div>';
+          }
+        }
+        document.getElementById('dobDays').innerHTML = html;
+      }
+
+      window.toggleDobPicker = function() {
+        var dp = document.getElementById('dobPicker');
+        var isHidden = dp.style.display === 'none' || dp.style.display === '';
+        if (isHidden) { buildYearOptions(); syncSelects(); renderDobPicker(); dp.style.display = 'block'; }
+        else { dp.style.display = 'none'; }
+      };
+
+      window.dobChangeMonth = function(dir) {
+        _dobDate.setMonth(_dobDate.getMonth() + dir);
+        renderDobPicker();
+      };
+
+      window.dobPickerMonthYearChange = function() {
+        var mSel = document.getElementById('dobMonthSel');
+        var ySel = document.getElementById('dobYearSel');
+        _dobDate.setFullYear(parseInt(ySel.value));
+        _dobDate.setMonth(parseInt(mSel.value));
+        renderDobPicker();
+      };
+
+      window._dobSelectDate = function(y, m, d) {
+        var selected = new Date(y, m, d);
+        var today = new Date(); today.setHours(0,0,0,0);
+        if (selected > today) return;
+        _dobSelected = selected;
+        var mm = String(m+1).padStart(2,'0');
+        var dd = String(d).padStart(2,'0');
+        document.getElementById('dob').value        = y+'-'+mm+'-'+dd;
+        document.getElementById('dobDisplay').value = dd+' '+_arMonthsDob[m]+' '+y;
+        document.getElementById('dobDisplay').style.borderColor = 'rgba(166,124,82,0.45)';
+        document.getElementById('dobPicker').style.display = 'none';
+        var errEl = document.getElementById('e-dob');
+        if (errEl) errEl.textContent = '';
+      };
+
+      document.addEventListener('mousedown', function(e) {
+        var dp = document.getElementById('dobPicker');
+        var display = document.getElementById('dobDisplay');
+        if (!dp || !display) return;
+        if (!dp.contains(e.target) && e.target !== display) dp.style.display = 'none';
+      });
+    })();
   </script>
 <div class="policy-modal-backdrop" id="policyModal">
 
