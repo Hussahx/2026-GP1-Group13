@@ -1209,6 +1209,8 @@ try {
     });
   }
 
+
+
   // Track whether the user has attempted to submit the login form
   let loginAttempted = false;
 
@@ -1952,6 +1954,7 @@ try {
 })();
 
 });
+
 document.getElementById('openLoginModal2')?.addEventListener('click', () => {
   document.getElementById('loginModal').classList.add('is-open');
 });

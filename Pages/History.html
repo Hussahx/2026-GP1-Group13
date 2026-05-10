@@ -1175,10 +1175,10 @@ if (
       localStorage.setItem('role', currentRole);
 
       const userChip = document.getElementById('userChip');
-
 if (userChip && currentRole !== 'admin') {
-  userChip.onclick = () => window.location.href = 'Profile1.html';
-} else if (userChip) {
+  userChip.onclick = () => window.location.href = '/profile1.html';
+}
+ else if (userChip) {
   userChip.onclick = null;
   userChip.style.cursor = 'default';
 }
