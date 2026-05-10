@@ -1164,7 +1164,8 @@
             phone:               data.Phone                || data.phone             || '—',
             email:               data.ReporterEmail        || data.email             || '—',
             priority:            priorityMap[data.Priority] || 'um',
-            date:                data.ReportDate           || data.LostDate          || '—',
+            /* Keep raw value (Timestamp, ISO string, or date string) so parseDateVal() can sort accurately */
+            date:                data.ReportDate           || data.LostDate          || data.reportDate || data.lostDate || '—',
             /* IMPORTANT: Status values now match the new schema:
                "Report Received" → pending tab
                "Under Review"    → accepted tab
@@ -1215,9 +1216,35 @@
     function toAr(n){ return String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[+d];}); }
 
     /* ════ تصفية وترتيب ════ */
+    /* Parse a date value that may be:
+      – a Firestore Timestamp object  { seconds, nanoseconds }
+      – a JS Date object
+      – an ISO string  "2024-03-15" or "2024-03-15T10:30:00Z"
+      – a slash-separated string  "2024/03/15"  (Gregorian)
+      – an Arabic-Indic digit string  "١٤٤٦/٠٢/١٥"  (Hijri — kept as-is for comparison)
+      Returns a numeric timestamp for reliable comparison; returns 0 on failure. */
+    function parseDateVal(d) {
+      if (!d || d === '—') return 0;
+      // Firestore Timestamp
+      if (d && typeof d === 'object' && typeof d.seconds === 'number') {
+        return d.seconds * 1000;
+      }
+      // JS Date
+      if (d instanceof Date) return d.getTime();
+      var s = String(d).trim();
+      // Normalise Arabic-Indic digits → Western digits
+      s = s.replace(/[٠١٢٣٤٥٦٧٨٩]/g, function(c){
+        return '٠١٢٣٤٥٦٧٨٩'.indexOf(c);
+      });
+      // Replace slashes with dashes for Date.parse compatibility
+      s = s.replace(/\//g, '-');
+      var ms = Date.parse(s);
+      return isNaN(ms) ? 0 : ms;
+    }
+
     function getFiltered(){
       var q   = (document.getElementById('searchInput').value||'').trim().toLowerCase();
-      var srt = document.getElementById('sortSel').value;
+      var srt = document.getElementById('sortSel').value || 'newest';
       var po  = {uv:0, uh:1, um:2};
       var list = reports.filter(function(r){
         var match = !q ||
@@ -1229,9 +1256,27 @@
         if (!match) return false;
         return TAB === 'all' || r.status === TAB;
       });
-      if (srt === 'oldest')        list.sort(function(a,b){ return a.date.localeCompare(b.date); });
-      else if (srt === 'priority') list.sort(function(a,b){ return po[a.priority] - po[b.priority]; });
-      else                          list.sort(function(a,b){ return b.date.localeCompare(a.date); });
+      if (srt === 'oldest') {
+        // Oldest first: ascending by date; ties broken by id ascending
+        list.sort(function(a, b){
+          var diff = parseDateVal(a.date) - parseDateVal(b.date);
+          return diff !== 0 ? diff : String(a.id).localeCompare(String(b.id));
+        });
+      } else if (srt === 'priority') {
+          // Highest priority first: uv(0) → uh(1) → um(2); unknown defaults to lowest (3); ties broken by newest date
+          list.sort(function(a, b){
+            var pa = (po[a.priority] !== undefined ? po[a.priority] : 3);
+            var pb = (po[b.priority] !== undefined ? po[b.priority] : 3);
+            var diff = pa - pb;
+            return diff !== 0 ? diff : parseDateVal(b.date) - parseDateVal(a.date);
+          });
+      } else {
+        // Default: newest first (descending by date); ties broken by id descending
+        list.sort(function(a, b){
+          var diff = parseDateVal(b.date) - parseDateVal(a.date);
+          return diff !== 0 ? diff : String(b.id).localeCompare(String(a.id));
+        });
+      }
       return list;
     }
 
@@ -1278,7 +1323,7 @@
           '<td>' + missingCell(r, start + i) + '</td>' +
           '<td>' + contactCell(r)    + '</td>' +
           '<td>' + urgTag(r.priority)+ '</td>' +
-          '<td><div class="date-cell">' + r.date + '</div></td>' +
+          '<td><div class="date-cell">' + formatDate(r.date) + '</div></td>' +
           '<td>' + statusBadge(r.status) + '</td>' +
           '<td>' + actCell(r) + '</td>' +
         '</tr>';
@@ -1554,6 +1599,30 @@ document.getElementById('viewOvr').classList.add('on');
     function urgLbl(p){ return {uv:'طارئ جداً', uh:'طارئ', um:'متوسط'}[p] || p; }
     function statLbl(s){ return {pending:'تم استلام البلاغ', accepted:'مقبول', rejected:'مرفوض'}[s] || s; }
 
+    /* Format a raw date value (Firestore Timestamp / ISO string / display string) → human-readable Arabic string */
+    function formatDate(d) {
+      if (!d || d === '—') return '—';
+      // Firestore Timestamp object
+      if (typeof d === 'object' && d !== null && typeof d.seconds === 'number') {
+        var dt = new Date(d.seconds * 1000);
+        return dt.toLocaleDateString('ar-SA', { year:'numeric', month:'long', day:'numeric' });
+      }
+      // Native Date
+      if (d instanceof Date) {
+        return d.toLocaleDateString('ar-SA', { year:'numeric', month:'long', day:'numeric' });
+      }
+      var s = String(d).trim();
+      // Already contains Arabic letters/digits (Hijri string etc.) → return as-is
+      if (/[\u0600-\u06FF\u0660-\u0669]/.test(s)) return s;
+      // Try Gregorian ISO / slash-separated parse
+      var ms = Date.parse(s.replace(/\//g, '-'));
+      if (!isNaN(ms)) {
+        return new Date(ms).toLocaleDateString('ar-SA', { year:'numeric', month:'long', day:'numeric' });
+      }
+      return s; // fallback: show raw value
+    }
+    
+    
     function notify(msg, type){
       var w = document.getElementById('nwrap');
       var d = document.createElement('div');
