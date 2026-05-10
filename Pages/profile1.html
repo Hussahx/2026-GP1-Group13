@@ -1182,10 +1182,10 @@ background: #F5EFE6;
   border: 1px solid rgba(166,124,82,0.14);
   border-radius: 10px;
 }
-.del-sub strong { color: #c0392b; }
 .del-actions {
   display: flex;
   gap: 0.65rem;
+  flex-direction: row-reverse;
 }
 .del-confirm-btn {
   flex: 1;
@@ -2643,13 +2643,16 @@ daysText = '';        reportTimeStr = tsDate.getDate() + ' ' + _months[tsDate.ge
       var currentStatus = d.Status || d.status || '';
       var closedStatuses = ['rescued','found','Rescued','Found','closed','Closed'];
       ops.push({
-        id:        docSnap.id,
-        ar:        d.reportId          || docSnap.id,
-        nm:        d.MissingPersonName || d.MisssionPersoneName || d.missingPersonName || '—',
-        loc:       d.Region            || d.location            || '—',
-        days:      daysText,
-        ld:        reportTimeStr,
-        role:      isLeader ? 'leader' : 'member',
+  id:        docSnap.id,
+  ar:        d.reportId || docSnap.id,
+  nm:        d.MissingPersonName || d.MisssionPersoneName || d.missingPersonName || '—',
+  loc:       d.Region || d.location || '—',
+  days:      daysText,
+  ld:        reportTimeStr,
+
+  startDate: reportTimeStr, // ✅ أضيفي هذا
+
+  role:      isLeader ? 'leader' : 'member',
 teamCount: Array.isArray(d.teamMembers)
   ? d.teamMembers.length
   : (d.CurrentVolunteers || d.currentVolunteers || 0),
