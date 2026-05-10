@@ -1243,6 +1243,7 @@ await updateDoc(doc(db, 'Report', docId), {
       try {
         const now = new Date().toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' });
         await updateDoc(doc(db, 'Report', docId), {
+          Status:     newStatus,   // ← السطر الجديد
           status:     newStatus,
           lastUpdate: now
         });
