@@ -4,6 +4,46 @@
 ### AI-Powered Drone-Based Search & Rescue System
 
 ---
+Launch Instructions
+Prerequisites
+
+Visual Studio Code installed on your machine
+Live Server extension installed in VS Code
+
+
+Step 1 – Install VS Code
+Download and install VS Code from the official website:
+👉 https://code.visualstudio.com/
+
+Step 2 – Install the Live Server Extension
+
+Open VS Code
+Click the Extensions icon in the sidebar or press Ctrl+Shift+X
+Search for: Live Server
+Click Install on the extension by Ritwick Dey
+
+
+Step 3 – Run the Project
+
+Open the project folder in VS Code:
+
+   File → Open Folder → Select the rasid folder
+
+Open index.html
+Right-click the file and select "Open with Live Server"
+— or —
+Click the Go Live button in the bottom status bar
+Your browser will open automatically at:
+
+   http://127.0.0.1:5500/index.html
+
+Notes
+
+Any saved change in your code will automatically reload the browser (Live Reload)
+Make sure port 5500 is not blocked on your machine
+No internet connection is required to run the project locally
+
+---
 
 ## Abstract
 
@@ -88,6 +128,7 @@ The system analyzes drone video frame by frame, detects human presence in real t
 Rasid advances smart public safety solutions by demonstrating how AI and integrated systems can support emergency operations in remote and high-risk desert environments.
 
 ---
+
 
 ## Developers
 
