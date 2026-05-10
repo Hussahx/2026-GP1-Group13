@@ -45,8 +45,8 @@
 |
 |-- index.html                     # Main landing page
 |
-|-- Release-1/                     # Sprint / Release 1 deliverables
-|   `-- ...
+|-- Release-1                     # Sprint / Release 1 deliverables
+|    
 |
 |-- AUTHORS                        # Project contributors
 |-- README.md                      # Project documentation
