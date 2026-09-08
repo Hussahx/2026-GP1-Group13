@@ -1058,10 +1058,15 @@ const visibleStatuses = ['Under Review', 'active'];
 if (!visibleStatuses.includes(dbStatus)) return;
 
           const r = docToReport(data, docSnap.id, currentUid);
-          // Check leader deactivation asynchronously (won't block render)
-          if (data.LeaderID && window._fbHandleLeaderDeactivation) {
-            window._fbHandleLeaderDeactivation(docSnap.id, data).catch(e => console.warn('deactivation check:', e));
-          }
+          // ── تعطيل الفحص التلقائي لتعطيل القائد ──────────────────────
+          // هذا الفحص كان يمسح الفريق فور تعيين قائد جديد (حتى لو الحساب
+          // نشط فعلاً)، لأن قيمة حقل Status في مستند المتطوع لا تُطابق
+          // دائماً ما يتوقعه الفحص. عطّلناه بالكامل تجنباً لفقدان بيانات
+          // الفريق بالخطأ. الدالة نفسها موجودة (window._fbHandleLeaderDeactivation)
+          // لمن يريد إعادة تفعيلها لاحقاً بعد مراجعة قيم الحالة الفعلية.
+          // if (data.LeaderID && window._fbHandleLeaderDeactivation) {
+          //   window._fbHandleLeaderDeactivation(docSnap.id, data).catch(e => console.warn('deactivation check:', e));
+          // }
 
           // التصنيف بناءً على حالة الفريق
           if (r.userInTeam) {
@@ -1150,24 +1155,27 @@ if (!visibleStatuses.includes(dbStatus)) return;
     window._fbTakeOver = async function(docId, uid) {
       if (!docId || !uid) {
         console.warn('assignLeader: missing docId or uid');
-        return;
+        return { ok: false, reason: 'no-auth' };
       }
       try {
-        // قراءة بيانات المتطوع من Volunteer collection
-        const volSnap = await getDoc(doc(db, 'Volunteer', uid));
+        // قراءة بيانات المتطوع من Volunteer collection (بحسب doc ID أو حقل UserID)
+        const volData = await window._fbGetVolunteerByUid(uid);
 
         let leaderName  = '';
         let leaderPhone = '';
 
-        if (volSnap.exists()) {
-          const volData = volSnap.data();
+        if (volData) {
           leaderName  = ((volData.FirstName || '') + ' ' + (volData.LastName || '')).trim();
           leaderPhone = volData.Phone || '';
         }
 
         // ── الحالة الحالية قبل الانضمام ──
 const preSnap = await getDoc(doc(db, 'Report', docId));
-const preData = preSnap.exists() ? preSnap.data() : {};
+if (!preSnap.exists()) {
+  console.warn('assignLeader: report not found', docId);
+  return { ok: false, reason: 'not-found' };
+}
+const preData = preSnap.data();
 const preStatus = preData.Status || preData.status || '';
 const closedStatuses = ['rescued', 'found', 'closed', 'report_closed'];
 const isAlreadyClosed = closedStatuses.includes(preStatus);
@@ -1188,8 +1196,10 @@ await updateDoc(doc(db, 'Report', docId), {
 });
 
         console.log('✅ assignLeader: LeaderID set to', uid);
+        return { ok: true };
       } catch (err) {
         console.error('assignLeader error:', err);
+        return { ok: false, reason: 'error', error: err };
       }
     };
 
@@ -1198,14 +1208,14 @@ await updateDoc(doc(db, 'Report', docId), {
     window._fbJoin = async function(docId, uid) {
       if (!docId || !uid) {
         console.warn('addTeamMember: missing docId or uid');
-        return;
+        return { ok: false, reason: 'no-auth' };
       }
       try {
         // Fetch current report to check for duplicates
         const reportSnap = await getDoc(doc(db, 'Report', docId));
         if (!reportSnap.exists()) {
           console.warn('addTeamMember: report not found', docId);
-          return;
+          return { ok: false, reason: 'not-found' };
         }
 
         const reportData  = reportSnap.data();
@@ -1220,7 +1230,7 @@ await updateDoc(doc(db, 'Report', docId), {
 
         if (alreadyInTeam) {
           console.warn('addTeamMember: user already in team', uid);
-          return;
+          return { ok: false, reason: 'already-member' };
         }
 
         // نخزن UID فقط (string) — متناسق مع _fbTakeOver
@@ -1232,8 +1242,10 @@ await updateDoc(doc(db, 'Report', docId), {
 });
 
         console.log('✅ addTeamMember: added uid', uid);
+        return { ok: true };
       } catch (err) {
         console.error('addTeamMember error:', err);
+        return { ok: false, reason: 'error', error: err };
       }
     };
 
@@ -1256,11 +1268,22 @@ await updateDoc(doc(db, 'Report', docId), {
     // Classic script reads window._fbCurrentUid before calling actions
     onAuthStateChanged(auth, (user) => {
       window._fbCurrentUid = user ? user.uid : null;
-      
-      
-    }
-  );
-  onAuthStateChanged(auth, async (user) => {
+    });
+
+    // ── Reliable UID getter — avoids any race with onAuthStateChanged ──
+    // Resolves immediately if Auth already settled; otherwise waits for
+    // the first auth-state callback instead of silently returning null.
+    window._fbGetCurrentUid = function () {
+      if (auth.currentUser) return Promise.resolve(auth.currentUser.uid);
+      if (window._fbCurrentUid !== undefined) return Promise.resolve(window._fbCurrentUid);
+      return new Promise((resolve) => {
+        const unsub = onAuthStateChanged(auth, (user) => {
+          unsub();
+          resolve(user ? user.uid : null);
+        });
+      });
+    };
+    onAuthStateChanged(auth, async (user) => {
 
   window._fbCurrentUid = user ? user.uid : null;
 
@@ -1358,6 +1381,30 @@ await updateDoc(doc(db, 'Report', docId), {
       return null;
     };
 
+    // ── بحث "خام" عن المتطوع — يرجع السجل بغض النظر عن حقل Status ──
+    // (بعكس _fbGetVolunteerByUid اللي يرجع null أيضاً إذا الحالة ≠ 'active'،
+    // وهذا يمنع الخلط بين "الحساب غير موجود" و"الحساب موجود لكن حالته
+    // مكتوبة بصيغة مختلفة" — الخلط بين الحالتين هو اللي كان يمسح الفريق
+    // بالخطأ فور تولّي البلاغ)
+    window._fbGetRawVolunteerByUid = async function(uid) {
+      if (!uid) return null;
+      try {
+        const directSnap = await getDoc(doc(db, 'Volunteer', uid));
+        if (directSnap.exists()) return directSnap.data();
+      } catch(e) {}
+      try {
+        const { collection: col2, query: q2, where: w2, getDocs: gd2 } =
+          await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const snap = await gd2(q2(col2(db, 'Volunteer'), w2('UserID', '==', uid)));
+        if (!snap.empty) return snap.docs[0].data();
+      } catch(e) {}
+      return null;
+    };
+
+    // قيم الحالة التي تعني تعطيل الحساب فعلياً — أي شيء غير هذا (بما في ذلك
+    // "لم يُعثر على السجل") لا يُعتبر دليلاً كافياً على التعطيل
+    const DEACTIVATED_STATUSES = ['inactive', 'deactivated', 'disabled', 'rejected', 'deleted', 'banned', 'suspended'];
+
     // ── Leader deactivation handler ──────────────────────────────────
     window._fbHandleLeaderDeactivation = async function(docId, reportData) {
       const leaderId = reportData.LeaderID;
@@ -1365,16 +1412,18 @@ await updateDoc(doc(db, 'Report', docId), {
 
       let leaderActive = true;
       try {
-        const lSnap = await getDoc(doc(db, 'Volunteer', leaderId));
-        if (!lSnap.exists()) {
-          leaderActive = false;
-        } else {
-          const lData = lSnap.data();
-          if (lData.Status && lData.Status !== 'active') leaderActive = false;
+        const leaderRecord = await window._fbGetRawVolunteerByUid(leaderId);
+        if (leaderRecord) {
+          const statusVal = String(leaderRecord.Status || '').trim().toLowerCase();
+          if (DEACTIVATED_STATUSES.includes(statusVal)) leaderActive = false;
         }
+        // إذا ما وُجد سجل المتطوع إطلاقاً، نتركه "نشط" افتراضياً بدل تصفير
+        // الفريق — قد يكون خطأ شبكة عابر أو تأخر تزامن، وليس دليلاً على التعطيل
       } catch(e) { return; }
 
       if (leaderActive) return;
+
+      console.warn('⚠️ Leader deactivation triggered for report', docId, '— leaderId:', leaderId);
 
       // Leader is deactivated — find remaining active members
       const rawTeam = Array.isArray(reportData.teamMembers) ? reportData.teamMembers : [];
@@ -1391,16 +1440,18 @@ await updateDoc(doc(db, 'Report', docId), {
         return;
       }
 
-      // Find first active member to promote
+      // Find first non-deactivated member to promote
       let newLeaderUid = null, newLeaderData = null;
       for (const mUid of memberUids) {
         try {
-          const mSnap = await getDoc(doc(db, 'Volunteer', mUid));
-          if (mSnap.exists()) {
-            const mData = mSnap.data();
-            if (!mData.Status || mData.Status === 'active') {
-              newLeaderUid = mUid; newLeaderData = mData; break;
-            }
+          const mData = await window._fbGetRawVolunteerByUid(mUid);
+          if (mData) {
+            const mStatus = String(mData.Status || '').trim().toLowerCase();
+            if (!DEACTIVATED_STATUSES.includes(mStatus)) { newLeaderUid = mUid; newLeaderData = mData; break; }
+          } else {
+            // لم يوجد سجل — لا نستبعده تلقائياً، نعامله كمرشح صالح بدل مسح الفريق
+            newLeaderUid = mUid; newLeaderData = {};
+            break;
           }
         } catch(e) { continue; }
       }
@@ -1901,7 +1952,7 @@ function openTakeOverConfirm(id, missingName){
     `هل أنت متأكد من تولّي بلاغ المفقود <strong>${missingName}</strong>؟<br>
     سيتم تعيينك كقائد لفريق البحث والإنقاذ لهذا البلاغ.`;
 
-  document.getElementById('joinConfirmBtn').onclick = function(){
+  document.getElementById('joinConfirmBtn').onclick = async function(){
 
     closeJoinConfirm();
 
@@ -1910,13 +1961,39 @@ function openTakeOverConfirm(id, missingName){
     if(idx<0) return;
 
     var r = NR[idx];
-    var uid = window._fbCurrentUid || null;
 
-    if(window._fbTakeOver && r._docId){
-      window._fbTakeOver(r._docId, uid);
+    if(!window._fbTakeOver || !r._docId){
+      notify('تعذّر تنفيذ العملية، أعد تحميل الصفحة وحاول مرة أخرى','w');
+      return;
     }
 
-    notify('تولّيت البلاغ '+r.ar+' — أنت الآن القائد','s');
+    var uid = window._fbGetCurrentUid ? await window._fbGetCurrentUid() : window._fbCurrentUid;
+    console.log('[تتبّع تولّي البلاغ] docId =', r._docId, '| uid =', uid);
+
+    if(!uid){
+      notify('يجب تسجيل الدخول أولاً لتتمكن من تولّي البلاغ','w');
+      console.warn('[تتبّع تولّي البلاغ] توقف: uid فارغ — المستخدم غير معروف كمسجّل دخول');
+      return;
+    }
+
+    var result = await window._fbTakeOver(r._docId, uid);
+    console.log('[تتبّع تولّي البلاغ] نتيجة الكتابة:', result);
+
+    if(result && result.ok){
+      notify('تولّيت البلاغ '+r.ar+' — أنت الآن القائد','s');
+      // ── تحقق فوري: نقرأ نفس المستند مباشرة من Firestore بعد الكتابة ──
+      if(window._fbVerifyReport){
+        window._fbVerifyReport(r._docId).then(function(snap){
+          console.log('[تتبّع تولّي البلاغ] تحقق فوري من المستند بعد الكتابة:', snap);
+        });
+      }
+    } else {
+      var reasonMsg = (result && result.error && (result.error.code || result.error.message))
+        ? ' ('+(result.error.code || result.error.message)+')'
+        : (result && result.reason ? ' ('+result.reason+')' : '');
+      notify('حدث خطأ ولم يتم تولّي البلاغ'+reasonMsg,'w');
+      console.error('takeover failed:', result);
+    }
   };
 
   document.getElementById('joinConfirmOverlay').style.display='flex';
@@ -1932,7 +2009,7 @@ function openJoinTeamConfirm(id, missingName){
     `هل أنت متأكد من الانضمام لبلاغ المفقود <strong>${missingName}</strong>؟<br>
     ستصبح عضوًا ضمن فريق البحث والإنقاذ لهذا البلاغ.`;
 
-  document.getElementById('joinConfirmBtn').onclick = function(){
+  document.getElementById('joinConfirmBtn').onclick = async function(){
 
     closeJoinConfirm();
 
@@ -1941,13 +2018,32 @@ function openJoinTeamConfirm(id, missingName){
     if(idx<0) return;
 
     var r = AR[idx];
-    var uid = window._fbCurrentUid || null;
 
-    if(window._fbJoin && r._docId){
-      window._fbJoin(r._docId, uid);
+    if(!window._fbJoin || !r._docId){
+      notify('تعذّر تنفيذ العملية، أعد تحميل الصفحة وحاول مرة أخرى','w');
+      return;
     }
 
-    notify('انضممت لبلاغ '+r.ar+' كعضو في فريق '+r.ldr,'s');
+    var uid = window._fbGetCurrentUid ? await window._fbGetCurrentUid() : window._fbCurrentUid;
+
+    if(!uid){
+      notify('يجب تسجيل الدخول أولاً لتتمكن من الانضمام للفريق','w');
+      return;
+    }
+
+    var result = await window._fbJoin(r._docId, uid);
+
+    if(result && result.ok){
+      notify('انضممت لبلاغ '+r.ar+' كعضو في فريق '+r.ldr,'s');
+    } else if(result && result.reason === 'already-member'){
+      notify('أنت منضم لهذا الفريق بالفعل','i');
+    } else {
+      var reasonMsg = (result && result.error && (result.error.code || result.error.message))
+        ? ' ('+(result.error.code || result.error.message)+')'
+        : (result && result.reason ? ' ('+result.reason+')' : '');
+      notify('حدث خطأ ولم يتم الانضمام للفريق'+reasonMsg,'w');
+      console.error('join team failed:', result);
+    }
   };
 
   document.getElementById('joinConfirmOverlay').style.display='flex';
@@ -2158,10 +2254,8 @@ style="display:none;position:fixed;inset:0;background:rgba(42,31,18,.52);backdro
         if (nameEl)    nameEl.textContent    = fullName || 'User';
         if (initialEl) initialEl.textContent = FirstName ? FirstName.charAt(0) : 'U';
       }
-      // 3. Fallback
-      console.error('header name error:', e);
+      // 3. Fallback — handled below in catch if steps 1/2 threw
     } catch(e) {
-      console.error('header name error:', e);
       console.error('header name error:', e);
 }
 

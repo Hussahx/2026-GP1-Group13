@@ -336,6 +336,69 @@
       box-shadow: 0 6px 16px rgba(192,57,43,0.38);
     }
 
+    /* ══ كشف تشابه البلاغات — شارة "بلاغ مشابه" (بنفس ألوان أزرار الموقع البنية) ══ */
+    .dup-badge {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 50px;
+      background: rgba(245,239,230,0.92);
+      border: 1.5px solid rgba(166,124,82,0.40);
+      color: #8B6B47;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.22s ease;
+    }
+    .dup-badge:hover {
+      background: #fff;
+      border-color: #A67C52;
+      color: #5C4530;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(139,107,71,0.18);
+    }
+    .dup-badge i { font-size: 10px; color: #B8862E; }
+
+    /* ══ نافذة مراجعة البلاغ المشابه ══ */
+    .dup-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .dup-col {
+      background: rgba(245,239,230,0.75);
+      border: 1px solid rgba(166,124,82,0.16);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .dup-col-label { font-size: 0.72rem; font-weight: 800; color: #A67C52; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .3px; }
+    .dup-col .dl { font-size: 0.68rem; }
+    .dup-col .dv { font-size: 0.85rem; }
+    .dup-col .di { padding: 8px 10px; margin-bottom: 7px; }
+    .dup-col .di:last-child { margin-bottom: 0; }
+
+    /* أزرار القرار — دمج (بني أساسي) / إبقاء منفصلين (بني ثانوي فاتح) */
+    .mbtn-dup-merge {
+      background: linear-gradient(135deg, #A67C52, #8B6B47);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(139,107,71,0.28);
+    }
+    .mbtn-dup-merge:hover {
+      background: linear-gradient(135deg, #9C7A4F, #5C4530);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(139,107,71,0.40);
+    }
+    .mbtn-dup-keep {
+      background: rgba(245,239,230,0.92);
+      border: 1.5px solid rgba(166,124,82,0.40) !important;
+      color: #5C4530;
+    }
+    .mbtn-dup-keep:hover {
+      background: #fff;
+      border-color: #A67C52 !important;
+      transform: translateY(-2px);
+    }
+
     /* حالة فارغة */
     .empty-state { padding: 56px 24px; text-align: center; }
     .empty-icon  { font-size: 40px; margin-bottom: 12px; color: var(--t300); }
@@ -1023,6 +1086,29 @@
     </div>
   </div>
 
+  <!-- ══ نافذة مراجعة البلاغ المشابه (كشف تشابه البلاغات) ══ -->
+  <div class="aoverlay" id="dupReviewOvr">
+    <div class="amodal">
+      <div class="mhandle"></div>
+      <div class="mhead">
+        <div class="mhead-icon" style="background: linear-gradient(135deg, #A67C52, #8B6B47);"><i class="fas fa-clone"></i></div>
+        <div style="flex:1;min-width:0;">
+          <div class="mhead-title">بلاغ مشابه محتمل</div>
+          <div class="mhead-sub" id="dupSub"></div>
+        </div>
+        <button class="mclose" onclick="closeDupReview()" type="button"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="mbody">
+        <div class="dup-compare" id="dupCompare"></div>
+      </div>
+      <div class="mfoot" style="flex-wrap:wrap;">
+        <button class="mbtn mbtn-cancel" onclick="closeDupReview()" type="button"><i class="fas fa-arrow-right"></i> إلغاء</button>
+        <button class="mbtn mbtn-dup-keep" id="dupKeepBtn" type="button"><i class="fas fa-arrows-split-up-and-left"></i> إبقاء منفصلين</button>
+        <button class="mbtn mbtn-dup-merge" id="dupMergeBtn" type="button"><i class="fas fa-object-group"></i> دمج البلاغين</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════
        SIDEBAR SCRIPT — من base.html
   ══════════════════════════════════ -->
@@ -1123,7 +1209,7 @@
     /* — Firebase imports — */
     var db = null;
     var fbAuthRef = null;  // ← holds Firebase Auth instance for AdminID capture
-    var fsCollection, fsDocs, fsQuery, fsWhere, fsUpdateDoc, fsDoc;
+    var fsCollection, fsDocs, fsQuery, fsWhere, fsUpdateDoc, fsDoc, fsGetDoc, fsArrayUnion;
 
     (async function initFirebase() {
       const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
@@ -1150,6 +1236,8 @@
       fsWhere       = fs.where;
       fsUpdateDoc   = fs.updateDoc;
       fsDoc         = fs.doc;
+      fsGetDoc      = fs.getDoc;
+      fsArrayUnion  = fs.arrayUnion;
 
       /* ── انتظر حتى Firebase Auth يؤكد حالة المستخدم ──
          هذا هو سبب خطأ "Missing or insufficient permissions":
@@ -1172,7 +1260,16 @@
     async function loadReports() {
       try {
         const snap = await fsDocs(fsCollection(db, 'Report'));
-        reports = snap.docs.map(function(d) {
+        reports = snap.docs
+          .filter(function(d){
+            // البلاغات المدموجة (Merged) تُستبعد بالكامل من لوحة الأدمن —
+            // بياناتها انتقلت للبلاغ الأقدم الناجي، وعرضها هنا كـ"قيد
+            // المراجعة" كان سيربك الأدمن (خلل: لا يوجد تعيين لحالة Merged
+            // في mapStatusToInternal فكانت تُصنَّف pending بالخطأ)
+            var s = d.data().Status || d.data().status || '';
+            return s !== 'Merged' && s !== 'merged';
+          })
+          .map(function(d) {
           var data = d.data();
           /* Map DB fields → internal fields used by render functions.
              Priority mapping: Arabic text from DB → internal code */
@@ -1201,7 +1298,13 @@
             healthStatus:        data.HealthStatus         || data.healthStatus       || '—',
             // Evidence
             evidenceUrl:         data.EvidanceFile         || data.evidenceFile       || '',
-            evidenceType:        data.EvidenceFileType     || data.evidenceFileType   || ''
+            evidenceType:        data.EvidenceFileType     || data.evidenceFileType   || '',
+            // Duplicate-report detection: raw status string, saved dismissals, and a
+            // sortable timestamp used to tell which of two similar reports is older
+            rawStatus:             data.Status || data.status || 'Report Received',
+            dismissedDuplicateIds: Array.isArray(data.dismissedDuplicateIds) ? data.dismissedDuplicateIds : [],
+            dt:                     parseDateVal(data.LoggedAt || data.ReportDate || data.LostDate || data.reportDate || data.lostDate || 0),
+            dupMatch:               null
           };
         });
         renderAll();
@@ -1227,6 +1330,86 @@
         'In Progress':     'accepted'
       };
       return m[s] || 'pending';
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       كشف تشابه البلاغات (Duplicate Reports Detection) — للأدمن فقط
+       - يقارن كل بلاغ "قيد المراجعة" (pending) بباقي البلاغات المفتوحة
+         (قيد المراجعة أو مقبولة) على أساس الاسم + الموقع بعد تطبيع النص.
+       - "المفتوحة" تستثني المرفوضة والمغلقة والمدموجة، فأي تطابق هو
+         تلقائياً مع بلاغ لم يُغلق بعد.
+       - النتيجة تُحفظ في r.dupMatch ليستخدمها العرض وزر المراجعة.
+       ══════════════════════════════════════════════════════════════════ */
+    var CLOSED_RAW_STATUSES = ['rescued', 'found', 'closed', 'report_closed', 'Merged', 'merged'];
+
+    function normalizeArabicText(s){
+      if(!s) return '';
+      return String(s)
+        .trim()
+        .replace(/[\u064B-\u065F\u0670\u0640]/g,'')
+        .replace(/[إأآا]/g,'ا')
+        .replace(/ى/g,'ي')
+        .replace(/ة/g,'ه')
+        .replace(/[^\u0621-\u064Aa-zA-Z0-9\s]/g,'')
+        .replace(/\s+/g,' ')
+        .trim()
+        .toLowerCase();
+    }
+
+    function findSimilarReport(target, pool){
+      var nName = normalizeArabicText(target.missingName);
+      var nLoc  = normalizeArabicText(target.region);
+      if(!nName || !nLoc) return null;
+      var best = null;
+      for(var i=0;i<pool.length;i++){
+        var other = pool[i];
+        if(other.docId===target.docId) continue;
+
+        var otherDt = other.dt||0, targetDt = target.dt||0;
+        // "الأقدم" = وقت أصغر، أو عند التساوي (مثلاً بلاغات تجريبية بنفس
+        // اليوم بدون وقت دقيق) نحسم الأمر بترتيب معرّف المستند بشكل ثابت
+        // حتى لا يتم تجاهل الاثنين لأن كلاً منهما لا يعتبر الآخر "أقدم"
+        var otherIsOlder = otherDt < targetDt ||
+          (otherDt === targetDt && String(other.docId) < String(target.docId));
+        if(!otherIsOlder) continue;
+
+        var oName = normalizeArabicText(other.missingName);
+        var oLoc  = normalizeArabicText(other.region);
+        if(oName && oLoc && oName===nName && oLoc===nLoc){
+          if(!best || (other.dt||0) > (best.dt||0)) best = other;
+        }
+      }
+      return best;
+    }
+
+    function annotateDuplicates(){
+      var openList = reports.filter(function(r){
+        return (r.status==='pending' || r.status==='accepted') &&
+               CLOSED_RAW_STATUSES.indexOf(r.rawStatus) === -1;
+      });
+      reports.forEach(function(r){ r.dupMatch = null; });
+
+      console.log('[تتبّع التشابه] عدد البلاغات المفتوحة المقارنة:', openList.length);
+      openList.filter(function(r){ return r.status==='pending'; }).forEach(function(r){
+        console.log('[تتبّع التشابه] بلاغ:', r.id,
+          '| الاسم الخام:', r.missingName, '→ مُطبَّع:', normalizeArabicText(r.missingName),
+          '| المنطقة الخام:', r.region, '→ مُطبَّع:', normalizeArabicText(r.region),
+          '| dt:', r.dt, '| docId:', r.docId);
+      });
+
+      openList.forEach(function(r){
+        if(r.status !== 'pending') return; // التنبيه يظهر فقط على البلاغات قيد المراجعة (طابور قرار الأدمن)
+        var match = findSimilarReport(r, openList);
+        if(match){
+          var dismissed = r.dismissedDuplicateIds || [];
+          if(dismissed.indexOf(match.docId) === -1){
+            r.dupMatch = match;
+            console.log('[تتبّع التشابه] ✅ تطابق: بلاغ', r.id, '↔ بلاغ', match.id);
+          } else {
+            console.log('[تتبّع التشابه] تطابق موجود لكن تم تجاهله سابقاً:', r.id, '↔', match.id);
+          }
+        }
+      });
     }
 
     var reports = [];
@@ -1321,6 +1504,7 @@ function getFiltered(){
     }
 
     function renderPage(){
+      annotateDuplicates();
       var list  = getFiltered();
       var tbody = document.getElementById('tbody');
       var empty = document.getElementById('emptyState');
@@ -1409,11 +1593,19 @@ function getFiltered(){
         rejected: 'linear-gradient(135deg,#c0392b,#962d22)'
       };
       var bg = avColors[r.status] || avColors.pending;
+      var dupHtml = '';
+      if (r.status === 'pending' && r.dupMatch){
+        dupHtml =
+          '<button class="dup-badge" onclick="event.stopPropagation();openDupReview(\''+r.id+'\')" type="button">' +
+            '<i class="fas fa-triangle-exclamation"></i> بلاغ مشابه — مراجعة' +
+          '</button>';
+      }
       return '<div class="missing-cell">' +
         '<div class="miss-av av-'+r.status+'" style="background:'+bg+'">'+r.missingName.charAt(0)+'</div>' +
         '<div>' +
           '<div class="miss-name">'+r.missingName+'</div>' +
           '<div class="miss-id">'+r.id+'</div>' +
+          dupHtml +
         '</div></div>';
     }
 
@@ -1523,6 +1715,7 @@ function getFiltered(){
 
     function execAction(){
       if (!pendingAction) return;
+      if (pendingAction.type === 'dup') { execDupAction(); return; }
       var r = find(pendingAction.id);
       if (!r) return;
 
@@ -1567,6 +1760,174 @@ function getFiltered(){
       }
     }
     function closeConfirm(){ document.getElementById('confirmOvr').classList.remove('on'); }
+
+    /* ════════════════════════════════════════════════════════════════
+       كشف تشابه البلاغات — مراجعة القرار (خطوة 1) ثم تأكيد نهائي (خطوة 2)
+       ════════════════════════════════════════════════════════════════ */
+    var dupReviewIds = null; // { id, simId }
+
+    function openDupReview(id){
+      var r = find(id);
+      if (!r || !r.dupMatch) return;
+      var o = r.dupMatch;
+      dupReviewIds = { id: id, simId: o.id };
+
+      document.getElementById('dupSub').textContent =
+        'بلاغ "' + r.missingName + '" يتشابه مع بلاغ سابق لم يُغلق بعد';
+
+      document.getElementById('dupCompare').innerHTML =
+        '<div class="dup-col">' +
+          '<div class="dup-col-label">البلاغ الأحدث (' + r.id + ')</div>' +
+          di('اسم المفقود', r.missingName) +
+          di('المنطقة', r.region) +
+          di('الموقع التفصيلي', r.location) +
+          di('التاريخ', formatDate(r.date)) +
+        '</div>' +
+        '<div class="dup-col">' +
+          '<div class="dup-col-label">البلاغ الأقدم (' + o.id + ')</div>' +
+          di('اسم المفقود', o.missingName) +
+          di('المنطقة', o.region) +
+          di('الموقع التفصيلي', o.location) +
+          di('التاريخ', formatDate(o.date)) +
+        '</div>';
+
+      document.getElementById('dupKeepBtn').onclick  = function(){ openDupConfirm('keep'); };
+      document.getElementById('dupMergeBtn').onclick = function(){ openDupConfirm('merge'); };
+
+      document.getElementById('dupReviewOvr').classList.add('on');
+    }
+
+    function closeDupReview(){
+      document.getElementById('dupReviewOvr').classList.remove('on');
+    }
+
+    /* خطوة التأكيد النهائي — تحمي من الضغط بالخطأ أو تغيير الرأي */
+    function openDupConfirm(choice){
+      if (!dupReviewIds) return;
+      var r = find(dupReviewIds.id);
+      var o = find(dupReviewIds.simId);
+      if (!r || !o) return;
+
+      pendingAction = { type: 'dup', id: r.id, simId: o.id, choice: choice };
+
+      var icon = document.getElementById('mIcon');
+      var title= document.getElementById('mTitle');
+      var sub  = document.getElementById('mSub');
+      var det  = document.getElementById('mDetails');
+      var btn  = document.getElementById('mConfirmBtn');
+
+      icon.className = 'mhead-icon';
+      icon.style.background = 'linear-gradient(135deg, #A67C52, #8B6B47)';
+      icon.innerHTML = '<i class="fas fa-clone"></i>';
+
+      if (choice === 'merge'){
+        title.textContent = 'تأكيد دمج البلاغين';
+        sub.textContent   = 'سيتم توحيد فريقَي البلاغين داخل البلاغ الأقدم، وسيختفي البلاغ الأحدث من اللوحة. هل أنت متأكد؟';
+      } else {
+        title.textContent = 'تأكيد الإبقاء منفصلين';
+        sub.textContent    = 'لن يظهر تنبيه التشابه لهذا الزوج من البلاغين مرة أخرى، وسيبقى كل بلاغ مستقلاً. هل تريد المتابعة؟';
+      }
+
+      det.innerHTML =
+        di('البلاغ الأحدث', r.id + ' — ' + r.missingName) +
+        di('البلاغ الأقدم',  o.id + ' — ' + o.missingName);
+
+      btn.className   = 'mbtn mbtn-primary';
+      btn.textContent = choice === 'merge' ? 'نعم، ادمج البلاغين' : 'نعم، أبقهما منفصلين';
+      btn.onclick = function(){ execAction(); };
+
+      closeDupReview();
+      document.getElementById('confirmOvr').classList.add('on');
+    }
+
+    function execDupAction(){
+      var r = find(pendingAction.id);
+      var o = find(pendingAction.simId);
+      if (!r || !o) { pendingAction = null; closeConfirm(); return; }
+
+      if (pendingAction.choice === 'merge'){
+        mergeReports(r, o).then(function(ok){
+          notify(ok ? '✓ تم دمج البلاغين بنجاح' : 'تعذّر دمج البلاغين، حاول مرة أخرى', ok ? 's' : 'ne');
+          if (ok) loadReports();
+          closeConfirm();
+          pendingAction = null;
+          dupReviewIds = null;
+        });
+      } else {
+        dismissDuplicate(r, o).then(function(ok){
+          notify(ok ? 'تم إبقاء البلاغين منفصلين' : 'حدث خطأ أثناء حفظ القرار', ok ? 'i' : 'ne');
+          if (ok){
+            r.dismissedDuplicateIds = (r.dismissedDuplicateIds || []).concat([o.docId]);
+            r.dupMatch = null;
+            renderAll();
+          }
+          closeConfirm();
+          pendingAction = null;
+          dupReviewIds = null;
+        });
+      }
+    }
+
+    /* ── Firestore: دمج بلاغين — يوحّد الفريقين في البلاغ الأقدم ويُخفي الأحدث ── */
+    async function mergeReports(newerR, olderR){
+      try{
+        var newerSnap = await fsGetDoc(fsDoc(db, 'Report', newerR.docId));
+        var olderSnap = await fsGetDoc(fsDoc(db, 'Report', olderR.docId));
+        if (!newerSnap.exists() || !olderSnap.exists()) return false;
+
+        var newerData = newerSnap.data();
+        var olderData = olderSnap.data();
+
+        function toUids(arr){
+          return (Array.isArray(arr) ? arr : []).map(function(m){
+            return (typeof m === 'object' && m !== null) ? m.userId : m;
+          }).filter(Boolean);
+        }
+        var olderUids  = toUids(olderData.teamMembers);
+        var newerUids  = toUids(newerData.teamMembers);
+        var mergedUids = Array.from(new Set(olderUids.concat(newerUids)));
+
+        var olderUpdate = {
+          teamMembers:       mergedUids,
+          CurrentVolunteers: mergedUids.length,
+          mergedReports:     fsArrayUnion(newerR.docId)
+        };
+        if (!olderData.LeaderID && newerData.LeaderID){
+          olderUpdate.LeaderID    = newerData.LeaderID;
+          olderUpdate.leader      = newerData.leader      || '';
+          olderUpdate.leaderPhone = newerData.leaderPhone || '';
+        }
+        if (mergedUids.length > 0){
+          olderUpdate.Status = 'active';
+          olderUpdate.status = 'active';
+        }
+
+        await fsUpdateDoc(fsDoc(db, 'Report', olderR.docId), olderUpdate);
+        await fsUpdateDoc(fsDoc(db, 'Report', newerR.docId), {
+          Status:      'Merged',
+          status:      'Merged',
+          mergedInto:  olderR.docId,
+          teamMembers: []
+        });
+        return true;
+      } catch(err){
+        console.error('mergeReports error:', err);
+        return false;
+      }
+    }
+
+    /* ── Firestore: تسجيل قرار "إبقاء منفصلين" حتى لا يتكرر التنبيه لنفس الزوج ── */
+    async function dismissDuplicate(newerR, olderR){
+      try{
+        await fsUpdateDoc(fsDoc(db, 'Report', newerR.docId), {
+          dismissedDuplicateIds: fsArrayUnion(olderR.docId)
+        });
+        return true;
+      } catch(err){
+        console.error('dismissDuplicate error:', err);
+        return false;
+      }
+    }
 
     /* ════ نافذة التفاصيل ════
          Only the 5 permitted fields are displayed — no phone, email, or internal IDs.
@@ -1666,8 +2027,9 @@ document.getElementById('viewOvr').classList.add('on');
     /* ════ إغلاق النوافذ ════ */
     document.getElementById('confirmOvr').addEventListener('click', function(e){ if(e.target===this) closeConfirm(); });
     document.getElementById('viewOvr').addEventListener('click',    function(e){ if(e.target===this) closeView(); });
+    document.getElementById('dupReviewOvr').addEventListener('click', function(e){ if(e.target===this) closeDupReview(); });
     document.addEventListener('keydown', function(e){
-      if (e.key==='Escape'){ closeConfirm(); closeView(); }
+      if (e.key==='Escape'){ closeConfirm(); closeView(); closeDupReview(); }
     });
 
     /* ════ البحث والترتيب ════ */
