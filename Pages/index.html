@@ -393,22 +393,22 @@
         <div class="counters-grid" data-aos="fade-up" data-aos-delay="100">
           <div class="counter-card glass-card">
             <div class="counter-icon"><i class="fas fa-tasks"></i></div>
-            <div class="counter-value" data-target="247">0</div>
+            <div class="counter-value" id="counterCompletedMissions" data-target="247">0</div>
             <div class="counter-label">عدد المهام المنفذة</div>
           </div>
           <div class="counter-card glass-card">
             <div class="counter-icon"><i class="fas fa-users"></i></div>
-            <div class="counter-value" data-target="83">0</div>
+            <div class="counter-value" id="counterActiveVolunteers" data-target="83">0</div>
             <div class="counter-label">المتطوعون النشطون</div>
           </div>
           <div class="counter-card glass-card">
             <div class="counter-icon"><i class="fas fa-eye"></i></div>
-            <div class="counter-value" data-target="1520">0</div>
+            <div class="counter-value" id="counterMonitoringOps" data-target="1520">0</div>
             <div class="counter-label">عمليات الرصد</div>
           </div>
           <div class="counter-card glass-card">
             <div class="counter-icon"><i class="fas fa-chart-pie"></i></div>
-            <div class="counter-value" data-target="88" data-suffix="%">0</div>
+            <div class="counter-value" id="counterAccuracy" data-target="88" data-suffix="%">0</div>
             <div class="counter-label">نسبة الدقة</div>
           </div>
         </div>
@@ -428,9 +428,8 @@
             </div>
             <canvas id="doughnutChart"></canvas>
             <div class="doughnut-legend">
-              <span class="leg-item"><span class="leg-dot" style="background:#C2A477"></span>جديد (42%)</span>
-              <span class="leg-item"><span class="leg-dot" style="background:#8B6B47"></span>قيد المعالجة (35%)</span>
-              <span class="leg-item"><span class="leg-dot" style="background:#7A9A7A"></span>مغلق (23%)</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#8B6B47"></span>قيد المعالجة (<span id="legendProgress">50%</span>)</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#7A9A7A"></span>مغلق (<span id="legendClosed">50%</span>)</span>
             </div>
           </div>
         </div>
@@ -966,6 +965,7 @@
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="/JS/index.js"></script>
+  <script type="module" src="/JS/dashboardStats.js"></script>
 
   <!-- ================================================================
        FIREBASE — Report Submission + Login

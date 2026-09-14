@@ -332,12 +332,15 @@ document.addEventListener('DOMContentLoaded', () => {
       },
     });
 
+    window.rasidLineChart = lineChart;
+
     let chartResizeTimer;
     window.addEventListener('resize', () => {
       clearTimeout(chartResizeTimer);
       chartResizeTimer = setTimeout(() => {
         lineChart.options.aspectRatio = isSmallScreen() ? 1.4 : 2;
-        lineChart.data.labels = isSmallScreen() ? shortDays : days;
+        const labelSet = window.rasidLineChartDays || { full: days, short: shortDays };
+        lineChart.data.labels = isSmallScreen() ? labelSet.short : labelSet.full;
         lineChart.update();
       }, 200);
     });
@@ -345,15 +348,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const doughnutCtx = document.getElementById('doughnutChart');
   if (doughnutCtx) {
-    new Chart(doughnutCtx, {
+    const doughnutChart = new Chart(doughnutCtx, {
       type: 'doughnut',
       data: {
-        labels: ['جديد', 'قيد المعالجة', 'مغلق'],
+        labels: ['قيد المعالجة', 'مغلق'],
         datasets: [
           {
-            data: [42, 35, 23],
-            backgroundColor: ['#C2A477', '#8B6B47', '#7A9A7A'],
-            borderColor: ['#FAF6F0', '#FAF6F0', '#FAF6F0'],
+            data: [35, 23],
+            backgroundColor: ['#8B6B47', '#7A9A7A'],
+            borderColor: ['#FAF6F0', '#FAF6F0'],
             borderWidth: 3,
             hoverOffset: 8,
           },
@@ -379,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
       },
     });
+    window.rasidDoughnutChart = doughnutChart;
   }
 
   /* ============================================================
