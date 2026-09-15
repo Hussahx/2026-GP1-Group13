@@ -363,19 +363,25 @@
     }
     .dup-badge i { font-size: 10px; color: #B8862E; }
 
-    /* ══ نافذة مراجعة البلاغ المشابه ══ */
-    .dup-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    /* ══ نافذة مراجعة البلاغات المتشابهة ══ */
+    .dup-compare { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; max-height: 360px; overflow-y: auto; padding-left: 2px; }
     .dup-col {
       background: rgba(245,239,230,0.75);
-      border: 1px solid rgba(166,124,82,0.16);
+      border: 1.5px solid rgba(166,124,82,0.16);
       border-radius: 12px;
-      padding: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      transition: border-color .18s, background .18s;
     }
-    .dup-col-label { font-size: 0.72rem; font-weight: 800; color: #A67C52; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .3px; }
-    .dup-col .dl { font-size: 0.68rem; }
-    .dup-col .dv { font-size: 0.85rem; }
-    .dup-col .di { padding: 8px 10px; margin-bottom: 7px; }
-    .dup-col .di:last-child { margin-bottom: 0; }
+    .dup-col.checked { border-color: rgba(166,124,82,0.55); background: rgba(245,239,230,0.95); }
+    .dup-col input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: #8B6B47; cursor: pointer; flex-shrink: 0; }
+    .dup-col .dup-col-body { flex: 1; min-width: 0; }
+    .dup-col-label { font-size: 0.74rem; font-weight: 800; color: #A67C52; margin-bottom: 4px; }
+    .dup-col-label .oldest-tag { font-size: 0.62rem; font-weight: 800; color: #fff; background: #8B6B47; border-radius: 50px; padding: 1px 8px; margin-right: 6px; }
+    .dup-col .dv-row { font-size: 0.76rem; color: #5C4530; line-height: 1.6; }
+    .dup-col .dv-row b { color: #3E2F1C; }
 
     /* أزرار القرار — دمج (بني أساسي) / إبقاء منفصلين (بني ثانوي فاتح) */
     .mbtn-dup-merge {
@@ -1086,14 +1092,14 @@
     </div>
   </div>
 
-  <!-- ══ نافذة مراجعة البلاغ المشابه (كشف تشابه البلاغات) ══ -->
+  <!-- ══ نافذة مراجعة البلاغات المتشابهة (كشف تشابه البلاغات) ══ -->
   <div class="aoverlay" id="dupReviewOvr">
-    <div class="amodal">
+    <div class="amodal" style="max-width:640px;">
       <div class="mhandle"></div>
       <div class="mhead">
         <div class="mhead-icon" style="background: linear-gradient(135deg, #A67C52, #8B6B47);"><i class="fas fa-clone"></i></div>
         <div style="flex:1;min-width:0;">
-          <div class="mhead-title">بلاغ مشابه محتمل</div>
+          <div class="mhead-title">بلاغات مشابهة محتملة</div>
           <div class="mhead-sub" id="dupSub"></div>
         </div>
         <button class="mclose" onclick="closeDupReview()" type="button"><i class="fas fa-xmark"></i></button>
@@ -1103,13 +1109,14 @@
       </div>
       <div class="mfoot" style="flex-wrap:wrap;">
         <button class="mbtn mbtn-cancel" onclick="closeDupReview()" type="button"><i class="fas fa-arrow-right"></i> إلغاء</button>
-        <button class="mbtn mbtn-dup-keep" id="dupKeepBtn" type="button"><i class="fas fa-arrows-split-up-and-left"></i> إبقاء منفصلين</button>
-        <button class="mbtn mbtn-dup-merge" id="dupMergeBtn" type="button"><i class="fas fa-object-group"></i> دمج البلاغين</button>
+        <button class="mbtn mbtn-dup-keep" id="dupKeepBtn" type="button"><i class="fas fa-arrows-split-up-and-left"></i> إبقاء الكل منفصلين</button>
+        <button class="mbtn mbtn-dup-merge" id="dupMergeBtn" type="button"><i class="fas fa-object-group"></i> دمج المحدّد</button>
       </div>
     </div>
   </div>
 
   <!-- ══════════════════════════════════
+
        SIDEBAR SCRIPT — من base.html
   ══════════════════════════════════ -->
   <script>
@@ -1296,6 +1303,7 @@
             desc:                data.Details              || data.details            || '—',
             // Health status of missing person
             healthStatus:        data.HealthStatus         || data.healthStatus       || '—',
+            vehicle:             data.Vehicle              || data.vehicle            || '—',
             // Evidence
             evidenceUrl:         data.EvidanceFile         || data.evidenceFile       || '',
             evidenceType:        data.EvidenceFileType     || data.evidenceFileType   || '',
@@ -1304,7 +1312,7 @@
             rawStatus:             data.Status || data.status || 'Report Received',
             dismissedDuplicateIds: Array.isArray(data.dismissedDuplicateIds) ? data.dismissedDuplicateIds : [],
             dt:                     parseDateVal(data.LoggedAt || data.ReportDate || data.LostDate || data.reportDate || data.lostDate || 0),
-            dupMatch:               null
+            dupGroup:               []
           };
         });
         renderAll();
@@ -1334,11 +1342,13 @@
 
     /* ══════════════════════════════════════════════════════════════════
        كشف تشابه البلاغات (Duplicate Reports Detection) — للأدمن فقط
-       - يقارن كل بلاغ "قيد المراجعة" (pending) بباقي البلاغات المفتوحة
-         (قيد المراجعة أو مقبولة) على أساس الاسم + الموقع بعد تطبيع النص.
-       - "المفتوحة" تستثني المرفوضة والمغلقة والمدموجة، فأي تطابق هو
-         تلقائياً مع بلاغ لم يُغلق بعد.
-       - النتيجة تُحفظ في r.dupMatch ليستخدمها العرض وزر المراجعة.
+       - يجمع كل البلاغات "المفتوحة" (قيد المراجعة أو مقبولة، غير مرفوضة/
+         مغلقة/مدموجة) في مجموعات (clusters) حسب تطابق الاسم + المنطقة
+         بعد تطبيع النص.
+       - أي مجموعة فيها بلاغان أو أكثر تُعتبر "بلاغات متكررة"، ويظهر
+         التنبيه على **كل بلاغ منها** (مو بس الأحدث) — النتيجة تُحفظ في
+         r.dupGroup كمصفوفة بباقي أعضاء المجموعة.
+       - الدمج يدعم أكثر من بلاغين بنفس الوقت (يختار الأدمن أيهم يدمج).
        ══════════════════════════════════════════════════════════════════ */
     var CLOSED_RAW_STATUSES = ['rescued', 'found', 'closed', 'report_closed', 'Merged', 'merged'];
 
@@ -1356,30 +1366,11 @@
         .toLowerCase();
     }
 
-    function findSimilarReport(target, pool){
-      var nName = normalizeArabicText(target.missingName);
-      var nLoc  = normalizeArabicText(target.region);
+    function dupClusterKey(r){
+      var nName = normalizeArabicText(r.missingName);
+      var nLoc  = normalizeArabicText(r.region);
       if(!nName || !nLoc) return null;
-      var best = null;
-      for(var i=0;i<pool.length;i++){
-        var other = pool[i];
-        if(other.docId===target.docId) continue;
-
-        var otherDt = other.dt||0, targetDt = target.dt||0;
-        // "الأقدم" = وقت أصغر، أو عند التساوي (مثلاً بلاغات تجريبية بنفس
-        // اليوم بدون وقت دقيق) نحسم الأمر بترتيب معرّف المستند بشكل ثابت
-        // حتى لا يتم تجاهل الاثنين لأن كلاً منهما لا يعتبر الآخر "أقدم"
-        var otherIsOlder = otherDt < targetDt ||
-          (otherDt === targetDt && String(other.docId) < String(target.docId));
-        if(!otherIsOlder) continue;
-
-        var oName = normalizeArabicText(other.missingName);
-        var oLoc  = normalizeArabicText(other.region);
-        if(oName && oLoc && oName===nName && oLoc===nLoc){
-          if(!best || (other.dt||0) > (best.dt||0)) best = other;
-        }
-      }
-      return best;
+      return nName + '||' + nLoc;
     }
 
     function annotateDuplicates(){
@@ -1387,28 +1378,41 @@
         return (r.status==='pending' || r.status==='accepted') &&
                CLOSED_RAW_STATUSES.indexOf(r.rawStatus) === -1;
       });
-      reports.forEach(function(r){ r.dupMatch = null; });
+      reports.forEach(function(r){ r.dupGroup = []; });
 
-      console.log('[تتبّع التشابه] عدد البلاغات المفتوحة المقارنة:', openList.length);
-      openList.filter(function(r){ return r.status==='pending'; }).forEach(function(r){
-        console.log('[تتبّع التشابه] بلاغ:', r.id,
-          '| الاسم الخام:', r.missingName, '→ مُطبَّع:', normalizeArabicText(r.missingName),
-          '| المنطقة الخام:', r.region, '→ مُطبَّع:', normalizeArabicText(r.region),
-          '| dt:', r.dt, '| docId:', r.docId);
+      // تجميع البلاغات المفتوحة حسب مفتاح (الاسم + المنطقة) بعد التطبيع
+      var groups = {};
+      openList.forEach(function(r){
+        var key = dupClusterKey(r);
+        if(!key) return;
+        if(!groups[key]) groups[key] = [];
+        groups[key].push(r);
       });
 
-      openList.forEach(function(r){
-        if(r.status !== 'pending') return; // التنبيه يظهر فقط على البلاغات قيد المراجعة (طابور قرار الأدمن)
-        var match = findSimilarReport(r, openList);
-        if(match){
+      console.log('[تتبّع التشابه] عدد البلاغات المفتوحة المقارنة:', openList.length);
+
+      Object.keys(groups).forEach(function(key){
+        var members = groups[key];
+        if(members.length < 2) return; // ما فيه تكرار
+
+        // نرتّب المجموعة من الأقدم للأحدث (نفس منطق كسر التعادل بالتوقيت)
+        members.sort(function(a,b){
+          var dtDiff = (a.dt||0) - (b.dt||0);
+          if(dtDiff !== 0) return dtDiff;
+          return String(a.docId) < String(b.docId) ? -1 : 1;
+        });
+
+        console.log('[تتبّع التشابه] ✅ مجموعة متكررة (' + members.length + ' بلاغات):',
+          members.map(function(m){ return m.id; }).join(' ، '));
+
+        members.forEach(function(r){
           var dismissed = r.dismissedDuplicateIds || [];
-          if(dismissed.indexOf(match.docId) === -1){
-            r.dupMatch = match;
-            console.log('[تتبّع التشابه] ✅ تطابق: بلاغ', r.id, '↔ بلاغ', match.id);
-          } else {
-            console.log('[تتبّع التشابه] تطابق موجود لكن تم تجاهله سابقاً:', r.id, '↔', match.id);
-          }
-        }
+          // باقي أعضاء المجموعة اللي ما تم تجاهلهم مسبقاً لهذا البلاغ بالذات
+          var relevant = members.filter(function(o){
+            return o.docId !== r.docId && dismissed.indexOf(o.docId) === -1;
+          });
+          r.dupGroup = relevant;
+        });
       });
     }
 
@@ -1594,10 +1598,12 @@ function getFiltered(){
       };
       var bg = avColors[r.status] || avColors.pending;
       var dupHtml = '';
-      if (r.status === 'pending' && r.dupMatch){
+      if (r.dupGroup && r.dupGroup.length > 0){
+        var totalInGroup = r.dupGroup.length + 1; // شامل البلاغ نفسه، بنفس منطق عدّاد نافذة المراجعة
+        var dupLabel = 'بلاغات مشابهة ('+toAr(totalInGroup)+') — مراجعة';
         dupHtml =
           '<button class="dup-badge" onclick="event.stopPropagation();openDupReview(\''+r.id+'\')" type="button">' +
-            '<i class="fas fa-triangle-exclamation"></i> بلاغ مشابه — مراجعة' +
+            '<i class="fas fa-triangle-exclamation"></i> '+dupLabel +
           '</button>';
       }
       return '<div class="missing-cell">' +
@@ -1762,34 +1768,84 @@ function getFiltered(){
     function closeConfirm(){ document.getElementById('confirmOvr').classList.remove('on'); }
 
     /* ════════════════════════════════════════════════════════════════
-       كشف تشابه البلاغات — مراجعة القرار (خطوة 1) ثم تأكيد نهائي (خطوة 2)
+       كشف تشابه البلاغات — مراجعة المجموعة كاملة (خطوة 1) ثم تأكيد نهائي (خطوة 2)
        ════════════════════════════════════════════════════════════════ */
-    var dupReviewIds = null; // { id, simId }
+    var dupReviewGroup = null; // مصفوفة من r.id لكل البلاغات المعروضة حالياً بنافذة المراجعة
+
+    /* عرض مصغّر لملف الإثبات (المحضر المرفق) داخل بطاقة البلاغ بنافذة مراجعة التشابه */
+    function dupEvidenceHtml(g){
+      var evUrl  = g.evidenceUrl  || '';
+      var evType = g.evidenceType || '';
+      if (!evUrl){
+        return '<div class="dv-row" style="margin-top:6px;color:#a08865;"><b>المحضر المرفق:</b> لا يوجد ملف</div>';
+      }
+      if (evType === 'pdf'){
+        return '<div class="dv-row" style="margin-top:6px;">' +
+          '<b>المحضر المرفق:</b> ' +
+          '<a href="'+evUrl+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" ' +
+          'style="display:inline-flex;align-items:center;gap:5px;color:#8B6B47;font-weight:700;text-decoration:none;">' +
+          '<i class="fas fa-file-pdf" style="color:#c0392b;"></i> عرض الملف</a>' +
+        '</div>';
+      }
+      return '<div class="dv-row" style="margin-top:6px;">' +
+        '<b>المحضر المرفق:</b>' +
+        '<div style="margin-top:6px;">' +
+          '<a href="'+evUrl+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">' +
+            '<img src="'+evUrl+'" alt="المحضر المرفق" ' +
+            'style="max-width:100%;max-height:130px;border-radius:8px;border:1.5px solid rgba(166,124,82,0.25);object-fit:contain;cursor:zoom-in;" ' +
+            'onerror="this.parentElement.parentElement.innerHTML=\'<b>المحضر المرفق:</b> تعذّر تحميل الصورة\'" />' +
+          '</a>' +
+        '</div>' +
+      '</div>';
+    }
 
     function openDupReview(id){
       var r = find(id);
-      if (!r || !r.dupMatch) return;
-      var o = r.dupMatch;
-      dupReviewIds = { id: id, simId: o.id };
+      if (!r || !r.dupGroup || !r.dupGroup.length) return;
+
+      // المجموعة الكاملة = البلاغ المضغوط + كل أعضاء dupGroup، بدون تكرار، من الأقدم للأحدث
+      var seen = {};
+      var groupReports = [r].concat(r.dupGroup).filter(function(g){
+        if (seen[g.docId]) return false;
+        seen[g.docId] = true;
+        return true;
+      });
+      groupReports.sort(function(a,b){
+        var d = (a.dt||0) - (b.dt||0);
+        if (d !== 0) return d;
+        return String(a.docId) < String(b.docId) ? -1 : 1;
+      });
+
+      dupReviewGroup = groupReports.map(function(g){ return g.id; });
+      var oldestDocId = groupReports[0].docId;
 
       document.getElementById('dupSub').textContent =
-        'بلاغ "' + r.missingName + '" يتشابه مع بلاغ سابق لم يُغلق بعد';
+        'العدد: ' + toAr(groupReports.length) + ' بلاغات مشابهة';
 
-      document.getElementById('dupCompare').innerHTML =
-        '<div class="dup-col">' +
-          '<div class="dup-col-label">البلاغ الأحدث (' + r.id + ')</div>' +
-          di('اسم المفقود', r.missingName) +
-          di('المنطقة', r.region) +
-          di('الموقع التفصيلي', r.location) +
-          di('التاريخ', formatDate(r.date)) +
-        '</div>' +
-        '<div class="dup-col">' +
-          '<div class="dup-col-label">البلاغ الأقدم (' + o.id + ')</div>' +
-          di('اسم المفقود', o.missingName) +
-          di('المنطقة', o.region) +
-          di('الموقع التفصيلي', o.location) +
-          di('التاريخ', formatDate(o.date)) +
-        '</div>';
+      document.getElementById('dupCompare').innerHTML = groupReports.map(function(g){
+        return (
+          '<label class="dup-col checked" data-docid="'+g.docId+'">' +
+            '<input type="checkbox" class="dup-check" data-id="'+g.id+'" checked>' +
+            '<div class="dup-col-body">' +
+              '<div class="dup-col-label">' +
+                (g.docId === oldestDocId ? '<span class="oldest-tag">الأقدم</span>' : '') +
+                g.id +
+              '</div>' +
+              '<div class="dv-row"><b>الاسم:</b> ' + g.missingName + '</div>' +
+              '<div class="dv-row"><b>المنطقة:</b> ' + g.region + ' &nbsp; <b>الموقع:</b> ' + g.location + '</div>' +
+              '<div class="dv-row"><b>المركبة:</b> ' + g.vehicle + ' &nbsp; <b>الحالة:</b> ' + statusBadge(g.status) + '</div>' +
+              '<div class="dv-row"><b>التاريخ:</b> ' + formatDate(g.date) + '</div>' +
+              dupEvidenceHtml(g) +
+            '</div>' +
+          '</label>'
+        );
+      }).join('');
+
+      Array.prototype.forEach.call(document.querySelectorAll('.dup-check'), function(cb){
+        cb.onchange = function(){
+          cb.closest('.dup-col').classList.toggle('checked', cb.checked);
+        };
+      });
 
       document.getElementById('dupKeepBtn').onclick  = function(){ openDupConfirm('keep'); };
       document.getElementById('dupMergeBtn').onclick = function(){ openDupConfirm('merge'); };
@@ -1801,14 +1857,28 @@ function getFiltered(){
       document.getElementById('dupReviewOvr').classList.remove('on');
     }
 
+    function getCheckedDupIds(){
+      var ids = [];
+      Array.prototype.forEach.call(document.querySelectorAll('.dup-check:checked'), function(cb){
+        ids.push(cb.getAttribute('data-id'));
+      });
+      return ids;
+    }
+
     /* خطوة التأكيد النهائي — تحمي من الضغط بالخطأ أو تغيير الرأي */
     function openDupConfirm(choice){
-      if (!dupReviewIds) return;
-      var r = find(dupReviewIds.id);
-      var o = find(dupReviewIds.simId);
-      if (!r || !o) return;
+      if (!dupReviewGroup) return;
+      var selectedIds = choice === 'merge' ? getCheckedDupIds() : dupReviewGroup.slice();
 
-      pendingAction = { type: 'dup', id: r.id, simId: o.id, choice: choice };
+      if (choice === 'merge' && selectedIds.length < 2){
+        notify('حدّد بلاغين على الأقل للدمج', 'w');
+        return;
+      }
+
+      var selectedReports = selectedIds.map(find).filter(Boolean);
+      if (selectedReports.length < (choice === 'merge' ? 2 : 1)) return;
+
+      pendingAction = { type: 'dup', choice: choice, ids: selectedIds };
 
       var icon = document.getElementById('mIcon');
       var title= document.getElementById('mTitle');
@@ -1821,19 +1891,19 @@ function getFiltered(){
       icon.innerHTML = '<i class="fas fa-clone"></i>';
 
       if (choice === 'merge'){
-        title.textContent = 'تأكيد دمج البلاغين';
-        sub.textContent   = 'سيتم توحيد فريقَي البلاغين داخل البلاغ الأقدم، وسيختفي البلاغ الأحدث من اللوحة. هل أنت متأكد؟';
+        title.textContent = 'تأكيد دمج ' + toAr(selectedReports.length) + ' بلاغات';
+        sub.textContent   = 'سيتم توحيد الفرق وأوصاف الموقع لكل البلاغات المحدّدة داخل أقدم بلاغ بينها، وستختفي البقية من اللوحة. هل أنت متأكد؟';
       } else {
         title.textContent = 'تأكيد الإبقاء منفصلين';
-        sub.textContent    = 'لن يظهر تنبيه التشابه لهذا الزوج من البلاغين مرة أخرى، وسيبقى كل بلاغ مستقلاً. هل تريد المتابعة؟';
+        sub.textContent   = 'لن يظهر تنبيه التشابه بين هذه البلاغات مرة أخرى، وستبقى كل واحدة مستقلة. هل تريد المتابعة؟';
       }
 
-      det.innerHTML =
-        di('البلاغ الأحدث', r.id + ' — ' + r.missingName) +
-        di('البلاغ الأقدم',  o.id + ' — ' + o.missingName);
+      det.innerHTML = selectedReports.map(function(g){
+        return di(g.id, g.missingName);
+      }).join('');
 
       btn.className   = 'mbtn mbtn-primary';
-      btn.textContent = choice === 'merge' ? 'نعم، ادمج البلاغين' : 'نعم، أبقهما منفصلين';
+      btn.textContent = choice === 'merge' ? 'نعم، ادمجها' : 'نعم، أبقها منفصلة';
       btn.onclick = function(){ execAction(); };
 
       closeDupReview();
@@ -1841,90 +1911,154 @@ function getFiltered(){
     }
 
     function execDupAction(){
-      var r = find(pendingAction.id);
-      var o = find(pendingAction.simId);
-      if (!r || !o) { pendingAction = null; closeConfirm(); return; }
+      var selectedReports = pendingAction.ids.map(find).filter(Boolean);
+      if (!selectedReports.length) { pendingAction = null; closeConfirm(); return; }
 
       if (pendingAction.choice === 'merge'){
-        mergeReports(r, o).then(function(ok){
-          notify(ok ? '✓ تم دمج البلاغين بنجاح' : 'تعذّر دمج البلاغين، حاول مرة أخرى', ok ? 's' : 'ne');
+        mergeReportsGroup(selectedReports).then(function(ok){
+          notify(ok ? '✓ تم دمج البلاغات بنجاح' : 'تعذّر دمج البلاغات، حاول مرة أخرى', ok ? 's' : 'ne');
           if (ok) loadReports();
           closeConfirm();
           pendingAction = null;
-          dupReviewIds = null;
+          dupReviewGroup = null;
         });
       } else {
-        dismissDuplicate(r, o).then(function(ok){
-          notify(ok ? 'تم إبقاء البلاغين منفصلين' : 'حدث خطأ أثناء حفظ القرار', ok ? 'i' : 'ne');
-          if (ok){
-            r.dismissedDuplicateIds = (r.dismissedDuplicateIds || []).concat([o.docId]);
-            r.dupMatch = null;
-            renderAll();
-          }
+        dismissDuplicateGroup(selectedReports).then(function(ok){
+          notify(ok ? 'تم إبقاء البلاغات منفصلة' : 'حدث خطأ أثناء حفظ القرار', ok ? 'i' : 'ne');
+          if (ok) loadReports();
           closeConfirm();
           pendingAction = null;
-          dupReviewIds = null;
+          dupReviewGroup = null;
         });
       }
     }
 
-    /* ── Firestore: دمج بلاغين — يوحّد الفريقين في البلاغ الأقدم ويُخفي الأحدث ── */
-    async function mergeReports(newerR, olderR){
+    /* ── Firestore: دمج مجموعة بلاغات — يوحّد الفرق وأوصاف الموقع داخل الأقدم ── */
+    async function mergeReportsGroup(selectedReports){
       try{
-        var newerSnap = await fsGetDoc(fsDoc(db, 'Report', newerR.docId));
-        var olderSnap = await fsGetDoc(fsDoc(db, 'Report', olderR.docId));
-        if (!newerSnap.exists() || !olderSnap.exists()) return false;
+        var sorted = selectedReports.slice().sort(function(a,b){
+          var d = (a.dt||0) - (b.dt||0);
+          if (d !== 0) return d;
+          return String(a.docId) < String(b.docId) ? -1 : 1;
+        });
+        var survivor = sorted[0];
+        var others   = sorted.slice(1);
 
-        var newerData = newerSnap.data();
-        var olderData = olderSnap.data();
+        var snaps = await Promise.all(
+          sorted.map(function(g){ return fsGetDoc(fsDoc(db, 'Report', g.docId)); })
+        );
+        if (snaps.some(function(s){ return !s.exists(); })) return false;
+        var dataList = snaps.map(function(s){ return s.data(); });
+        var survivorData = dataList[0];
+        var othersData   = dataList.slice(1);
 
         function toUids(arr){
           return (Array.isArray(arr) ? arr : []).map(function(m){
             return (typeof m === 'object' && m !== null) ? m.userId : m;
           }).filter(Boolean);
         }
-        var olderUids  = toUids(olderData.teamMembers);
-        var newerUids  = toUids(newerData.teamMembers);
-        var mergedUids = Array.from(new Set(olderUids.concat(newerUids)));
+        // توحيد الفرق من كل البلاغات المحدّدة
+        var mergedUids = toUids(survivorData.teamMembers);
+        othersData.forEach(function(d){ mergedUids = mergedUids.concat(toUids(d.teamMembers)); });
+        mergedUids = Array.from(new Set(mergedUids));
 
-        var olderUpdate = {
-          teamMembers:       mergedUids,
-          CurrentVolunteers: mergedUids.length,
-          mergedReports:     fsArrayUnion(newerR.docId)
+        // دمج الحقول النصية الوصفية (وصف الموقع + تفاصيل البلاغ + الموقع
+        // التفصيلي + المركبة) بدل فقدانها
+        function mergeTextField(base, extra){
+          var parts = [base].filter(function(t){ return t && t !== '—'; });
+          extra.forEach(function(t){
+            if (t && t !== '—' && parts.indexOf(t) === -1) parts.push(t);
+          });
+          return parts.join(' / ');
+        }
+        var mergedLocationDesc = mergeTextField(
+          survivorData.LocationDescription || survivorData.locationDescription || '',
+          othersData.map(function(d){ return d.LocationDescription || d.locationDescription || ''; })
+        );
+        var mergedDetails = mergeTextField(
+          survivorData.Details || survivorData.details || '',
+          othersData.map(function(d){ return d.Details || d.details || ''; })
+        );
+        var mergedLastSeenLocation = mergeTextField(
+          survivorData.LastSeenLocation || survivorData.lastSeenLocation || '',
+          othersData.map(function(d){ return d.LastSeenLocation || d.lastSeenLocation || ''; })
+        );
+        var mergedVehicle = mergeTextField(
+          survivorData.Vehicle || survivorData.vehicle || '',
+          othersData.map(function(d){ return d.Vehicle || d.vehicle || ''; })
+        );
+
+        console.log('[تتبّع الدمج] survivor docId:', survivor.docId, '(', survivor.id, ')');
+        console.log('[تتبّع الدمج] وصف الموقع — قبل الدمج لكل بلاغ:',
+          [survivorData].concat(othersData).map(function(d){ return d.LocationDescription || d.locationDescription || '(فاضي)'; }));
+        console.log('[تتبّع الدمج] وصف الموقع — بعد الدمج:', mergedLocationDesc);
+        console.log('[تتبّع الدمج] تفاصيل البلاغ — قبل الدمج لكل بلاغ:',
+          [survivorData].concat(othersData).map(function(d){ return d.Details || d.details || '(فاضي)'; }));
+        console.log('[تتبّع الدمج] تفاصيل البلاغ — بعد الدمج:', mergedDetails);
+        console.log('[تتبّع الدمج] الموقع التفصيلي — قبل الدمج لكل بلاغ:',
+          [survivorData].concat(othersData).map(function(d){ return d.LastSeenLocation || d.lastSeenLocation || '(فاضي)'; }));
+        console.log('[تتبّع الدمج] الموقع التفصيلي — بعد الدمج:', mergedLastSeenLocation);
+        console.log('[تتبّع الدمج] المركبة — قبل الدمج لكل بلاغ:',
+          [survivorData].concat(othersData).map(function(d){ return d.Vehicle || d.vehicle || '(فاضي)'; }));
+        console.log('[تتبّع الدمج] المركبة — بعد الدمج:', mergedVehicle);
+
+        var survivorUpdate = {
+          teamMembers:         mergedUids,
+          CurrentVolunteers:   mergedUids.length,
+          mergedReports:       fsArrayUnion.apply(null, others.map(function(o){ return o.docId; })),
+          LocationDescription: mergedLocationDesc,
+          Details:             mergedDetails,
+          LastSeenLocation:    mergedLastSeenLocation,
+          Vehicle:             mergedVehicle
         };
-        if (!olderData.LeaderID && newerData.LeaderID){
-          olderUpdate.LeaderID    = newerData.LeaderID;
-          olderUpdate.leader      = newerData.leader      || '';
-          olderUpdate.leaderPhone = newerData.leaderPhone || '';
+        // القيادة: إن لم يكن للأقدم قائد، ننقلها من أول بلاغ آخر عنده قائد
+        if (!survivorData.LeaderID){
+          var withLeader = othersData.find(function(d){ return d.LeaderID; });
+          if (withLeader){
+            survivorUpdate.LeaderID    = withLeader.LeaderID;
+            survivorUpdate.leader      = withLeader.leader      || '';
+            survivorUpdate.leaderPhone = withLeader.leaderPhone || '';
+          }
         }
         if (mergedUids.length > 0){
-          olderUpdate.Status = 'active';
-          olderUpdate.status = 'active';
+          survivorUpdate.Status = 'active';
+          survivorUpdate.status = 'active';
         }
 
-        await fsUpdateDoc(fsDoc(db, 'Report', olderR.docId), olderUpdate);
-        await fsUpdateDoc(fsDoc(db, 'Report', newerR.docId), {
-          Status:      'Merged',
-          status:      'Merged',
-          mergedInto:  olderR.docId,
-          teamMembers: []
-        });
+        await fsUpdateDoc(fsDoc(db, 'Report', survivor.docId), survivorUpdate);
+
+        var verifySnap = await fsGetDoc(fsDoc(db, 'Report', survivor.docId));
+        console.log('[تتبّع الدمج] ✅ تحقق فوري بعد الكتابة — المستند الناجي الآن:', verifySnap.data());
+
+        await Promise.all(others.map(function(o){
+          return fsUpdateDoc(fsDoc(db, 'Report', o.docId), {
+            Status:      'Merged',
+            status:      'Merged',
+            mergedInto:  survivor.docId,
+            teamMembers: []
+          });
+        }));
         return true;
       } catch(err){
-        console.error('mergeReports error:', err);
+        console.error('mergeReportsGroup error:', err);
         return false;
       }
     }
 
-    /* ── Firestore: تسجيل قرار "إبقاء منفصلين" حتى لا يتكرر التنبيه لنفس الزوج ── */
-    async function dismissDuplicate(newerR, olderR){
+    /* ── Firestore: تسجيل قرار "إبقاء منفصلين" لكل زوج داخل المجموعة المُراجَعة ── */
+    async function dismissDuplicateGroup(selectedReports){
       try{
-        await fsUpdateDoc(fsDoc(db, 'Report', newerR.docId), {
-          dismissedDuplicateIds: fsArrayUnion(olderR.docId)
-        });
+        var docIds = selectedReports.map(function(g){ return g.docId; });
+        await Promise.all(selectedReports.map(function(g){
+          var others = docIds.filter(function(id){ return id !== g.docId; });
+          if (!others.length) return Promise.resolve();
+          return fsUpdateDoc(fsDoc(db, 'Report', g.docId), {
+            dismissedDuplicateIds: fsArrayUnion.apply(null, others)
+          });
+        }));
         return true;
       } catch(err){
-        console.error('dismissDuplicate error:', err);
+        console.error('dismissDuplicateGroup error:', err);
         return false;
       }
     }
