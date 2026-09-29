@@ -1752,6 +1752,25 @@ function getFiltered(){
           notify(msg, pendingAction.action === 'accept' ? 's' : 'ne');
           renderAll();
           closeConfirm();
+
+          /* ── إرسال إشعار واتساب لجميع المتطوعين عند قبول البلاغ ── */
+          if (pendingAction.action === 'accept') {
+            fetch('https://rasid-whatsapp-notify.sshrg99.workers.dev/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-App-Secret': 'qwertyuioplkjhgfdsazxcvbnmmmmmmhgfdsavbnbvctr'
+              },
+              body: JSON.stringify({
+                reportTitle:    r.missingName,
+                reportLocation: r.location
+              })
+            }).catch(function(err) {
+              // لا نوقف عملية القبول لو فشل إرسال الإشعار، فقط نسجل الخطأ
+              console.error('WhatsApp notify error:', err);
+            });
+          }
+
           pendingAction = null;
         }).catch(function(err) {
           console.error('Firestore update error:', err);
