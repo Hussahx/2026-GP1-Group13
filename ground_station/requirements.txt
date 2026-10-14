@@ -14,4 +14,6 @@ lap                       # needed by the object tracker (ByteTrack)
 fastapi
 uvicorn[standard]         # [standard] includes WebSocket support
 
-# Later steps (added when we get there): firebase-admin, cloudinary
+# Step 5: saving detections
+firebase-admin            # writes to Firestore with serviceAccountKey.json
+requests                  # uploads detection images to Cloudinary
