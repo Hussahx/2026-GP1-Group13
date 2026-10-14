@@ -67,3 +67,10 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Ground station
+ground_station/models/exports/
+ground_station/data/
+ground_station/serviceAccountKey.json
+ground_station/speed_results.csv
+__pycache__/
