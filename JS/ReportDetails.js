@@ -716,7 +716,7 @@ if (d.LoggedAt && d.LoggedAt.toDate) {
     setReport();
     draw();
     wireEvents();
-    startSim();
+        // startSim();  // fake alerts removed - real detections now come from Firestore (detectionAlerts.js)
 
     setTimeout(setHeader, 50);
     setTimeout(setHeader, 200);
