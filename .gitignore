@@ -74,3 +74,4 @@ ground_station/data/
 ground_station/serviceAccountKey.json
 ground_station/speed_results.csv
 __pycache__/
+  ground_station/kernel.errors.txt
