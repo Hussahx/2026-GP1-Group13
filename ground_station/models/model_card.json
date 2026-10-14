@@ -1,0 +1,89 @@
+{
+  "model": "YOLO26s",
+  "run": "yolo26s_3class_960_rf3",
+  "weights": "rasid_v3_yolo26s_960.pt",
+  "classes": [
+    "car",
+    "moto",
+    "person"
+  ],
+  "imgsz": 960,
+  "thresholds": {
+    "car": {
+      "balanced": 0.13813813813813813,
+      "rescue": 0.050050050050050046,
+      "rescue_reaches_target": false
+    },
+    "moto": {
+      "balanced": 0.23323323323323322,
+      "rescue": 0.050050050050050046,
+      "rescue_reaches_target": false
+    },
+    "person": {
+      "balanced": 0.38538538538538536,
+      "rescue": 0.0940940940940941,
+      "rescue_reaches_target": true
+    }
+  },
+  "target_recall": 0.85,
+  "test_results": [
+    {
+      "cls": "car",
+      "boxes": 492,
+      "mAP50": 0.9672,
+      "mAP50-95": 0.7032,
+      "balanced_conf": 0.1381,
+      "balanced_P": 0.8948,
+      "balanced_R": 0.9736,
+      "balanced_F1": 0.9326,
+      "rescue_conf": 0.0501,
+      "rescue_P": 0.8431,
+      "rescue_R": 0.9797,
+      "rescue_F1": 0.9063
+    },
+    {
+      "cls": "moto",
+      "boxes": 11,
+      "mAP50": 0.4786,
+      "mAP50-95": 0.3644,
+      "balanced_conf": 0.2332,
+      "balanced_P": 0.7567,
+      "balanced_R": 0.4545,
+      "balanced_F1": 0.5679,
+      "rescue_conf": 0.0501,
+      "rescue_P": 0.2271,
+      "rescue_R": 0.4545,
+      "rescue_F1": 0.3029
+    },
+    {
+      "cls": "person",
+      "boxes": 2575,
+      "mAP50": 0.8427,
+      "mAP50-95": 0.5857,
+      "balanced_conf": 0.3854,
+      "balanced_P": 0.9306,
+      "balanced_R": 0.7499,
+      "balanced_F1": 0.8305,
+      "rescue_conf": 0.0941,
+      "rescue_P": 0.8229,
+      "rescue_R": 0.8173,
+      "rescue_F1": 0.8201
+    },
+    {
+      "cls": "ALL (mean of classes)",
+      "boxes": 3078,
+      "mAP50": 0.7628,
+      "mAP50-95": 0.5511,
+      "balanced_conf": null,
+      "balanced_P": 0.8607,
+      "balanced_R": 0.726,
+      "balanced_F1": 0.777,
+      "rescue_conf": null,
+      "rescue_P": 0.631,
+      "rescue_R": 0.7505,
+      "rescue_F1": 0.6764
+    }
+  ],
+  "dataset": "Roboflow rasid-combined-dataset v3, split 70/20/10 by group (same as run 1)",
+  "trained_on": "2026-10-05"
+}

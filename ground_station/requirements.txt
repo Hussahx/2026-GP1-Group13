@@ -1,0 +1,13 @@
+# Rasid ground station - Python packages
+# Install with:  pip install -r requirements.txt
+
+# Step 1: model + speed test
+ultralytics>=8.4.173      # same version family the model was trained with (YOLO26 needs 8.4+)
+opencv-python
+numpy
+onnx                      # export to ONNX (faster on CPU)
+onnxruntime
+openvino                  # Intel's fast CPU runtime
+lap                       # needed by the object tracker (ByteTrack)
+
+# Later steps (added when we get there): fastapi, uvicorn, firebase-admin, cloudinary
