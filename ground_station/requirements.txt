@@ -10,4 +10,8 @@ onnxruntime
 openvino                  # Intel's fast CPU runtime
 lap                       # needed by the object tracker (ByteTrack)
 
-# Later steps (added when we get there): fastapi, uvicorn, firebase-admin, cloudinary
+# Step 4: server (live stream to the website)
+fastapi
+uvicorn[standard]         # [standard] includes WebSocket support
+
+# Later steps (added when we get there): firebase-admin, cloudinary
