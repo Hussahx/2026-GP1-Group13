@@ -41,10 +41,13 @@ from pydantic import BaseModel
 
 from auair_loader import DEFAULT_FLIGHT
 from detector import Detector
+from event_manager import EventManager
 from frame_source import AuAirSource
+from storage import Storage
 
-STREAM_WIDTH = 1280          # frames are shrunk to this width for the browser (smaller = faster)
+STREAM_WIDTH = 960           # frames are shrunk to this width for the browser (smaller = faster)
 JPEG_QUALITY = 70
+TIMING_EVERY = 50            # print a timing line every N frames
 
 
 class Mission:
@@ -52,6 +55,7 @@ class Mission:
 
     def __init__(self):
         self.detector = None
+        self.storage = None
         self.thread = None
         self.stop_flag = threading.Event()
         self.lock = threading.Lock()
@@ -66,6 +70,7 @@ class Mission:
         print("Loading model + warm-up (first time takes ~20 s)...")
         self.detector = Detector()
         self.detector.warmup()
+        self.storage = Storage()
         print("Model ready.")
 
     def start(self, report_id, flight=DEFAULT_FLIGHT, start=0):
@@ -104,12 +109,22 @@ class Mission:
             self._set_state("ended")
             return
         self.info["source"] = source.name
+        self.storage.mission_started(self.info)
+        events = EventManager(self.info["reportId"], self.info["missionId"])
         self._set_state("running")
         t0, n = time.perf_counter(), 0
+        sums = {"model": 0.0, "events": 0.0, "encode": 0.0, "loop": 0.0}
         for frame in source:
             if self.stop_flag.is_set():
                 break
+            t_loop = time.perf_counter()
             dets = self.detector.detect(frame.image)
+            t_ev = time.perf_counter()
+            for kind, det in events.update(frame, dets):          # one detection per person
+                self.storage.save(kind, det)
+            t_enc = time.perf_counter()
+            image = self._encode(frame.image)
+            t_end = time.perf_counter()
             n += 1
             msg = {
                 "type": "frame",
@@ -117,17 +132,29 @@ class Mission:
                 "reportId": self.info["reportId"],
                 "source": source.name,
                 "n": frame.number,
-                "image": self._encode(frame.image),
+                "image": image,
                 "telemetry": frame.telemetry.to_dict(),
-                "boxes": [{"cls": d["cls"], "conf": d["conf"], "trackId": d["track_id"], "box": d["box"]}
+                "boxes": [{"cls": d["cls"], "conf": d["conf"], "trackId": d["track_id"], "box": d["box"],
+                           "detectionId": events.detection_id_for(d["track_id"])}
                           for d in dets],
                 "stats": {"modelMs": round(self.detector.last_ms),
                           "skipped": source.skipped,
+                          "detections": len(events.detections),
                           "fps": round(n / max(1e-6, time.perf_counter() - t0), 1)},
             }
             with self.lock:
                 self.latest = json.dumps(msg)
                 self.seq += 1
+            for k, v in (("model", t_ev - t_loop), ("events", t_enc - t_ev), ("encode", t_end - t_enc),
+                         ("loop", time.perf_counter() - t_loop)):
+                sums[k] += v
+            if n % TIMING_EVERY == 0:
+                print(f"[timing] last {TIMING_EVERY} frames avg: model {1000*sums['model']/TIMING_EVERY:.0f} ms | "
+                      f"events {1000*sums['events']/TIMING_EVERY:.0f} ms | encode {1000*sums['encode']/TIMING_EVERY:.0f} ms | "
+                      f"total {1000*sums['loop']/TIMING_EVERY:.0f} ms (budget 200) | skipped so far {source.skipped} | "
+                      f"detections {len(events.detections)}")
+                sums = dict.fromkeys(sums, 0.0)
+        self.storage.mission_ended(self.info, n, len(events.detections))
         self._set_state("ended")
 
     @staticmethod

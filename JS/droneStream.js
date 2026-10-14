@@ -1,221 +1,230 @@
 // ============================================================
-//  RASID – Live drone stream (RealTimeReportDetails.html)
+//  RASID – Detection alerts (user story 33)
 // ------------------------------------------------------------
-//  Connects to the ground station (ground_station/server.py) over a
-//  WebSocket and shows the drone video with the model's boxes drawn on top.
+//  Listens to Firestore "Detection" documents of THIS report (?docId=...).
+//  The ground station writes them (one document per person found).
 //
-//  - Shows the stream ONLY if the mission belongs to this report (?docId=...)
-//  - Shows "no drone available" when the server is off or no mission runs
-//  - Reconnects automatically (leave the page and come back = it reconnects)
-//  - Team leader only: a "start / end drone mission" button in the card header
-//    (calls the ground station's /mission/start and /mission/stop)
-//  - Sends every telemetry update as a browser event, so the map can use it:
-//        window.addEventListener('rasid:telemetry', e => e.detail ...)
+//  - New detection while the page is open -> notification (time, coordinates,
+//    type, confidence) with a "View details" button
+//  - Details: captured image with the box, coordinates, Google Maps link,
+//    and buttons for the volunteer to set the status:
+//    confirmed / false alarm / duplicate
+//  - A list of all detections of this report under the drone video
+//  - Shares the list with the map:   window.addEventListener('rasid:detections', e => e.detail)
+//    and lets the map open a detection:  window.RasidDetections.open(id)
 // ============================================================
 
-(function () {
-  // Where the ground station runs. Change this ONE line when the server moves.
-  const STREAM_URL = window.RASID_STREAM_URL || 'ws://localhost:8000/ws/stream';
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-  const LABELS = { person: 'شخص', car: 'سيارة', moto: 'دراجة نارية' };
-  const COLORS = { person: '#ef4444', car: '#3b82f6', moto: '#f59e0b' };
+const firebaseConfig = {
+  apiKey: "AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0",
+  authDomain: "rasid-1bb06.firebaseapp.com",
+  projectId: "rasid-1bb06",
+  storageBucket: "rasid-1bb06.firebasestorage.app",
+  messagingSenderId: "668525115587",
+  appId: "1:668525115587:web:e017be3b5cbf4ac3b30a76",
+};
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-  const API_URL = STREAM_URL.replace(/^ws/, 'http').replace(/\/ws\/stream$/, '');
+const STATUS = {
+  new:         { ar: "جديد",        color: "#b45309" },
+  confirmed:   { ar: "مؤكَّد",       color: "#15803d" },
+  false_alarm: { ar: "إنذار خاطئ",   color: "#6b7280" },
+  duplicate:   { ar: "مكرر",         color: "#6b7280" },
+};
 
-  const reportDocId = new URLSearchParams(window.location.search).get('docId');
-  let box, canvas, ctx, overlay, ws, retryMs = 1000, lastFrameAt = 0;
-  let btn, connected = false, missionState = 'idle', missionReport = null, busy = false;
+const docId = new URLSearchParams(location.search).get("docId");
+const detections = new Map();          // id -> data
+let firstSnapshot = true;
+let listEl, countEl;
 
-  function setup() {
-    box = document.getElementById('liveVideoBox');
-    if (!box) return;
-    box.innerHTML = '';
-    box.style.position = 'relative';
-    box.style.height = 'auto';
-    box.style.minHeight = '320px';
-    box.style.padding = '0';
-    box.style.overflow = 'hidden';
-    box.style.background = '#1d1a16';
+injectStyles();
+if (docId) start();
 
-    canvas = document.createElement('canvas');
-    canvas.width = 1280; canvas.height = 720;
-    canvas.style.cssText = 'width:100%;height:auto;display:none;border-radius:20px;';
-    canvas.dir = 'ltr';            // the page is RTL; drawing coordinates must stay left-to-right
-    ctx = canvas.getContext('2d');
-
-    overlay = document.createElement('div');
-    overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
-      'color:#f5efe6;font-weight:800;text-align:center;padding:1rem;line-height:1.9;';
-
-    box.appendChild(canvas);
-    box.appendChild(overlay);
-    showMessage('جارٍ الاتصال بمحطة الدرون...');
-    setupLeaderButton();
-    connect();
-    setInterval(checkAlive, 2000);
-  }
-
-  function showMessage(text) {
-    overlay.innerHTML = text;
-    overlay.style.display = 'flex';
-    canvas.style.display = 'none';
-  }
-
-  function showVideo() {
-    overlay.style.display = 'none';
-    canvas.style.display = 'block';
-  }
-
-  function connect() {
-    try { ws = new WebSocket(STREAM_URL); } catch (e) { return retry(); }
-    ws.onopen = () => { retryMs = 1000; connected = true; updateButton(); };
-    ws.onmessage = (ev) => {
-      let msg; try { msg = JSON.parse(ev.data); } catch (e) { return; }
-      if (msg.type === 'status') return onStatus(msg);
-      if (msg.type === 'frame') return onFrame(msg);
-    };
-    ws.onclose = () => {
-      connected = false; updateButton();
-      showMessage('لا يوجد درون متصل حالياً<br><small>سيتم إعادة الاتصال تلقائياً</small>');
-      retry();
-    };
-    ws.onerror = () => { try { ws.close(); } catch (e) {} };
-  }
-
-  function retry() {
-    setTimeout(connect, retryMs);
-    retryMs = Math.min(retryMs * 2, 10000);
-  }
-
-  function belongsHere(msg) {
-    // No docId in the URL (e.g. opened directly for testing) = show any mission
-    return !reportDocId || msg.reportId === reportDocId;
-  }
-
-  function onStatus(msg) {
-    missionState = msg.state; missionReport = msg.reportId || null; updateButton();
-    if (msg.state === 'running' && belongsHere(msg)) return;   // frames will follow
-    if (msg.state === 'starting' && belongsHere(msg)) return showMessage('جارٍ تشغيل الدرون...');
-    if (msg.state === 'ended' && belongsHere(msg)) return showMessage('انتهت مهمة الدرون');
-    showMessage('لا يوجد درون نشط لهذا البلاغ حالياً');
-  }
-
-  function onFrame(msg) {
-    if (!belongsHere(msg)) return showMessage('لا يوجد درون نشط لهذا البلاغ حالياً');
-    lastFrameAt = Date.now();
-    const img = new Image();
-    img.onload = () => {
-      if (canvas.width !== img.width) { canvas.width = img.width; canvas.height = img.height; }
-      ctx.drawImage(img, 0, 0);
-      ctx.direction = 'ltr'; ctx.textAlign = 'left';
-      drawBoxes(msg.boxes);
-      drawInfo(msg);
-      showVideo();
-    };
-    img.src = msg.image;
-
-    const src = document.getElementById('videoSource');
-    if (src) src.textContent = msg.source;
-
-    window.dispatchEvent(new CustomEvent('rasid:telemetry',
-      { detail: { reportId: msg.reportId, missionId: msg.missionId, ...msg.telemetry } }));
-  }
-
-  function drawBoxes(boxes) {
-    const w = canvas.width, h = canvas.height, lw = Math.max(2, w / 500);
-    ctx.font = `bold ${Math.round(w / 55)}px Tajawal, sans-serif`;
-    (boxes || []).forEach(b => {
-      const [x1, y1, x2, y2] = [b.box[0] * w, b.box[1] * h, b.box[2] * w, b.box[3] * h];
-      const color = COLORS[b.cls] || '#ffffff';
-      ctx.strokeStyle = color; ctx.lineWidth = lw;
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-      const label = `${Math.round(b.conf * 100)}% ${LABELS[b.cls] || b.cls}`;
-      const tw = ctx.measureText(label).width + 10, th = w / 45;
-      const ty = Math.max(0, y1 - th - 2);
-      ctx.fillStyle = color; ctx.fillRect(x1, ty, tw, th);
-      ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';
-      ctx.fillText(label, x1 + 5, ty + 2);
+function start() {
+  buildList();
+  const q = query(collection(db, "Detection"), where("ReportID", "==", docId));
+  onSnapshot(q, (snap) => {
+    snap.docChanges().forEach((ch) => {
+      const d = { id: ch.doc.id, ...ch.doc.data() };
+      if (ch.type === "removed") { detections.delete(d.id); return; }
+      detections.set(d.id, d);
+      if (ch.type === "added" && !firstSnapshot) notify(d);
     });
-  }
+    firstSnapshot = false;
+    renderList();
+    window.dispatchEvent(new CustomEvent("rasid:detections", { detail: sorted() }));
+  }, (err) => {
+    console.error("[RASID] Detection listener error:", err);
+    if (countEl) countEl.textContent = "تعذّر تحميل الاكتشافات (صلاحيات قاعدة البيانات)";
+  });
+}
 
-  function drawInfo(msg) {
-    const t = msg.telemetry, w = canvas.width;
-    const people = (msg.boxes || []).filter(b => b.cls === 'person').length;
-    const lines = [
-      `GPS ${t.lat.toFixed(6)}, ${t.lng.toFixed(6)}   ALT ${t.alt} m   HDG ${Math.round(t.yaw)}°`,
-      `People: ${people}   Model: ${msg.stats.modelMs} ms   FPS: ${msg.stats.fps}`
-    ];
-    ctx.font = `bold ${Math.round(w / 70)}px monospace`;
-    ctx.textBaseline = 'top';
-    lines.forEach((line, i) => {
-      const y = 12 + i * (w / 55);
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.fillRect(10, y - 2, ctx.measureText(line).width + 12, w / 60);
-      ctx.fillStyle = '#fff';
-      ctx.fillText(line, 16, y);
+// ---------------------------------------------------------------- helpers
+function sorted() {
+  return [...detections.values()].sort((a, b) => (b.FrameTime || "").localeCompare(a.FrameTime || ""));
+}
+function fmtTime(d) {
+  const t = d.TimeStamp && d.TimeStamp.toDate ? d.TimeStamp.toDate() : new Date();
+  return t.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+function fmtCoords(d) { return `${Number(d.Latitude).toFixed(6)}, ${Number(d.Longitude).toFixed(6)}`; }
+function pct(v) { return Math.round((v || 0) * 100) + "%"; }
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+// ---------------------------------------------------------------- notification
+function notify(d) {
+  const el = document.createElement("div");
+  el.className = "rd-toast";
+  el.innerHTML = `
+    <div class="rd-toast-hd"><span class="rd-dot"></span> تم رصد ${esc(d.ClassAr || "شخص")} جديد</div>
+    <div class="rd-toast-row">الوقت: <b>${fmtTime(d)}</b></div>
+    <div class="rd-toast-row">الإحداثيات: <b dir="ltr">${fmtCoords(d)}</b></div>
+    <div class="rd-toast-row">نسبة الثقة: <b>${pct(d.ConfidenceScore)}</b> · الحالة: <b>${STATUS[d.Status]?.ar || "جديد"}</b></div>
+    <div class="rd-toast-btns">
+      <button class="rd-btn rd-primary">عرض التفاصيل</button>
+      <button class="rd-btn rd-ghost">إغلاق</button>
+    </div>`;
+  el.querySelector(".rd-primary").onclick = () => { open(d.id); el.remove(); };
+  el.querySelector(".rd-ghost").onclick = () => el.remove();
+  stack().appendChild(el);
+  setTimeout(() => el.remove(), 15000);
+}
+function stack() {
+  let s = document.getElementById("rdToastStack");
+  if (!s) { s = document.createElement("div"); s.id = "rdToastStack"; document.body.appendChild(s); }
+  return s;
+}
+
+// ---------------------------------------------------------------- details modal
+function open(id) {
+  const d = detections.get(id);
+  if (!d) return;
+  close();
+  const [x1, y1, x2, y2] = d.BBox || [0, 0, 0, 0];
+  const back = document.createElement("div");
+  back.className = "rd-back";
+  back.innerHTML = `
+    <div class="rd-modal" role="dialog" aria-modal="true">
+      <div class="rd-modal-hd">
+        <h3>تفاصيل الرصد</h3>
+        <button class="rd-x" aria-label="إغلاق">✕</button>
+      </div>
+      <div class="rd-img">
+        ${d.DetectionImage ? `<img src="${esc(d.DetectionImage)}" alt="صورة الرصد">` : `<div class="rd-noimg">جارٍ رفع الصورة...</div>`}
+        <div class="rd-box" style="left:${x1 * 100}%;top:${y1 * 100}%;width:${(x2 - x1) * 100}%;height:${(y2 - y1) * 100}%"></div>
+      </div>
+      <div class="rd-grid">
+        <div><span>النوع</span><b>${esc(d.ClassAr || d.Class)}</b></div>
+        <div><span>نسبة الثقة</span><b>${pct(d.ConfidenceScore)}</b></div>
+        <div><span>وقت الرصد</span><b>${fmtTime(d)}</b></div>
+        <div><span>ارتفاع الدرون</span><b>${esc(d.DroneAltitude)} م</b></div>
+        <div class="rd-wide"><span>الإحداثيات</span><b dir="ltr">${fmtCoords(d)}</b>
+          <a href="https://www.google.com/maps?q=${d.Latitude},${d.Longitude}" target="_blank" rel="noopener">فتح في خرائط Google</a></div>
+        <div class="rd-wide rd-note">الموقع هو موقع الدرون لحظة الرصد؛ قد يبعد الشخص عنه تقريباً 10–40 متر.</div>
+        <div class="rd-wide"><span>الحالة الحالية</span><b style="color:${STATUS[d.Status]?.color || "#b45309"}">${STATUS[d.Status]?.ar || "جديد"}</b></div>
+      </div>
+      <div class="rd-status">
+        <button class="rd-btn" data-s="confirmed" style="background:#15803d">تأكيد: شخص حقيقي</button>
+        <button class="rd-btn" data-s="false_alarm" style="background:#6b7280">إنذار خاطئ</button>
+        <button class="rd-btn" data-s="duplicate" style="background:#9ca3af">مكرر</button>
+      </div>
+    </div>`;
+  back.onclick = (e) => { if (e.target === back) close(); };
+  back.querySelector(".rd-x").onclick = close;
+  back.querySelectorAll("[data-s]").forEach((b) => (b.onclick = () => setStatus(d.id, b.dataset.s)));
+  document.body.appendChild(back);
+}
+function close() { document.querySelectorAll(".rd-back").forEach((e) => e.remove()); }
+
+async function setStatus(id, status) {
+  if (!confirm(`تغيير حالة الرصد إلى "${STATUS[status].ar}"؟`)) return;
+  try {
+    await updateDoc(doc(db, "Detection", id), {
+      Status: status, StatusBy: auth.currentUser ? auth.currentUser.uid : null, StatusAt: serverTimestamp(),
     });
+    close();
+  } catch (e) {
+    console.error(e);
+    alert("تعذّر تحديث الحالة. تأكد من تسجيل الدخول وصلاحيات قاعدة البيانات.");
   }
+}
 
-  // ---------------------------------------------------------- leader button
-  function setupLeaderButton() {
-    const header = box.parentElement && box.parentElement.querySelector('.cardHd');
-    if (!header || !reportDocId) return;
-    btn = document.createElement('button');
-    btn.type = 'button';
-    btn.style.cssText = 'display:none;margin-inline-start:.6rem;padding:.45rem 1rem;border:none;border-radius:999px;' +
-      'font-family:inherit;font-weight:800;font-size:.85rem;cursor:pointer;color:#fff;transition:opacity .2s;';
-    btn.addEventListener('click', onButtonClick);
-    header.appendChild(btn);
-    // The page decides who the leader is (window._isLeader is set after Firestore loads)
-    let tries = 0;
-    const wait = setInterval(() => {
-      tries++;
-      if (window._isLeader === true && !window._reportAlreadyClosed) {
-        btn.style.display = 'inline-block'; updateButton(); clearInterval(wait);
-      } else if (window._isLeader === false || tries > 40) {
-        clearInterval(wait);
-      }
-    }, 500);
-  }
+// ---------------------------------------------------------------- list under the video
+function buildList() {
+  const video = document.getElementById("liveVideoBox");
+  if (!video) return;
+  const wrap = document.createElement("div");
+  wrap.className = "rd-list-wrap";
+  wrap.innerHTML = `<div class="rd-list-hd">الاكتشافات <span id="rdCount">(0)</span></div><div class="rd-list"></div>`;
+  video.insertAdjacentElement("afterend", wrap);
+  listEl = wrap.querySelector(".rd-list");
+  countEl = wrap.querySelector("#rdCount");
+}
+function renderList() {
+  if (!listEl) return;
+  const items = sorted();
+  countEl.textContent = `(${items.length})`;
+  listEl.innerHTML = items.length ? "" : `<div class="rd-empty">لا توجد اكتشافات لهذا البلاغ بعد</div>`;
+  items.forEach((d) => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "rd-row";
+    row.innerHTML = `
+      ${d.DetectionImage ? `<img src="${esc(d.DetectionImage)}" alt="">` : `<span class="rd-thumb"></span>`}
+      <span class="rd-row-main"><b>${esc(d.ClassAr || d.Class)} · ${pct(d.ConfidenceScore)}</b>
+        <small dir="ltr">${fmtCoords(d)}</small></span>
+      <span class="rd-row-side"><small>${fmtTime(d)}</small>
+        <em style="background:${STATUS[d.Status]?.color || "#b45309"}">${STATUS[d.Status]?.ar || "جديد"}</em></span>`;
+    row.onclick = () => open(d.id);
+    listEl.appendChild(row);
+  });
+}
 
-  function updateButton() {
-    if (!btn) return;
-    const mine = missionReport === reportDocId;
-    let text, color, enabled = !busy;
-    if (!connected) { text = 'محطة الرصد غير متصلة'; color = '#9ca3af'; enabled = false; }
-    else if ((missionState === 'running' || missionState === 'starting') && mine) { text = 'إنهاء مهمة الدرون'; color = '#b91c1c'; }
-    else if (missionState === 'running' || missionState === 'starting') { text = 'الدرون مشغول ببلاغ آخر'; color = '#9ca3af'; enabled = false; }
-    else { text = 'بدء مهمة الدرون'; color = '#8B6B47'; }
-    btn.textContent = busy ? '...' : text;
-    btn.style.background = color;
-    btn.disabled = !enabled;
-    btn.style.opacity = enabled ? '1' : '.7';
-    btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
-  }
+window.RasidDetections = { open, list: sorted };
 
-  async function onButtonClick() {
-    const running = (missionState === 'running' || missionState === 'starting') && missionReport === reportDocId;
-    const question = running ? 'هل تريد إنهاء مهمة الدرون لهذا البلاغ؟' : 'هل تريد بدء مهمة الدرون لهذا البلاغ؟';
-    if (!confirm(question)) return;                       // error prevention (same UX rule as the rest of Rasid)
-    busy = true; updateButton();
-    try {
-      const res = await fetch(API_URL + (running ? '/mission/stop' : '/mission/start'), {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: running ? '{}' : JSON.stringify({ reportId: reportDocId })
-      });
-      if (!res.ok) throw new Error(res.status);
-    } catch (e) {
-      alert('تعذّر الاتصال بمحطة الرصد. تأكد أن محطة الدرون تعمل.');
-    }
-    busy = false; updateButton();
-  }
-
-  function checkAlive() {
-    // connected, but no frame for 5 s = the stream stopped
-    if (canvas.style.display === 'block' && Date.now() - lastFrameAt > 5000) {
-      showMessage('انقطع بث الدرون<br><small>بانتظار عودة البث...</small>');
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', setup);
-})();
+// ---------------------------------------------------------------- styles
+function injectStyles() {
+  const css = `
+  #rdToastStack{position:fixed;left:18px;bottom:18px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:340px}
+  .rd-toast{background:#fffaf3;border:1.5px solid #e7d6c1;border-right:6px solid #ef4444;border-radius:16px;padding:12px 14px;
+    box-shadow:0 10px 30px rgba(60,40,20,.18);font-family:Tajawal,sans-serif;color:#3b2f24;animation:rdIn .25s ease}
+  @keyframes rdIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .rd-toast-hd{font-weight:900;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .rd-dot{width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.2)}
+  .rd-toast-row{font-size:.88rem;margin:2px 0}
+  .rd-toast-btns,.rd-status{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .rd-btn{border:none;border-radius:999px;padding:.45rem .9rem;font-family:inherit;font-weight:800;font-size:.85rem;color:#fff;cursor:pointer}
+  .rd-primary{background:#8B6B47}.rd-ghost{background:transparent;color:#8B6B47;border:1.5px solid #d8c3a8}
+  .rd-back{position:fixed;inset:0;background:rgba(30,22,14,.45);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px}
+  .rd-modal{background:#fffaf3;border-radius:22px;max-width:720px;width:100%;max-height:92vh;overflow:auto;padding:18px;font-family:Tajawal,sans-serif;color:#3b2f24}
+  .rd-modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.rd-modal-hd h3{margin:0}
+  .rd-x{border:none;background:#f1e6d8;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem}
+  .rd-img{position:relative;border-radius:14px;overflow:hidden;background:#1d1a16;direction:ltr}
+  .rd-img img{display:block;width:100%}.rd-noimg{color:#f5efe6;padding:3rem;text-align:center}
+  .rd-box{position:absolute;border:3px solid #ef4444;box-shadow:0 0 0 2px rgba(255,255,255,.6)}
+  .rd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .rd-grid>div{background:#f6ede1;border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+  .rd-grid span{font-size:.78rem;color:#8a7560}.rd-grid a{font-size:.85rem;color:#8B6B47;font-weight:800}
+  .rd-wide{grid-column:1/-1}.rd-note{font-size:.82rem;color:#7a6550;background:#fff3df !important}
+  .rd-list-wrap{margin-top:14px}.rd-list-hd{font-weight:900;margin-bottom:8px;color:#3b2f24}
+  .rd-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto}
+  .rd-empty{color:#8a7560;font-weight:700;padding:.6rem}
+  .rd-row{display:flex;align-items:center;gap:10px;width:100%;text-align:right;background:#f6ede1;border:1.5px solid #ead9c4;
+    border-radius:14px;padding:8px;cursor:pointer;font-family:inherit;color:#3b2f24}
+  .rd-row:hover{border-color:#c9a77f}
+  .rd-row img,.rd-thumb{width:64px;height:40px;object-fit:cover;border-radius:8px;background:#1d1a16;flex:none}
+  .rd-row-main{flex:1;display:flex;flex-direction:column}.rd-row-main small{color:#7a6550}
+  .rd-row-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .rd-row-side em{font-style:normal;color:#fff;font-size:.75rem;font-weight:800;padding:2px 8px;border-radius:999px}
+  @media (max-width:600px){.rd-grid{grid-template-columns:1fr}#rdToastStack{left:10px;right:10px;max-width:none}}`;
+  const s = document.createElement("style");
+  s.textContent = css;
+  document.head.appendChild(s);
+}
