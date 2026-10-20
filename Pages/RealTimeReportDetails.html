@@ -187,7 +187,7 @@
     }
 
     .mapWrap{
-      height: 420px;
+      height: 480px;
       border-radius: 22px;
       border: 1.5px solid rgba(166,124,82,0.22);
       background: rgba(245,239,230,0.55);
@@ -745,10 +745,11 @@
           <div class="mapHeader">
             <div class="legend">
               <span class="item"><span class="sw" style="background:#3b82f6"></span> موقع الدرون</span>
-              <span class="item"><span class="sw" style="background:#ef4444"></span> تنبيه </span>
+              <span class="item"><span class="sw" style="background:#ef4444"></span> رصد شخص</span>
+              <span class="item"><span class="sw" style="background:#9ca3af"></span> إنذار خاطئ / مكرر</span>
             </div>
           </div>
-          <canvas id="mapCanvas" width="1100" height="650" aria-label="خريطة ديناميكية للدرون"></canvas>
+          <div id="googleMap" aria-label="خريطة تتبع الدرون"></div>
         </div>
       </article>
 
@@ -866,6 +867,7 @@
   <script src="/JS/ReportDetails.js"></script>
   <script src="/JS/droneStream.js"></script>
   <script type="module" src="/JS/detectionAlerts.js"></script>
+  <script type="module" src="/JS/droneMap.js"></script>
 
   <script>
     (function () {
