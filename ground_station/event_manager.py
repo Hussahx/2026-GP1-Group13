@@ -30,7 +30,7 @@ import uuid
 from dataclasses import dataclass, field
 
 # ---- tunable rules ------------------------------------------------------
-ALERT_CLASSES = {"person"}   # only people create alerts (cars/motos are shown on video only)
+ALERT_CLASSES = {"person", "car", "moto"}   # classes that create alerts (remove "car" if parked cars get too noisy)
 MIN_HITS = 3                 # frames a track must be seen in before it counts
 ALERT_CONF = 0.25            # confidence it must reach at least once
 RELINK_SECONDS = 8.0         # a "new" person within this time after one vanished...

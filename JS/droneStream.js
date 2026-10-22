@@ -126,12 +126,13 @@
     ctx.font = `bold ${Math.round(w / 55)}px Tajawal, sans-serif`;
     (boxes || []).forEach(b => {
       const [x1, y1, x2, y2] = [b.box[0] * w, b.box[1] * h, b.box[2] * w, b.box[3] * h];
-      const color = COLORS[b.cls] || '#ffffff';
-      const confirmed = !!b.detectionId;              // this person already became a saved detection
-      ctx.strokeStyle = color; ctx.lineWidth = confirmed ? lw * 2.5 : lw;
+      // saved detection -> same number + status colour as the list and the map (#3 red / green / grey)
+      const hub = window.RasidDetections;
+      const num = b.detectionId && hub ? hub.numberOf(b.detectionId) : null;
+      const color = (num && hub.colorOf(b.detectionId)) || COLORS[b.cls] || '#ffffff';
+      ctx.strokeStyle = color; ctx.lineWidth = num ? lw * 2.5 : lw;
       ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-      const label = `${confirmed ? '✓ ' : ''}${Math.round(b.conf * 100)}% ${LABELS[b.cls] || b.cls}`;
-      const tw = ctx.measureText(label).width + 10, th = w / 45;
+      const label = `${num ? '#' + num + '  ' : ''}${Math.round(b.conf * 100)}% ${LABELS[b.cls] || b.cls}`;      const tw = ctx.measureText(label).width + 10, th = w / 45;
       const ty = Math.max(0, y1 - th - 2);
       ctx.fillStyle = color; ctx.fillRect(x1, ty, tw, th);
       ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';

@@ -3,9 +3,13 @@
 // ------------------------------------------------------------
 //  - Blue arrow  = live drone position (from droneStream.js -> 'rasid:telemetry')
 //  - Blue dashed = the path the drone flew during this session
-//  - Red pins    = detections of THIS report (from detectionAlerts.js -> 'rasid:detections')
-//                  click a pin -> small card with the details
-//                  "عرض التفاصيل الكاملة" -> the full detection modal (status buttons)
+//  - Numbered pins = detections of the mission selected under the video
+//                  (from detectionAlerts.js -> 'rasid:detections'). Same number and
+//                  colour as the list: red = needs checking, green = confirmed,
+//                  grey = false alarm / duplicate.
+//                  click a pin -> small card + its row in the list is highlighted
+//                  "عرض والتحقق" -> the full detection window (status buttons)
+//  - A new drone mission clears the old flight path.
 //  - The map follows the drone; dragging the map stops following,
 //    and the "تتبع الدرون" button turns it back on.
 //
@@ -21,16 +25,11 @@ const DEFAULT_CENTER = { lat: 24.7136, lng: 46.6753 }; // Riyadh – used until 
 const MIN_PATH_STEP_M = 2;                          // add a path point only after the drone moved 2 m
 const MAX_PATH_POINTS = 5000;
 
-const STATUS = {
-  new:         { ar: "جديد",       color: "#ef4444" },
-  confirmed:   { ar: "مؤكَّد",      color: "#dc2626" },
-  false_alarm: { ar: "إنذار خاطئ",  color: "#9ca3af" },
-  duplicate:   { ar: "مكرر",        color: "#9ca3af" },
-};
 
 let engine = null;                  // the map engine in use (google or leaflet), see below
 let hasDrone = false, lastDrone = null;
 let following = true, lastPanAt = 0, fittedToDetections = false;
+let shownMission = null, pathMission = null;
 const pins = new Map();             // detection id -> { marker, data }
 let pendingDetections = null;       // list that arrived before the map was ready
 
@@ -38,8 +37,9 @@ const mapEl = document.getElementById("googleMap");
 
 // Listen right away (events may come before the map finishes loading)
 window.addEventListener("rasid:detections", (e) => {
-  if (engine) syncDetections(e.detail || []);
-  else pendingDetections = e.detail || [];
+  const detail = e.detail || {};
+  if (engine) syncDetections(detail);
+  else pendingDetections = detail;
 });
 window.addEventListener("rasid:telemetry", (e) => { if (engine) onTelemetry(e.detail); });
 
@@ -57,8 +57,9 @@ async function start() {
   engine.onUserDrag(() => setFollowing(false));
   engine.addFollowButton(buildFollowButton());
 
-  const initial = pendingDetections || (window.RasidDetections && window.RasidDetections.list()) || [];
+  const initial = pendingDetections || { items: (window.RasidDetections && window.RasidDetections.list()) || [] };
   syncDetections(initial);
+  updateLegend();
   pendingDetections = null;
   console.log("[RASID] map engine:", engine.name);
 }
@@ -67,6 +68,12 @@ async function start() {
 function onTelemetry(t) {
   if (!t || typeof t.lat !== "number" || typeof t.lng !== "number") return;
   const pos = { lat: t.lat, lng: t.lng };
+
+  if (t.missionId && t.missionId !== pathMission) {     // new mission -> start a fresh flight path
+    pathMission = t.missionId;
+    engine.pathClear();
+    lastDrone = null;
+  }
 
   if (!hasDrone) {
     hasDrone = true;
@@ -122,57 +129,88 @@ function setFollowing(on) {
 }
 
 // ---------------------------------------------------------------- detections
-function syncDetections(list) {
+function syncDetections(detail) {
+  const list = Array.isArray(detail) ? detail : (detail.items || []);
+  const missionChanged = (detail.missionId || null) !== shownMission;
+  shownMission = detail.missionId || null;
+
   const seen = new Set();
   list.forEach((d) => {
     if (typeof d.Latitude !== "number" || typeof d.Longitude !== "number") return;
     seen.add(d.id);
     const pos = { lat: d.Latitude, lng: d.Longitude };
+    const key = `${d._num}|${d.Status}|${d._color}`;           // redraw only if number/status changed
     const existing = pins.get(d.id);
     if (existing) {
       existing.data = d;
-      engine.updatePin(existing.marker, pos, pinElement(d, false));
+      if (existing.key !== key) { engine.updatePin(existing.marker, pos, pinElement(d, false)); existing.key = key; }
     } else {
-      const marker = engine.createPin(pos, pinElement(d, fittedToDetections),   // drop animation for new ones
-        `${d.ClassAr || "شخص"} · ${pct(d.ConfidenceScore)}`, () => openInfo(d.id));
-      pins.set(d.id, { marker, data: d });
+      const marker = engine.createPin(pos, pinElement(d, fittedToDetections && !missionChanged),   // drop animation for new ones
+        `#${d._num} ${d._classAr || "شخص"} · ${pct(d.ConfidenceScore)}`, () => onPinClick(d.id));
+      pins.set(d.id, { marker, data: d, key });
     }
   });
-  for (const [id, p] of pins) {                     // removed in Firestore -> remove from map
+  for (const [id, p] of pins) {                     // other mission / removed -> remove from map
     if (!seen.has(id)) { engine.removePin(p.marker); pins.delete(id); }
   }
 
-  // First time: if the drone isn't flying, zoom to where the detections are
-  if (!fittedToDetections) {
+  // First time, or another mission picked: show where its detections are (unless the drone is flying it)
+  if (!fittedToDetections || missionChanged) {
     fittedToDetections = true;
-    if (!hasDrone && pins.size) {
+    const flyingThis = hasDrone && detail.isLive;
+    if (!flyingThis && pins.size) {
+      setFollowing(false);
       const pts = [...pins.values()].map((p) => ({ lat: p.data.Latitude, lng: p.data.Longitude }));
-      if (pts.length === 1) engine.setView(pts[0], 18);
+      if (pts.length === 1) engine.setView(pts[0], 19);
       else engine.fit(pts);
+    } else if (flyingThis) {
+      setFollowing(true);
     }
   }
 }
 
 function pinElement(d, animate) {
-  const st = STATUS[d.Status] || STATUS.new;
+  const color = d._color || "#dc2626";
   const el = document.createElement("div");
   el.className = "rm-pin" + (animate ? " rm-pin-drop" : "") +
                  (d.Status === "false_alarm" || d.Status === "duplicate" ? " rm-pin-dim" : "");
+  el.dataset.id = d.id;
   el.innerHTML = `
     <svg viewBox="0 0 32 42" width="32" height="42">
       <path d="M16 1C7.7 1 1 7.6 1 15.8 1 27 16 41 16 41s15-14 15-25.2C31 7.6 24.3 1 16 1z"
-            fill="${st.color}" stroke="#fff" stroke-width="2"/>
-      <circle cx="16" cy="15.5" r="6" fill="#fff"/>
-      ${d.Status === "confirmed" ? '<path d="M12.6 15.6l2.4 2.4 4.4-4.6" stroke="#dc2626" stroke-width="2.2" fill="none" stroke-linecap="round"/>' : ""}
+            fill="${color}" stroke="#fff" stroke-width="2"/>
+      <circle cx="16" cy="15.5" r="9" fill="#fff"/>
+      <text x="16" y="19.6" text-anchor="middle" font-size="${String(d._num || "").length > 1 ? 10 : 12}"
+            font-weight="900" font-family="Tajawal,Arial,sans-serif" fill="${color}">${d._num || ""}</text>
     </svg>`;
   return el;
+}
+
+function onPinClick(id) {
+  openInfo(id);
+  window.dispatchEvent(new CustomEvent("rasid:select", { detail: { id } }));   // highlight its row in the list
+}
+
+function pulsePin(id) {
+  const el = mapEl.querySelector(`.rm-pin[data-id="${id}"]`);
+  if (!el) return;
+  el.classList.remove("rm-pin-focus"); void el.offsetWidth; el.classList.add("rm-pin-focus");
+}
+
+function updateLegend() {
+  const legend = document.querySelector(".mapWrap .mapHeader .legend");
+  if (!legend) return;
+  legend.innerHTML = `
+    <span class="item"><span class="sw" style="background:#3b82f6"></span> موقع الدرون</span>
+    <span class="item"><span class="sw" style="background:#dc2626"></span> بحاجة لتحقق</span>
+    <span class="item"><span class="sw" style="background:#16a34a"></span> مؤكَّد</span>
+    <span class="item"><span class="sw" style="background:#9ca3af"></span> إنذار خاطئ / مكرر</span>`;
 }
 
 function openInfo(id) {
   const p = pins.get(id);
   if (!p) return;
   const d = p.data;
-  const st = STATUS[d.Status] || STATUS.new;
   const box = document.createElement("div");
   box.className = "rm-info";
   box.dir = "rtl";
@@ -180,12 +218,13 @@ function openInfo(id) {
     ${d.DetectionImage
       ? `<img src="${esc(d.DetectionImage)}" alt="صورة الرصد">`
       : `<div class="rm-info-noimg">جارٍ رفع الصورة...</div>`}
-    <div class="rm-info-title">${esc(d.ClassAr || "شخص")} · ${pct(d.ConfidenceScore)}
-      <span class="rm-info-badge" style="background:${st.color}">${st.ar}</span></div>
+    <div class="rm-info-title"><span class="rm-info-num" style="background:${d._color}">${d._num}</span>
+      ${esc(d._classAr || "شخص")} · ${pct(d.ConfidenceScore)}
+      <span class="rm-info-badge" style="background:${d._color}">${esc(d._statusAr || "")}</span></div>
     <div class="rm-info-row"><span>وقت الرصد</span><b>${fmtTime(d)}</b></div>
     <div class="rm-info-row"><span>الإحداثيات</span><b dir="ltr">${Number(d.Latitude).toFixed(6)}, ${Number(d.Longitude).toFixed(6)}</b></div>
     <div class="rm-info-row"><span>ارتفاع الدرون</span><b>${esc(d.DroneAltitude ?? "—")} م</b></div>
-    <button type="button" class="rm-info-btn">عرض التفاصيل الكاملة</button>`;
+    <button type="button" class="rm-info-btn">عرض والتحقق</button>`;
   box.querySelector(".rm-info-btn").onclick = () => {
     engine.closeInfo();
     if (window.RasidDetections) window.RasidDetections.open(id);
@@ -196,12 +235,14 @@ function openInfo(id) {
 
 // Lets other code (e.g. the list under the video) move the map to a detection
 window.RasidMap = {
-  focus(id) {
+  // quiet = just move the map to the pin and make it bounce (used when a list row is clicked)
+  focus(id, opts = {}) {
     const p = pins.get(id);
     if (!p || !engine) return;
-    engine.setView({ lat: p.data.Latitude, lng: p.data.Longitude }, 18);
-    openInfo(id);
-    mapEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFollowing(false);
+    engine.setView({ lat: p.data.Latitude, lng: p.data.Longitude }, 19);
+    setTimeout(() => pulsePin(id), 350);
+    if (!opts.quiet) { openInfo(id); mapEl.scrollIntoView({ behavior: "smooth", block: "center" }); }
   },
 };
 
@@ -254,6 +295,7 @@ async function googleEngine() {
       drone = new AdvancedMarkerElement({ map, position: pos, content: el, title: "موقع الدرون", zIndex: 1000 });
     },
     moveDrone: (pos) => { drone.position = pos; },
+    pathClear: () => path.setPath([]),
     pathPush: (pos) => {
       const p = path.getPath();
       p.push(new google.maps.LatLng(pos.lat, pos.lng));
@@ -318,6 +360,7 @@ async function leafletEngine() {
                               interactive: false }).addTo(map);
     },
     moveDrone: (pos) => drone.setLatLng(pos),
+    pathClear: () => path.setLatLngs([]),
     pathPush: (pos) => {
       path.addLatLng(pos);
       const pts = path.getLatLngs();
@@ -332,7 +375,8 @@ async function leafletEngine() {
     removePin: (m) => m.remove(),
     openInfo: (m, el) => {
       m.unbindPopup();
-      m.bindPopup(el, { maxWidth: 300, minWidth: 260, className: "rm-popup" }).openPopup();
+      m.bindPopup(el, { maxWidth: 300, minWidth: 260, className: "rm-popup",
+                       autoPanPaddingTopLeft: [20, 70] }).openPopup();   // keep the card below the legend
     },
     closeInfo: () => map.closePopup(),
   };
@@ -392,6 +436,9 @@ function esc(s) {
   .rm-pin{cursor:pointer;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));transition:transform .15s;transform-origin:50% 100%}
   .rm-pin:hover{transform:scale(1.15)}
   .rm-pin-dim{opacity:.6}
+  .rm-pin-focus{animation:rmBounce .9s ease}
+  @keyframes rmBounce{0%,100%{transform:none}25%{transform:translateY(-14px) scale(1.25)}50%{transform:none}75%{transform:translateY(-7px) scale(1.1)}}
+  .rm-info-num{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 5px;border-radius:999px;color:#fff;font-size:.78rem;font-weight:900}
   .rm-pin-drop{animation:rmDrop .5s cubic-bezier(.3,1.6,.6,1)}
   @keyframes rmDrop{from{transform:translateY(-40px);opacity:0}to{transform:none;opacity:1}}
   .rm-follow{margin:10px;padding:8px 14px;border:none;border-radius:999px;background:#3b82f6;color:#fff;
