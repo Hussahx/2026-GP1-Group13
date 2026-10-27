@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.css" />
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="/CSS/index.css" />
+  <link rel="stylesheet" href="../CSS/index.css" />
 </head>
 <body>
 
@@ -32,7 +32,7 @@
   <header class="navbar" id="navbar">
     <div class="container nav-container">
       <div class="nav-brand">
-        <img src="/assest/logoo.PNG" alt="شعار راصد" class="nav-logo" />
+        <img src="../assest/logoo.PNG" alt="شعار راصد" class="nav-logo" />
       
       </div>
 
@@ -382,59 +382,123 @@
     </section>
 
     <!-- ===== STATS + CHARTS ===== -->
-    <section class="stats" id="stats">
-      <div class="container">
-        <div class="section-header" data-aos="fade-up">
-          <span class="section-tag">الأداء</span>
-          <h2>إحصائيات راصد</h2>
-          <p class="section-desc">أرقام تعكس قوة النظام وكفاءته الميدانية</p>
-        </div>
+    <!-- ===== STATS + CHARTS  (replace the whole <section class="stats" id="stats"> ... </section>) ===== -->
+<!-- ===== STATS + CHARTS  (replace the whole <section class="stats" id="stats"> ... </section>) ===== -->
+<!-- ===== STATS + CHARTS  (replace the whole <section class="stats" id="stats"> ... </section>) ===== -->
+<!-- ===== STATS + CHARTS  (replace the whole <section class="stats" id="stats"> ... </section>) ===== -->
+<!-- ===== STATS + CHARTS  (replace the whole <section class="stats" id="stats"> ... </section>) ===== -->
+<section class="stats" id="stats">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <span class="section-tag">الأداء</span>
+      <h2>إحصائيات راصد</h2>
+      <p class="section-desc">أرقام البلاغات والحالات كما هي مسجلة في النظام</p>
+    </div>
 
-        <div class="counters-grid" data-aos="fade-up" data-aos-delay="100">
-          <div class="counter-card glass-card">
-            <div class="counter-icon"><i class="fas fa-tasks"></i></div>
-            <div class="counter-value" id="counterCompletedMissions" data-target="247">0</div>
-            <div class="counter-label">عدد المهام المنفذة</div>
-          </div>
-          <div class="counter-card glass-card">
-            <div class="counter-icon"><i class="fas fa-users"></i></div>
-            <div class="counter-value" id="counterActiveVolunteers" data-target="83">0</div>
-            <div class="counter-label">المتطوعون النشطون</div>
-          </div>
-          <div class="counter-card glass-card">
-            <div class="counter-icon"><i class="fas fa-eye"></i></div>
-            <div class="counter-value" id="counterMonitoringOps" data-target="1520">0</div>
-            <div class="counter-label">عمليات الرصد</div>
-          </div>
-          <div class="counter-card glass-card">
-            <div class="counter-icon"><i class="fas fa-chart-pie"></i></div>
-            <div class="counter-value" id="counterAccuracy" data-target="88" data-suffix="%">0</div>
-            <div class="counter-label">نسبة الدقة</div>
-          </div>
-        </div>
-
-        <div class="charts-grid" data-aos="fade-up" data-aos-delay="200">
-          <div class="chart-card glass-card">
-            <div class="chart-card-header">
-              <h3><i class="fas fa-chart-line"></i> الرصد خلال الأسبوع</h3>
-              <span class="chart-badge">آخر 7 أيام</span>
-            </div>
-            <canvas id="lineChart"></canvas>
-          </div>
-          <div class="chart-card glass-card">
-            <div class="chart-card-header">
-              <h3><i class="fas fa-chart-pie"></i> توزيع الحالات</h3>
-              <span class="chart-badge">إجمالي</span>
-            </div>
-            <canvas id="doughnutChart"></canvas>
-            <div class="doughnut-legend">
-              <span class="leg-item"><span class="leg-dot" style="background:#8B6B47"></span>قيد المعالجة (<span id="legendProgress">50%</span>)</span>
-              <span class="leg-item"><span class="leg-dot" style="background:#7A9A7A"></span>مغلق (<span id="legendClosed">50%</span>)</span>
-            </div>
-          </div>
-        </div>
+    <!-- 4 cards -->
+    <div class="counters-grid" data-aos="fade-up" data-aos-delay="100">
+      <div class="counter-card glass-card">
+        <div class="counter-icon"><i class="fas fa-flag"></i></div>
+        <div class="counter-value" id="counterTotalReports" data-target="0">0</div>
+        <div class="counter-label">إجمالي البلاغات</div>
       </div>
-    </section>
+      <div class="counter-card glass-card">
+        <div class="counter-icon"><i class="fas fa-circle-check"></i></div>
+        <div class="counter-value" id="counterFoundReports" data-target="0">0</div>
+        <div class="counter-label">تم العثور عليهم</div>
+      </div>
+      <div class="counter-card glass-card">
+        <div class="counter-icon"><i class="fas fa-users"></i></div>
+        <div class="counter-value" id="counterActiveVolunteers" data-target="0">0</div>
+        <div class="counter-label">المتطوعون النشطون</div>
+      </div>
+      <div class="counter-card glass-card">
+        <div class="counter-icon"><i class="fas fa-tasks"></i></div>
+        <div class="counter-value" id="counterCompletedMissions" data-target="0">0</div>
+        <div class="counter-label">المهام المنفذة</div>
+      </div>
+    </div>
+
+    <div class="charts-grid charts-grid--2" data-aos="fade-up" data-aos-delay="200">
+
+      <!-- Card 1: status doughnut -->
+      <div class="chart-card glass-card">
+        <div class="chart-card-header">
+          <h3><i class="fas fa-chart-pie"></i> حالة البلاغات</h3>
+        </div>
+        <div class="chart-box"><canvas id="statusDoughnutChart"></canvas></div>
+        <div class="doughnut-legend" id="statusLegend"></div>
+        <small class="demo-note" hidden></small>
+      </div>
+
+      <!-- Card 2: tabs -->
+      <div class="chart-card glass-card">
+        <div class="chart-tabs" role="tablist" aria-label="اختيار الرسم">
+          <button type="button" class="chart-tab active" role="tab" aria-selected="true" data-target="panelWeek">
+            <i class="fas fa-chart-line"></i> آخر 7 أيام
+          </button>
+          <button type="button" class="chart-tab" role="tab" aria-selected="false" data-target="panelRegion">
+            <i class="fas fa-location-dot"></i> حسب المنطقة
+          </button>
+        </div>
+
+        <div class="chart-panel" id="panelWeek" role="tabpanel">
+          <div class="chart-box"><canvas id="reportsLineChart"></canvas></div>
+          <div class="chart-total" id="lineTotal"></div>
+        </div>
+        <div class="chart-panel" id="panelRegion" role="tabpanel" hidden>
+          <div class="chart-box"><canvas id="regionBarChart"></canvas></div>
+          <div class="chart-total" id="regionTotal"></div>
+        </div>
+
+        <small class="demo-note" hidden></small>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CSS: add to the end of index.css (without the <style> tags) -->
+<style>
+  /* cards: 4 in a row, 2×2 on small screens */
+  .counters-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+  @media (max-width: 900px) { .counters-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  /* a different color per card */
+  .stats .counters-grid .counter-card:nth-child(1) .counter-icon { background: #E6EEF7; color: #5B87B5; }
+  .stats .counters-grid .counter-card:nth-child(1) .counter-value { color: #46709C; }
+  .stats .counters-grid .counter-card:nth-child(2) .counter-icon { background: #E1F1E8; color: #4C9A72; }
+  .stats .counters-grid .counter-card:nth-child(2) .counter-value { color: #3A7F5B; }
+  .stats .counters-grid .counter-card:nth-child(3) .counter-icon { background: #F7ECD3; color: #C9993A; }
+  .stats .counters-grid .counter-card:nth-child(3) .counter-value { color: #A97A22; }
+  .stats .counters-grid .counter-card:nth-child(4) .counter-icon { background: #E1EFE8; color: #4F8A6B; }
+  .stats .counters-grid .counter-card:nth-child(4) .counter-value { color: #3E7A5C; }
+
+  /* charts: 2 columns, 1 on mobile */
+  .charts-grid--2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; align-items: stretch; }
+  @media (max-width: 900px) { .charts-grid--2 { grid-template-columns: 1fr; } }
+  .chart-box { position: relative; height: 300px; }
+  #panelRegion .chart-box { height: 440px; }   /* 13 regions need more height */
+  .chart-total { text-align: center; margin-top: .75rem; font-weight: 800; color: #2F6B50; }
+  .demo-note { display: block; text-align: center; margin-top: .4rem; color: #8a7a68; font-size: .8rem; }
+  .demo-note[hidden] { display: none; }
+  .doughnut-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1rem; margin-top: .75rem; }
+
+  /* tabs */
+  .chart-tabs { display: inline-flex; gap: .35rem; padding: .3rem; margin-bottom: 1rem; background: #EEF3EF; border-radius: 999px; }
+  .chart-tab { border: 0; background: transparent; padding: .5rem 1.1rem; border-radius: 999px; cursor: pointer;
+               font-family: 'Tajawal', sans-serif; font-size: .95rem; font-weight: 700; color: #55635A; transition: all .2s; }
+  .chart-tab:hover { color: #2F6B50; }
+  .chart-tab.active { background: linear-gradient(135deg, #4F8A6B, #3E7A5C); color: #fff; box-shadow: 0 4px 12px rgba(79,138,107,.35); }
+  .chart-tab:focus-visible { outline: 3px solid rgba(217,164,65,.6); outline-offset: 2px; }
+  .chart-panel[hidden] { display: none; }
+</style>
+
+<!-- Scripts: add at the bottom of index.html, after dashboardStats.js -->
+
+
+<!-- At the bottom of index.html, with the other scripts -->
+<script type="module" src="../JS/dashboardStats.js"></script>
 
     <!-- ===== CTA ===== -->
     <section class="cta-section" id="cta">
@@ -964,7 +1028,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script src="/JS/index.js"></script>
+  <script src="../JS/index.js"></script>
   <script type="module" src="/JS/dashboardStats.js"></script>
 
   <!-- ================================================================

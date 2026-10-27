@@ -134,7 +134,7 @@ export async function loginAndRedirect(email, password) {
 
     // 4. Store role & redirect
     localStorage.setItem("role", role);
-    window.location.href = role === "admin" ? "/Pages/Control.html" : "/Pages/Reports.html";
+    window.location.href = role === "admin" ? "../Pages/Control.html" : "../Pages/Reports.html";
     return { success: true };
 
   } catch (err) {
