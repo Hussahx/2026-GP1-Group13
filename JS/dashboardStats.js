@@ -30,8 +30,9 @@ const C = {
 const STATUS = [
   { key: 'received', label: 'بلاغ مستلم',   color: '#7FA6C9' },
   { key: 'progress', label: 'جارٍ العمل عليها', color: '#E0B25C' },
-  { key: 'found',    label: 'تم العثور',    color: '#5BA37F' },
-  { key: 'closed',   label: 'مغلق',         color: '#A8B0AA' }
+  { key: 'found',    label: 'تم العثور', color: '#5BA37F' },
+  { key: 'notfound', label: 'لم يتم العثور',        color: '#C9806B' },
+  { key: 'closed',   label: 'مغلق',                 color: '#A8B0AA' }   // fallback only: closed with no outcome (hidden when 0)
 ];
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
@@ -39,19 +40,31 @@ const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأرب
 const REGIONS = ['الرياض', 'مكة المكرمة', 'المدينة المنورة', 'القصيم', 'المنطقة الشرقية', 'عسير', 'تبوك',
                  'حائل', 'الحدود الشمالية', 'جازان', 'نجران', 'الباحة', 'الجوف'];
 
+// true  = merged reports (mergedReports / "Marged") count as ONE report: the main report is counted, the duplicates are not
+// false = count every document in the Report collection, merged duplicates included
+const EXCLUDE_MERGED = true;
+
 const $ = (id) => document.getElementById(id);
 const charts = {};
 
 /* ── Helpers ────────────────────────────────────────────── */
-// Report.Status values seen in Firestore: "Report Received", "search_in_progress", "rescued", "report_closed"
-function statusKey(s) {
-  s = String(s || '').toLowerCase();
-  if (/rescued|found|عثور/.test(s)) return 'found';
-  if (/clos|مغلق|مقفل/.test(s)) return 'closed';
-  if (/progress|جار|متابع|معالج/.test(s)) return 'progress';
-  return 'received';                       // "Report Received" and anything unknown
-}
 const toDate = (t) => { if (!t) return null; const d = t.toDate ? t.toDate() : new Date(t); return isNaN(d) ? null : d; };
+
+// Report.status values seen in Firestore: "Report Received", "search_in_progress", "rescued", "report_closed"
+// A closed report keeps status "rescued" and is told apart by its `outcome`:
+//   found_safe / found_injured / found_deceased → found (label: تم العثور)  |  not_found → notfound
+function statusKey(d) {
+  const s = String(d.Status || d.status || '').trim().toLowerCase();
+  const outcome = String(d.outcome || '').trim().toLowerCase();
+
+  if (/^not[_\s-]?found/.test(outcome)) return 'notfound';
+  if (/^found/.test(outcome)) return 'found';
+
+  if (/rescued|found|عثور/.test(s)) return 'found';                 // rescued but no outcome recorded
+  if (/clos|مغلق|مقفل/.test(s)) return 'closed';                    // closed but no outcome recorded
+  if (/progress|جار|متابع|معالج/.test(s)) return 'progress';
+  return 'received';                                                // "Report Received" and anything unknown
+}
 
 // Report date: LoggedAt (Timestamp) → ReportDate ("5/10/2026" = M/D/YYYY) → earliest statusLog entry
 function reportDate(d) {
@@ -72,7 +85,7 @@ async function loadData() {
     const dt = new Date(); dt.setHours(0, 0, 0, 0); dt.setDate(dt.getDate() - i);
     days.push({ key: dayKey(dt), label: DAYS_AR[dt.getDay()], count: 0 });
   }
-  const status = { received: 0, progress: 0, found: 0, closed: 0 };
+  const status = { received: 0, progress: 0, found: 0, notfound: 0, closed: 0 };
   const regions = {};
   let foundCount = 0, volunteers = 0, failed = false;
 
@@ -82,16 +95,35 @@ async function loadData() {
 
     // Reports
     const reports = await getDocs(collection(db, 'Report'));
+
+    // Merged reports: the main report lists the duplicates in `mergedReports`.
+    // The duplicates are skipped so the merged group counts as ONE report.
+    const skipped = [];                       // reports left out of the count (shown in the console)
+    const mergedAway = new Set();
+    reports.forEach((doc) => {
+      const m = doc.data().mergedReports;
+      if (Array.isArray(m)) m.forEach((x) => mergedAway.add(String(x && x.id ? x.id : x)));
+    });
+
     reports.forEach((doc) => {
       const d = doc.data();
-      const approval = String(d.ApprovalStutes || d.ApprovalStatus || '').toLowerCase();
-      if (/reject|رفض|مرفوض/.test(approval)) return;            // rejected reports are not counted
+      if (EXCLUDE_MERGED && (mergedAway.has(doc.id) || mergedAway.has(String(d.reportId || '')))) { skipped.push({ id: doc.id, reason: 'مدموج (مذكور في mergedReports)' }); return; }   // duplicate merged into another report
+      if (EXCLUDE_MERGED && (d.mergedInto || d.mergedWith || d.duplicateOf)) { skipped.push({ id: doc.id, reason: 'مدموج (mergedInto/mergedWith/duplicateOf)' }); return; }                        // (in case the duplicate points to its main report)
 
-      // "received" = waiting for the admin; once the admin approves it (and it is not found/closed yet) = in progress
-      let key = statusKey(d.Status || d.status);
+      // Status spelled "Marged" (or "Merged") = a duplicate that was merged. Skip it unless it is the main report
+      // (the main report is the one that holds the `mergedReports` list), so the group counts once.
+      const st = String(d.Status || d.status || '').trim();
+      const isMergedStatus = /m[ae]rged?|مدمج|مدموج|دمج/i.test(st);
+      const isMain = Array.isArray(d.mergedReports) && d.mergedReports.length > 0;
+      if (EXCLUDE_MERGED && isMergedStatus && !isMain) { skipped.push({ id: doc.id, reason: 'حالته Marged/Merged: ' + st }); return; }
+      const approval = String(d.ApprovalStutes || d.ApprovalStatus || '').toLowerCase();
+
+      // "received" = under review or rejected; once the admin approves it (and it is not found/closed yet) = in progress
+      let key = statusKey(d);
+      if (/reject|رفض|مرفوض/.test(approval)) key = 'received';        // rejected reports stay in "received" (only approval moves a report to in-progress)
       if (key === 'received' && /approved|مقبول|معتمد/.test(approval)) key = 'progress';
       status[key]++;
-      if (key === 'found' || /^found/.test(String(d.outcome || ''))) foundCount++;
+      if (key === 'found') foundCount++;
 
       const rg = String(d.Region || '').trim();
       if (rg) regions[rg] = (regions[rg] || 0) + 1;
@@ -99,6 +131,9 @@ async function loadData() {
       const dt = reportDate(d);
       if (dt) { const day = days.find((x) => x.key === dayKey(dt)); if (day) day.count++; }
     });
+
+    console.log('Charts: Report docs in Firestore =', reports.size, '| counted =', reports.size - skipped.length, '| skipped =', skipped.length);
+    if (skipped.length) console.table(skipped);
 
     // Volunteers (approved + valid account)
     const vols = await getDocs(collection(db, 'Volunteer'));
@@ -111,7 +146,7 @@ async function loadData() {
     console.error('Charts: could not read Firestore →', err.code || '', err.message);
   }
 
-  return { days, status, regions, foundCount, volunteers, completed: status.found + status.closed, failed };
+  return { days, status, regions, foundCount, volunteers, completed: status.found + status.notfound + status.closed, failed };
 }
 
 /* ── Chart.js plugins ───────────────────────────────────── */
@@ -186,11 +221,11 @@ function drawAll({ days, status, regions, foundCount, volunteers, completed, fai
       options: { responsive: true, maintainAspectRatio: false, cutout: '64%', plugins: { legend: { display: false } } },
       plugins: [centerTotal]
     });
-    if ($('statusLegend')) $('statusLegend').innerHTML = STATUS.map((s) => {
+    if ($('statusLegend')) $('statusLegend').innerHTML = STATUS.filter((s) => s.key !== 'closed' || status.closed > 0).map((s) => {
       const n = status[s.key];
       const pct = total ? Math.round((n / total) * 100) : 0;
       return '<span class="leg-item"><span class="leg-dot" style="background:' + s.color + '"></span>' +
-             s.label + ' <bdi dir="ltr">' + n + ' · ' + pct + '%</bdi></span>';
+             s.label + ' <bdi dir="ltr">' + n + ' - ' + pct + '%</bdi></span>';
     }).join('');
     if ($('counterTotalReports')) $('counterTotalReports').textContent = total;
     if ($('counterFoundReports')) $('counterFoundReports').textContent = foundCount;
@@ -227,7 +262,8 @@ function drawAll({ days, status, regions, foundCount, volunteers, completed, fai
       options: {
         responsive: true,
         maintainAspectRatio: false,
-layout: { padding: { top: 26, right: 28, left: 12 } },        plugins: { legend: { display: false } },
+        layout: { padding: { top: 26, right: 28, left: 12 } },
+        plugins: { legend: { display: false } },
         scales: {
           x: { reverse: true, grid: { display: false } },            // RTL: oldest day on the right
           y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: C.grid }, title: axisTitle('عدد البلاغات') }
@@ -261,14 +297,15 @@ layout: { padding: { top: 26, right: 28, left: 12 } },        plugins: { legend:
         layout: { padding: { left: 28 } },
         plugins: { legend: { display: false } },
         scales: {
-x: {
-  reverse: true,
-  beginAtZero: true,
-  grace: '12%',                       // ← فراغ بعد أطول عمود
-  ticks: { precision: 0 },
-  grid: { color: C.grid },
-  title: axisTitle('عدد البلاغات')
-},          y: { grid: { display: false } }
+          x: {
+            reverse: true,
+            beginAtZero: true,
+            grace: '12%',                       // space after the longest bar
+            ticks: { precision: 0 },
+            grid: { color: C.grid },
+            title: axisTitle('عدد البلاغات')
+          },
+          y: { grid: { display: false } }
         }
       },
       plugins: [valueLabelsH]

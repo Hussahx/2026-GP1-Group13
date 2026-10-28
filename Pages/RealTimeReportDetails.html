@@ -575,7 +575,7 @@
 
   <header class="page-header" id="pageHeader">
     <div class="header-logo-mark" aria-hidden="true">
-      <img src="/assest/logoo.PNG" alt="شعار راصد" />
+      <img src="../assest/logoo.PNG" alt="شعار راصد" />
     </div>
     <div class="header-brand">
       
@@ -864,10 +864,10 @@
     <div class="footer-dune"></div>
   </footer>
 
-  <script src="/JS/ReportDetails.js"></script>
-  <script src="/JS/droneStream.js"></script>
-  <script type="module" src="/JS/detectionAlerts.js"></script>
-  <script type="module" src="/JS/droneMap.js"></script>
+  <script src="../JS/ReportDetails.js"></script>
+  <script src="../JS/droneStream.js"></script>
+  <script type="module" src="../JS/detectionAlerts.js"></script>
+  <script type="module" src="../JS/droneMap.js"></script>
 
   <script>
     (function () {
@@ -1008,11 +1008,11 @@
   </div>
 
 <script type="module">
-  import { auth, db } from '/JS/firebase.js';
+  import { auth, db } from '../JS/firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { doc, getDoc, getDocs, updateDoc, arrayUnion, Timestamp, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { renderMenu } from '/JS/sidebar-menu.js';
-  import { getRoleFromFirestore } from '/JS/firebase.js';
+  import { renderMenu } from '../JS/sidebar-menu.js';
+  import { getRoleFromFirestore } from '../JS/firebase.js';
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
