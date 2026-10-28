@@ -128,7 +128,7 @@ const valueLabels = {                       // number above each point
     ctx.restore();
   }
 };
-const valueLabelsH = {                      // number at the end of each horizontal bar
+const valueLabelsH = {
   id: 'valueLabelsH',
   afterDatasetsDraw(chart) {
     const { ctx } = chart;
@@ -138,7 +138,7 @@ const valueLabelsH = {                      // number at the end of each horizon
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     chart.getDatasetMeta(0).data.forEach((el, i) =>
-      ctx.fillText(chart.data.datasets[0].data[i], el.x - 8, el.y));
+      ctx.fillText(chart.data.datasets[0].data[i], el.x - 10, el.y));
     ctx.restore();
   }
 };
@@ -227,8 +227,7 @@ function drawAll({ days, status, regions, foundCount, volunteers, completed, fai
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 26 } },
-        plugins: { legend: { display: false } },
+layout: { padding: { top: 26, right: 28, left: 12 } },        plugins: { legend: { display: false } },
         scales: {
           x: { reverse: true, grid: { display: false } },            // RTL: oldest day on the right
           y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: C.grid }, title: axisTitle('عدد البلاغات') }
@@ -262,8 +261,14 @@ function drawAll({ days, status, regions, foundCount, volunteers, completed, fai
         layout: { padding: { left: 28 } },
         plugins: { legend: { display: false } },
         scales: {
-          x: { reverse: true, beginAtZero: true, ticks: { precision: 0 }, grid: { color: C.grid }, title: axisTitle('عدد البلاغات') },
-          y: { grid: { display: false } }
+x: {
+  reverse: true,
+  beginAtZero: true,
+  grace: '12%',                       // ← فراغ بعد أطول عمود
+  ticks: { precision: 0 },
+  grid: { color: C.grid },
+  title: axisTitle('عدد البلاغات')
+},          y: { grid: { display: false } }
         }
       },
       plugins: [valueLabelsH]
