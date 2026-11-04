@@ -343,6 +343,10 @@ async function setStatus(id, status) {
     await updateDoc(doc(db, "Detection", id), {
       Status: status, StatusBy: auth.currentUser ? auth.currentUser.uid : null, StatusAt: serverTimestamp(),
     });
+
+    // ✅ جديد: عند تأكيد الرصد البشري نرسل تنبيه واتساب لأعضاء المهمة
+    if (status === "confirmed") notifyTeamConfirmed(id);
+
     close();                    // list, map pin and video update by themselves (live listener)
   } catch (e) {
     console.error(e);
@@ -412,4 +416,23 @@ function injectStyles() {
   const s = document.createElement("style");
   s.textContent = css;
   document.head.appendChild(s);
+}
+async function notifyTeamConfirmed(detectionId) {
+  try {
+    const reportId = new URLSearchParams(location.search).get('docId');
+    await fetch('https://rasid-detection-notify.sshrg99.workers.dev/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-App-Secret': 'qwertyuioplkjhgfdsazxcvbnmmmmmmhgfdsavbnbvctr'
+      },
+      body: JSON.stringify({
+        type: 'detection_confirmed',
+        reportId,
+        detectionId,
+        missingName: document.getElementById('missingName')?.textContent.trim(),
+        reportLocation: document.getElementById('missingArea')?.textContent.trim()
+      })
+    });
+  } catch (e) { console.error('WhatsApp detection notify error', e); }
 }
