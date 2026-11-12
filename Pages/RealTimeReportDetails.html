@@ -711,6 +711,9 @@
           </span>
         </div>
 
+        <!-- حالة طلب الإغلاق (بانتظار الإدارة / مرفوض) -->
+        <div id="closureReqMsg" style="display:none;"></div>
+
         <!-- رسالة للأعضاء غير القائد -->
         <div id="leaderOnlyMsg" style="display:none; margin-top:.9rem; padding:10px 14px; background:rgba(166,124,82,0.08); border:1.5px solid rgba(166,124,82,0.22); border-radius:12px; font-size:13px; color:var(--ink-muted, #8c6840); font-weight:600;">
           <i class="fa-solid fa-lock" style="margin-left:6px;"></i>
@@ -1098,8 +1101,8 @@ if (vDoc.exists()) {
 
       const reportData = reportSnap.data();
       /* ── LEADER CHECK ─────────────────────────────────────────
-         1. If LeaderID exists → fetch Volunteer doc → compare UserID
-         2. If no LeaderID → compare leader name field to my full name
+         Only the user whose auth uid equals report.LeaderID is the leader.
+         Everyone else (team members, admins, others) sees no edit button.
       ────────────────────────────────────────────────────────── */
 let isLeader = false;
 
@@ -1111,44 +1114,24 @@ try {
     reportData.leaderId ||
     '';
 
-  // نجيب بياناتي من Volunteer
-  const mySnap = await getDocs(
-    query(
-      collection(db, 'Volunteer'),
-      where('UserID', '==', user.uid)
-    )
-  );
+  // القائد الوحيد هو صاحب LeaderID — لا مقارنة بالاسم ولا بقيم فارغة
+  isLeader = !!leaderDocId && !!user.uid && leaderDocId === user.uid;
 
-  let myVolunteerDocId = '';
-  let myFullName = '';
-
-  if (!mySnap.empty) {
-
-    myVolunteerDocId = mySnap.docs[0].id;
-
-    const myData = mySnap.docs[0].data();
-
-    myFullName =
-      ((myData.FirstName || '') + ' ' + (myData.LastName || '')).trim();
+  // نجيب بياناتي من Volunteer (للاسم والرقم في طلب الإغلاق فقط)
+  let myData = null;
+  for (const field of ['UserID', 'AuthUID']) {
+    const s = await getDocs(query(collection(db, 'Volunteer'), where(field, '==', user.uid)));
+    if (!s.empty) { myData = s.docs[0].data(); break; }
+  }
+  if (!myData) {
+    const d = await getDoc(doc(db, 'Volunteer', user.uid));
+    if (d.exists()) myData = d.data();
   }
 
-  // 1) لو مخزن auth uid مباشرة
-  if (leaderDocId === user.uid) {
-    isLeader = true;
-  }
-
-  // 2) لو مخزن document id حق Volunteer
-  if (!isLeader && leaderDocId === myVolunteerDocId) {
-    isLeader = true;
-  }
-
-  // 3) fallback بالاسم
-  if (
-    !isLeader &&
-    reportData.leader &&
-    reportData.leader.trim() === myFullName
-  ) {
-    isLeader = true;
+  if (myData) {
+    // نحفظ اسم ورقم القائد لإرسالهم مع طلب الإغلاق للإدارة
+    window._myName  = ((myData.FirstName || '') + ' ' + (myData.LastName || '')).trim();
+    window._myPhone = myData.Phone || myData.phone || '';
   }
 
 } catch(e) {
@@ -1161,6 +1144,7 @@ try {
       window._leaderDocId      = docId;
       window._leaderUid        = user.uid;
       window._isLeader         = isLeader;
+      window._closureRequest   = reportData.closureRequest || null;
       window._firestoreDb      = db;
       window._firestoreDoc     = doc;
       window._firestoreUpdate  = updateDoc;
@@ -1256,6 +1240,10 @@ async function fetchActiveVolunteer(uid) {
         }
       }
 
+      /* الزر يظهر فقط لمن يظهر في الصفحة كـ "قائد الفريق" */
+      if (effectiveLeaderUid !== user.uid) isLeader = false;
+      window._isLeader = isLeader;
+
       /* ── Fill leader field ── */
       const leaderEl = document.getElementById('reportLeader');
       if (leaderEl) leaderEl.textContent = effectiveLeaderName;
@@ -1319,6 +1307,15 @@ async function fetchActiveVolunteer(uid) {
           const btn = document.getElementById('updateStatusBtn');
           if (btn) { btn.disabled = true; btn.style.opacity = '.45'; btn.style.pointerEvents = 'none'; }
         }
+        /* طلب الإغلاق: معلّق / مرفوض */
+        if (typeof _applyClosureUI === 'function') _applyClosureUI();
+        /* فتح النموذج تلقائياً لو جاء القائد من صفحة البلاغات */
+        const _req = window._closureRequest;
+        if (new URLSearchParams(location.search).get('openStatus') === '1'
+            && !window._reportAlreadyClosed
+            && !(_req && _req.state === 'pending')) {
+          openStatusModal();
+        }
       } else {
         if (statusRow)     statusRow.style.display     = 'none';
         if (leaderOnlyMsg) leaderOnlyMsg.style.display = '';
@@ -1343,6 +1340,15 @@ async function fetchActiveVolunteer(uid) {
      UPDATE STATUS MODAL
 ══════════════════════════════════════════════════ -->
 <style>
+  /* ── رسالة حالة طلب الإغلاق ── */
+  .closure-msg {
+    margin-top: .9rem; padding: 10px 14px; border-radius: 12px;
+    font-size: 13px; font-weight: 600; line-height: 1.8;
+  }
+  .closure-msg i { margin-left: 6px; }
+  .cm-pending  { background: #fff5ee; border: 1.5px solid #f0d4a8; color: #a04a18; }
+  .cm-rejected { background: #fef2f2; border: 1.5px solid #ffc0b8; color: #a02a1e; }
+
   /* ── Update Status Modal — matches login modal style ── */
   #usBackdrop {
     display: none;
@@ -1761,7 +1767,7 @@ async function fetchActiveVolunteer(uid) {
 
       <button onclick="executeStatusUpdate()" type="button"
       style="flex:1;height:54px;border-radius:999px;border:1.5px solid rgba(47,155,89,.30);background:transparent;color:#2f9b59;font-family:'Tajawal',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;transition:.22s;">
-        تأكيد التحديث
+       إرسال الطلب
       </button>
 
       <button onclick="closeUpdateConfirm()" type="button"
@@ -1810,6 +1816,11 @@ function openStatusModal() {
     _showToast('البلاغ مغلق بالفعل ولا يمكن تحديث حالته.');
     return;
   }
+
+  if (window._closureRequest && window._closureRequest.state === 'pending') {
+    _showToast('طلب الإغلاق بانتظار موافقة الإدارة.');
+    return;
+  }
   const bd = document.getElementById('usBackdrop');
   bd.classList.add('us-open');
   document.body.style.overflow = 'hidden';
@@ -1843,7 +1854,8 @@ function openUpdateConfirm() {
     document.getElementById('missingName')?.textContent || 'المفقود';
 
   document.getElementById('updateConfirmText').innerHTML =
-  `هل أنت متأكد من تحديث حالة البلاغ للمفقود <strong>${missingName}</strong> وإنهائها؟`;
+  `سيتم إرسال طلب إغلاق البلاغ للمفقود <strong>${missingName}</strong> إلى الإدارة للمراجعة.<br>
+   لن تتغير حالة البلاغ ولن يُبلَّغ المُبلِّغ إلا بعد موافقة الإدارة. هل تريد المتابعة؟`;
 
   document.getElementById('updateConfirmOverlay').style.display = 'flex';
 }
@@ -1901,6 +1913,26 @@ async function executeStatusUpdate(){
   const confirmBtn = document.getElementById('usConfirmBtn');
   confirmBtn.disabled = true;
   confirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جارٍ الحفظ…';
+
+  /* ── الإغلاق لا يتم مباشرة: يُرسل كطلب للإدارة (صفحة إغلاق الحالات) ── */
+  if (statusVal === 'report_closed') {
+    try {
+      await _writeClosureRequest(logEntry, customNote, now);
+    } catch(e) {
+      console.error('Closure request failed:', e);
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> تأكيد التحديث';
+      closeUpdateConfirm();
+      _showToast('حدث خطأ أثناء إرسال الطلب. حاول مجدداً.');
+      return;
+    }
+    confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> تأكيد التحديث';
+    closeUpdateConfirm();
+    closeStatusModal();
+    _applyClosureUI();
+    _showToast('✓ تم إرسال طلب الإغلاق إلى الإدارة للمراجعة');
+    return;
+  }
 
   try {
     await _writeToFirestore(logEntry, cfg.fbVal, now);
@@ -2008,6 +2040,80 @@ async function _writeToFirestore(logEntry, fbStatusVal, nowDate) {
   }
 
   await updFn(docFn(db, 'Report', docId), payload);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CLOSURE REQUEST — القائد يرسل طلب، والإدارة تعتمده
+   يُحفظ في حقل closureRequest داخل وثيقة البلاغ.
+   لا نغيّر status ولا statusLog هنا، لذلك المُبلِّغ لا يرى شيئاً
+   حتى تعتمد الإدارة الطلب من صفحة CaseClosure.html
+═══════════════════════════════════════════════════════════ */
+async function _writeClosureRequest(logEntry, customNote, nowDate) {
+  const docId = window._leaderDocId || window._currentReportDocId || null;
+  if (!docId) throw new Error('Firestore: no docId available');
+
+  const db = window._firestoreDb, docFn = window._firestoreDoc,
+        updFn = window._firestoreUpdate, TSClass = window._firestoreTS;
+  if (!db || !docFn || !updFn || !TSClass) throw new Error('Firestore refs not ready');
+
+  const leaderName = window._myName
+    || (document.getElementById('reportLeader')?.textContent || '').trim()
+    || '—';
+
+  const request = {
+    state:           'pending',
+    requestedStatus: 'report_closed',
+    previousStatus:  logEntry.previousStatus,
+    outcome:         logEntry.outcome      || null,
+    outcomeLbl:      logEntry.outcomeLbl   || null,
+    outcomeNotes:    logEntry.outcomeNotes || null,
+    note:            logEntry.note,
+    customNote:      customNote || null,
+    leaderUid:       window._leaderUid || null,
+    leaderName:      leaderName,
+    leaderPhone:     window._myPhone || '',
+    requestedAt:     TSClass.fromDate(nowDate),
+    requestedAtText: logEntry.loggedAt,
+    reviewedAt:      null,
+    reviewedBy:      null,
+    rejectReason:    null,
+  };
+
+  await updFn(docFn(db, 'Report', docId), { closureRequest: request });
+  window._closureRequest = request;
+}
+
+function _escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* يحدّث زر "تحديث الحالة" ورسالة الحالة حسب طلب الإغلاق */
+function _applyClosureUI() {
+  const req = window._closureRequest;
+  const btn = document.getElementById('updateStatusBtn');
+  const box = document.getElementById('closureReqMsg');
+  if (!btn || !box) return;
+  const lbl = btn.querySelector('.btn-label');
+
+  if (window._reportAlreadyClosed) { box.style.display = 'none'; return; }
+
+  if (req && req.state === 'pending') {
+    btn.disabled = true; btn.style.opacity = '.55'; btn.style.pointerEvents = 'none';
+    if (lbl) lbl.textContent = 'بانتظار موافقة الإدارة';
+    box.className = 'closure-msg cm-pending';
+    box.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> تم إرسال طلب إغلاق البلاغ إلى الإدارة. سيتم تحديث الحالة وإبلاغ المُبلِّغ بعد الموافقة.';
+    box.style.display = '';
+  } else if (req && req.state === 'rejected') {
+    btn.disabled = false; btn.style.opacity = ''; btn.style.pointerEvents = '';
+    if (lbl) lbl.textContent = 'تحديث الحالة';
+    box.className = 'closure-msg cm-rejected';
+    box.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> رفضت الإدارة طلب الإغلاق السابق.'
+      + (req.rejectReason ? ' <b>السبب:</b> ' + _escHtml(req.rejectReason) : '')
+      + ' يمكنك إرسال طلب جديد.';
+    box.style.display = '';
+  } else {
+    box.style.display = 'none';
+  }
 }
 
 function _showToast(msg) {

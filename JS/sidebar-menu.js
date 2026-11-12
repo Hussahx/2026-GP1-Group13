@@ -31,6 +31,12 @@ const ROLE_MENUS = {
       key   : 'Control',
     },
     {
+      label : 'إغلاق الحالات',
+      href  : 'CaseClosure.html',
+      icon  : 'fas fa-clipboard-check',
+      key   : 'CaseClosure',
+    },
+    {
       label : 'طلبات تسجيل المتطوعين',
       href  : 'AdminControlPanel.html',
       icon  : 'fas fa-users',

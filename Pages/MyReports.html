@@ -797,6 +797,12 @@ window.closeLeaveConfirm = function(){
       document.getElementById('statusPanelSave').onclick = async function(){
         const newStatus = sel.value;
 
+        // الإغلاق يحتاج موافقة الإدارة — نحوّل القائد لنموذج طلب الإغلاق في صفحة التفاصيل
+        if(newStatus === 'rescued' || newStatus === 'found'){
+          window.location.href = 'RealTimeReportDetails.html?docId=' + encodeURIComponent(r._docId) + '&openStatus=1';
+          return;
+        }
+
         // إذا اختار "تم الإنقاذ" — أظهر dialog التأكيد أولاً
         if(newStatus === 'rescued'){
           panel.style.display = 'none';

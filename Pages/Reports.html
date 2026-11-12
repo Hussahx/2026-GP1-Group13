@@ -966,7 +966,8 @@ if (tsDate) {
                  : data.LoggedAt?.toDate   ? data.LoggedAt.toDate().getTime() : 0;
 
       // Determine if current user is the creator/leader or a team member
-      const isLeader   = currentUid && (data.createdBy === currentUid || data.LeaderID === currentUid);
+      // القائد الوحيد هو صاحب LeaderID (منشئ البلاغ لا يُعتبر قائداً إذا انتقلت القيادة لغيره)
+      const isLeader   = !!currentUid && !!data.LeaderID && data.LeaderID === currentUid;
       const isMember   = currentUid && teamMembers.includes(currentUid);
       const userInTeam = isLeader || isMember;
 
@@ -2082,6 +2083,12 @@ function openJoinTeamConfirm(id, missingName){
 
       document.getElementById('statusPanelSave').onclick=function(){
         var newStatus=sel?sel.value:'accepted';
+
+        // الإغلاق يحتاج موافقة الإدارة — نحوّل القائد لنموذج طلب الإغلاق في صفحة التفاصيل
+        if(newStatus === 'rescued' || newStatus === 'found'){
+          window.location.href='RealTimeReportDetails.html?docId='+encodeURIComponent(r._docId)+'&openStatus=1';
+          return;
+        }
 
         if(newStatus === 'rescued'){
           panel.style.display='none';

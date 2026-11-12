@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F5EFE6" />
+  <title>راصد — إغلاق الحالات</title>
+  <link rel="icon" href="../assest/logoo.PNG" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="../CSS/Rasid.css" />
+
+  <style>
+    :root {
+      --bg:#f9f6f1; --white:#fff;
+      --s100:#f5ece0; --s200:#e8d9c4; --s300:#d4bc98;
+      --s400:#b8965e; --s500:#9a7440; --s600:#7a5828;
+      --t900:#2a1e0e; --t700:#5a3e20; --t500:#8c6840; --t300:#b89870;
+      --bdr:rgba(180,140,80,0.15); --acc:#b8782a;
+      --ndot:#e07830; --adot:#2d9e52;
+      --red:#c0392b; --grn:#1e8040;
+    }
+
+    /* ══ إشعارات ══ */
+    .nwrap{position:fixed!important;top:14px!important;left:50%!important;transform:translateX(-50%)!important;z-index:99999!important;display:flex!important;flex-direction:column!important;gap:7px!important;pointer-events:none!important;align-items:center!important;width:88%!important;max-width:380px!important;}
+    .nnotif{background:var(--white)!important;border-radius:12px!important;padding:11px 15px!important;box-shadow:0 6px 24px rgba(0,0,0,.13)!important;font-size:13px!important;color:var(--t900)!important;font-weight:500!important;width:100%!important;border-right:4px solid!important;animation:nin .3s ease,nout .3s ease 3.5s forwards!important;}
+    .ns{border-color:#2d9e52!important;}.ni{border-color:#4060c8!important;}.nw{border-color:#e07830!important;}.ne{border-color:#c0392b!important;}
+    @keyframes nin{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes nout{from{opacity:1;}to{opacity:0;}}
+
+    .cc-wrap { max-width: 1120px; margin: 0 auto; padding: 8px 24px 60px; }
+
+    /* ══ شريط البحث + العداد ══ */
+    .cc-toolbar { display:flex; gap:12px; align-items:center; margin-bottom:22px; flex-wrap:wrap; }
+    .cc-search {
+      flex:1; min-width:220px; padding:10px 16px;
+      background:#fff; border:1.5px solid rgba(166,124,82,0.18);
+      box-shadow:0 6px 18px rgba(62,47,28,0.05); border-radius:22px;
+      font-family:'Tajawal',sans-serif; font-size:13px; color:var(--t900);
+      outline:none; direction:rtl; transition:border-color .22s, box-shadow .22s;
+    }
+    .cc-search:focus { border-color:rgba(184,138,88,0.55); box-shadow:0 0 0 4px rgba(184,138,88,0.10); }
+    .cc-search::placeholder { color:var(--t300); }
+    .cc-count {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:9px 16px; border-radius:22px;
+      background:#fff5ee; border:1.5px solid #f0d4a8; color:#c05820;
+      font-size:13px; font-weight:800; white-space:nowrap;
+    }
+    .cc-count b { font-size:16px; }
+
+    /* ══ رأس القسم ══ */
+    .sec-head-row { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .sec-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; background:var(--ndot); }
+    .sec-head-row h2 { font-size:12px; font-weight:800; letter-spacing:2px; color:var(--t700); margin:0; }
+    .sec-line { flex:1; height:1px; background:linear-gradient(to left, transparent, var(--s300)); }
+
+    /* ══ البطاقات ══ */
+    .cc-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:16px; }
+    .cc-card {
+      background:var(--white); border:1.5px solid var(--bdr); border-radius:16px;
+      position:relative; overflow:hidden; display:flex; flex-direction:column;
+      transition:transform .2s, box-shadow .2s;
+    }
+    .cc-card:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(100,60,20,.10); }
+    .cc-card::before {
+      content:''; position:absolute; top:0; right:0; width:4px; height:100%;
+      background:linear-gradient(180deg, var(--ndot), #f0a060);
+    }
+    .cc-head {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:14px 18px 12px; border-bottom:1px solid var(--s100);
+      background:linear-gradient(135deg, rgba(194,164,119,0.10), rgba(139,107,71,0.04));
+    }
+    .cc-rid { font-size:12px; font-weight:800; color:var(--t500); display:flex; align-items:center; gap:6px; }
+    .cc-rid span { color:var(--t900); font-size:13.5px; letter-spacing:.3px; }
+    .cc-pending {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:10.5px; font-weight:800; padding:4px 10px; border-radius:20px;
+      background:#fff5ee; color:#c05820; border:1px solid #f0d4a8; white-space:nowrap;
+    }
+    .cc-body { padding:14px 18px 6px; flex:1; }
+    .cc-name { font-size:16px; font-weight:800; color:var(--t900); margin-bottom:10px; }
+    .cc-info { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+    .cc-i {
+      background:rgba(245,239,230,0.7); border:1px solid rgba(166,124,82,0.12);
+      border-radius:10px; padding:8px 11px;
+    }
+    .cc-i.full { grid-column:1 / -1; }
+    .cc-l { font-size:10.5px; font-weight:700; color:var(--t500); margin-bottom:3px; }
+    .cc-v { font-size:13px; font-weight:700; color:var(--t900); word-break:break-word; }
+
+    .cc-outcome {
+      border-radius:12px; padding:10px 12px; margin-bottom:12px;
+      background:#edfaf3; border:1px solid #a0d8b0;
+    }
+    .cc-outcome.bad  { background:#fef2f2; border-color:#ffc0b8; }
+    .cc-outcome.warn { background:#fff5ee; border-color:#f0d4a8; }
+    .cc-outcome .cc-l { color:var(--t700); }
+    .cc-outcome .cc-v { font-size:14px; }
+    .cc-note { font-size:12.5px; color:var(--t700); line-height:1.7; margin-top:6px; }
+
+    .cc-leader {
+      display:flex; align-items:center; gap:11px;
+      padding:10px 12px; border-radius:12px;
+      background:#fff; border:1.5px dashed rgba(166,124,82,0.28); margin-bottom:12px;
+    }
+    .cc-av {
+      width:36px; height:36px; border-radius:50%; flex-shrink:0;
+      background:var(--s400); color:#fff; font-weight:800; font-size:14px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .cc-leader-name { font-size:13.5px; font-weight:800; color:var(--t900); }
+    .cc-leader-role { font-size:10.5px; color:var(--t300); font-weight:700; }
+    .cc-wa {
+      margin-right:auto; display:inline-flex; align-items:center; gap:6px;
+      padding:7px 12px; border-radius:50px; text-decoration:none;
+      background:#eafaf0; border:1.5px solid #9fdcb4; color:#1e8040;
+      font-size:12.5px; font-weight:800; direction:ltr; transition:all .2s;
+    }
+    .cc-wa:hover { background:#25d366; border-color:#25d366; color:#fff; transform:translateY(-1px); }
+    .cc-wa i { font-size:15px; }
+    .cc-wa.disabled { pointer-events:none; opacity:.5; background:#f5f5f5; border-color:#ddd; color:#888; }
+
+    .cc-date { font-size:11px; color:var(--t300); font-weight:700; margin-bottom:4px; }
+
+    .cc-foot { display:flex; gap:8px; padding:12px 18px 16px; border-top:1px solid var(--s100); }
+    .abtn {
+      flex:1; padding:9px 14px; border-radius:50px; border:none; cursor:pointer;
+      font-family:'Tajawal',sans-serif; font-size:13px; font-weight:800;
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      min-height:40px; transition:all .22s ease; color:#fff;
+    }
+    .abtn:disabled { opacity:.55; cursor:not-allowed; transform:none !important; }
+    .abtn-acc { background:linear-gradient(135deg, #3e9a5a, #2d7a44); box-shadow:0 3px 10px rgba(45,122,68,0.28); }
+    .abtn-acc:hover { background:linear-gradient(135deg, #2d7a44, #1e5c30); transform:translateY(-1px); }
+    .abtn-rej { background:linear-gradient(135deg, #c0392b, #962d22); box-shadow:0 3px 10px rgba(192,57,43,0.28); }
+    .abtn-rej:hover { background:linear-gradient(135deg, #962d22, #7a2318); transform:translateY(-1px); }
+
+    /* حالة فارغة */
+    .empty-state {
+      padding:56px 24px; text-align:center; background:#fff;
+      border:1.5px solid var(--bdr); border-radius:16px;
+    }
+    .empty-icon  { font-size:40px; margin-bottom:12px; color:var(--t300); }
+    .empty-title { font-size:15px; font-weight:800; color:var(--t700); margin-bottom:5px; }
+    .empty-sub   { font-size:13px; color:var(--t300); }
+
+    /* ══ نافذة التأكيد ══ */
+    .aoverlay {
+      position:fixed; inset:0; background:rgba(42,31,18,0.52);
+      backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+      z-index:99990; display:flex; align-items:center; justify-content:center; padding:1.25rem;
+      opacity:0; pointer-events:none; transition:opacity .25s ease;
+    }
+    .aoverlay.on { opacity:1; pointer-events:all; }
+    .amodal {
+      background:rgba(255,250,242,0.97); border:1px solid rgba(166,124,82,0.20); border-radius:18px;
+      width:min(480px, 100%); max-height:88vh; display:flex; flex-direction:column;
+      box-shadow:0 24px 70px rgba(42,31,18,0.25); overflow:hidden;
+      transform:translateY(14px); transition:transform .22s ease-out;
+    }
+    .aoverlay.on .amodal { transform:translateY(0); }
+    .mhead {
+      display:flex; align-items:center; gap:.75rem; padding:1rem 1.1rem;
+      border-bottom:1px solid rgba(166,124,82,0.14);
+      background:linear-gradient(135deg, rgba(194,164,119,0.16), rgba(139,107,71,0.10));
+    }
+    .mhead-icon {
+      width:40px; height:40px; border-radius:12px; color:#fff; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:1rem;
+    }
+    .mhi-acc { background:linear-gradient(135deg, #3e9a5a, #2d7a44); }
+    .mhi-rej { background:linear-gradient(135deg, #c0392b, #962d22); }
+    .mhead-title { font-size:1.08rem; font-weight:900; color:#3E2F1C; }
+    .mclose {
+      margin-right:auto; width:42px; height:42px; border-radius:12px; cursor:pointer;
+      border:1px solid rgba(166,124,82,0.18); background:rgba(255,255,255,0.55); color:#3E2F1C; font-size:1rem;
+    }
+    .mbody { padding:1.1rem; overflow-y:auto; }
+    .mtext {
+      font-size:.92rem; color:#7A6245; line-height:1.9; font-weight:600;
+      background:rgba(245,239,230,.55); border:1px solid rgba(166,124,82,.14);
+      border-radius:12px; padding:13px;
+    }
+    .mfield { margin-top:12px; display:none; }
+    .mfield label { display:block; font-size:.8rem; font-weight:800; color:#3E2F1C; margin-bottom:6px; }
+    .mfield textarea {
+      width:100%; box-sizing:border-box; resize:vertical; min-height:70px;
+      border:1.5px solid rgba(166,124,82,0.22); border-radius:12px; padding:10px 12px;
+      font-family:'Tajawal',sans-serif; font-size:.88rem; color:#3E2F1C; background:#fff; outline:none;
+    }
+    .mfield textarea:focus { border-color:rgba(184,138,88,0.6); }
+    .mfoot { display:flex; gap:.65rem; padding:1rem 1.1rem 1.3rem; }
+    .mbtn {
+      flex:1; min-height:46px; border-radius:50px; cursor:pointer;
+      font-family:'Tajawal',sans-serif; font-size:.98rem; font-weight:800;
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      border:none; transition:all .25s ease;
+    }
+    .mbtn-cancel { background:transparent; border:2px solid rgba(166,124,82,0.25); color:#3E2F1C; }
+    .mbtn-cancel:hover { border-color:#A67C52; background:rgba(166,124,82,0.07); }
+    .mbtn-acc { background:linear-gradient(135deg, #3e9a5a, #2d7a44); color:#fff; }
+    .mbtn-rej { background:linear-gradient(135deg, #c0392b, #962d22); color:#fff; }
+    .mbtn:disabled { opacity:.6; cursor:not-allowed; }
+
+    @media (max-width: 600px) {
+      .cc-wrap { padding:8px 14px 50px; }
+      .cc-grid { grid-template-columns:1fr; }
+      .cc-info { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="nwrap" id="nwrap"></div>
+
+  <!-- ══ HEADER ══ -->
+  <header class="page-header" id="pageHeader">
+    <div class="header-logo-mark" aria-hidden="true">
+      <img src="../assest/logoo.PNG" alt="شعار راصد" />
+    </div>
+    <div class="header-brand"></div>
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="appSidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+    <nav class="header-nav" aria-label="تنقل سريع">
+      <div class="user-chip" title="حسابي">
+        <span class="avatar" id="userInitial">U</span>
+        <span class="name" id="userName">User</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ══ SIDEBAR ══ -->
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+  <aside class="app-sidebar" id="appSidebar" aria-label="القائمة الجانبية" aria-hidden="true">
+    <div class="sidebar-close-row">
+      <button class="sidebar-close" id="sidebarClose" aria-label="إغلاق القائمة">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <button class="sidebar-logout-btn" id="sidebarLogoutBtn">
+        <i class="fas fa-right-from-bracket"></i>
+        <span>تسجيل الخروج</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="logout-overlay" id="logoutOverlay" role="dialog" aria-modal="true" aria-labelledby="logoutTitle">
+    <div class="logout-dialog">
+      <div class="logout-dialog-icon">
+        <i class="fas fa-right-from-bracket"></i>
+        <h3 class="logout-dialog-title" id="logoutTitle">تسجيل الخروج</h3>
+      </div>
+      <p class="logout-dialog-msg">هل أنت متأكد من تسجيل الخروج؟</p>
+      <div class="logout-dialog-actions">
+        <button class="logout-cancel-btn" id="logoutCancel"><i class="fas fa-xmark"></i> إلغاء</button>
+        <button class="logout-confirm-btn" id="logoutConfirm"><i class="fas fa-right-from-bracket"></i> تسجيل الخروج</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MAIN ══ -->
+  <main class="page-body">
+
+    <div class="page-heading">
+      <div class="page-heading-eyebrow" aria-hidden="true"><span></span> لوحة التحكم الإدارية <span></span></div>
+      <h2>إغلاق الحالات</h2>
+      <p>طلبات إغلاق البلاغات المرسلة من قادة الفرق  </p>
+    </div>
+
+    <div class="cc-wrap">
+
+      <div class="cc-toolbar">
+        <input class="cc-search" id="ccSearch" type="search" placeholder="🔍 ابحث برقم البلاغ أو اسم المفقود أو اسم القائد...">
+        <div class="cc-count"><i class="fas fa-hourglass-half"></i> بانتظار المراجعة: <b id="ccCount">٠</b></div>
+      </div>
+
+      <div class="sec-head-row">
+        <div class="sec-dot"></div>
+        <h2>طلبات الإغلاق</h2>
+        <div class="sec-line"></div>
+      </div>
+
+      <div class="cc-grid" id="ccGrid"></div>
+
+      <div class="empty-state" id="ccEmpty" style="display:none;">
+        <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
+        <div class="empty-title" id="ccEmptyTitle">لا توجد طلبات إغلاق حالياً</div>
+        <div class="empty-sub" id="ccEmptySub">ستظهر هنا طلبات إغلاق البلاغات التي يرسلها قادة الفرق.</div>
+      </div>
+
+      <div class="empty-state" id="ccLoading">
+        <div class="empty-icon"><i class="fas fa-circle-notch fa-spin"></i></div>
+        <div class="empty-title">جارٍ تحميل الطلبات…</div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ══ FOOTER ══ -->
+  <footer>
+    <svg class="footer-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,60 L0,26 Q200,0 420,22 Q640,44 860,14 Q1080,0 1280,20 L1440,28 L1440,60 Z" fill="#f5efe5"/>
+      <path d="M0,60 L0,40 Q250,14 500,38 Q750,58 1000,30 Q1250,10 1440,40 L1440,60 Z" fill="#e8d4b4" opacity="0.3"/>
+    </svg>
+    <div class="footer-inner">
+      <div class="f-brand">
+        <div class="f-logo">راصد<span>RASID</span></div>
+        <p>منصة وطنية لرصد وتنسيق عمليات البحث والإنقاذ عن المفقودين في البيئات الصحراوية.</p>
+      </div>
+      <div class="f-col">
+        <h4>تواصل معنا</h4>
+        <p style="font-size:12.5px;color:rgba(255,255,255,0.56);line-height:1.8;margin-bottom:10px;">نحن هنا للإجابة على استفساراتك</p>
+        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=rasidsupport@gmail.com" target="_blank"
+           style="display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,0.78);font-size:13px;font-weight:700;text-decoration:none;">
+          <i class="fa-solid fa-envelope"></i> rasidsupport@gmail.com
+        </a>
+      </div>
+      <div class="f-col">
+        <h4>أرقام الطوارئ</h4>
+        <div class="f-emergency"><div class="num">911</div><small>الدفاع المدني</small></div>
+        <div class="f-emergency"><div class="num">998</div><small>الهلال الأحمر</small></div>
+      </div>
+    </div>
+    <div class="footer-bar">جميع الحقوق محفوظة © ٢٠٢٥ &nbsp;|&nbsp; منصة راصد للبحث والإنقاذ</div>
+    <div class="footer-dune"></div>
+  </footer>
+
+  <!-- ══ نافذة تأكيد القرار ══ -->
+  <div class="aoverlay" id="decideOvr" role="dialog" aria-modal="true">
+    <div class="amodal">
+      <div class="mhead">
+        <div class="mhead-icon" id="dIcon"></div>
+        <div class="mhead-title" id="dTitle"></div>
+        <button class="mclose" type="button" onclick="window.ccCloseDecide()" aria-label="إغلاق"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="mbody">
+        <div class="mtext" id="dText"></div>
+        <div class="mfield" id="dReasonWrap">
+          <label for="dReason">سبب الرفض <span style="color:#b89870;font-weight:600;">(اختياري — يظهر للقائد)</span></label>
+          <textarea id="dReason" placeholder="مثال: يرجى إرفاق تفاصيل أكثر عن حالة المفقود..."></textarea>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button class="mbtn" id="dConfirm" type="button"></button>
+        <button class="mbtn mbtn-cancel" type="button" onclick="window.ccCloseDecide()"><i class="fas fa-arrow-right"></i> إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SIDEBAR SCRIPT (من base.html) ══ -->
+  <script>
+    (function () {
+      var toggle     = document.getElementById('sidebarToggle');
+      var sidebar    = document.getElementById('appSidebar');
+      var overlay    = document.getElementById('sidebarOverlay');
+      var closeBtn   = document.getElementById('sidebarClose');
+      var pageHeader = document.getElementById('pageHeader');
+      var logoutBtn  = document.getElementById('sidebarLogoutBtn');
+      var logoutOvr  = document.getElementById('logoutOverlay');
+      var logoutCanc = document.getElementById('logoutCancel');
+      var logoutConf = document.getElementById('logoutConfirm');
+
+      function openSidebar() {
+        sidebar.classList.add('open');
+        overlay.classList.add('visible');
+        overlay.setAttribute('aria-hidden','false');
+        sidebar.setAttribute('aria-hidden','false');
+        toggle.setAttribute('aria-expanded','true');
+        document.body.style.overflow = 'hidden';
+        if (pageHeader) pageHeader.classList.add('header-hidden');
+      }
+      function closeSidebar() {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('visible');
+        overlay.setAttribute('aria-hidden','true');
+        sidebar.setAttribute('aria-hidden','true');
+        toggle.setAttribute('aria-expanded','false');
+        document.body.style.overflow = '';
+        if (pageHeader) pageHeader.classList.remove('header-hidden');
+      }
+      function openLogout()  { logoutOvr.classList.add('on'); document.body.style.overflow='hidden'; logoutConf.focus(); }
+      function closeLogout() { logoutOvr.classList.remove('on'); document.body.style.overflow=''; }
+
+      toggle.addEventListener('click', function(){ sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
+      closeBtn.addEventListener('click', closeSidebar);
+      overlay.addEventListener('click', closeSidebar);
+      logoutBtn.addEventListener('click', openLogout);
+      logoutCanc.addEventListener('click', closeLogout);
+      logoutOvr.addEventListener('click', function(e){ if (e.target===logoutOvr) closeLogout(); });
+      logoutConf.addEventListener('click', function(){
+        logoutConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الخروج…';
+        logoutConf.disabled = true;
+        sessionStorage.clear();
+        setTimeout(function(){ window.location.href='index.html'; }, 900);
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key==='Escape'){
+          if (logoutOvr.classList.contains('on')) { closeLogout(); return; }
+          if (sidebar.classList.contains('open')) { closeSidebar(); toggle.focus(); }
+        }
+      });
+      var resizeTimer;
+      window.addEventListener('resize', function(){
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function(){ if (window.innerWidth>=1024) closeSidebar(); }, 150);
+      });
+    })();
+  </script>
+
+  <!-- ══ PAGE LOGIC ══ -->
+  <script type="module">
+    import { renderMenu } from '/JS/sidebar-menu.js';
+    import { getRoleFromFirestore } from '/JS/firebase.js';
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import {
+      getFirestore, collection, query, where, onSnapshot,
+      doc, getDoc, updateDoc, arrayUnion, Timestamp
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey:            'AIzaSyD7_kFQDxLRMHYFuyiwcOuyZmApVLS-kl0',
+      authDomain:        'rasid-1bb06.firebaseapp.com',
+      projectId:         'rasid-1bb06',
+      storageBucket:     'rasid-1bb06.firebasestorage.app',
+      messagingSenderId: '668525115587',
+      appId:             '1:668525115587:web:e017be3b5cbf4ac3b30a76',
+    };
+    const app  = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    /* ── Helpers ─────────────────────────────────────────── */
+    const $ = (id) => document.getElementById(id);
+    const AR_DIGITS = '٠١٢٣٤٥٦٧٨٩';
+    const toAr = (n) => String(n).replace(/\d/g, (d) => AR_DIGITS[d]);
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+
+    function notify(msg, type = 'ns') {
+      const w = $('nwrap');
+      const n = document.createElement('div');
+      n.className = 'nnotif ' + type;
+      n.textContent = msg;
+      w.appendChild(n);
+      setTimeout(() => n.remove(), 4000);
+    }
+
+    /* Saudi number → WhatsApp link (handles 05xxxxxxxx, 5xxxxxxxx, 9665xxxxxxxx, +9665…) */
+    function waLink(phone) {
+      let d = String(phone || '').replace(/\D/g, '');
+      if (!d) return '';
+      if (d.startsWith('00')) d = d.slice(2);
+      if (d.startsWith('966')) return 'https://wa.me/' + d;
+      if (d.startsWith('0')) d = d.slice(1);
+      return 'https://wa.me/966' + d;
+    }
+
+    function fmtDate(ts, fallback) {
+      try {
+        if (ts && typeof ts.toDate === 'function') {
+          return ts.toDate().toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' });
+        }
+      } catch (_) {}
+      return fallback || '—';
+    }
+
+    function tsMs(ts) {
+      return (ts && typeof ts.toMillis === 'function') ? ts.toMillis() : 0;
+    }
+
+    const OUTCOME_CLASS = { found_safe: '', found_injured: 'warn', found_deceased: 'bad', not_found: 'bad' };
+
+    /* ── State ───────────────────────────────────────────── */
+    let REQUESTS = [];
+    let SEARCH   = '';
+    let ADMIN_UID = null;
+
+    /* ── Render ──────────────────────────────────────────── */
+    function render() {
+      const grid = $('ccGrid');
+      const q = SEARCH.trim().toLowerCase();
+      const list = REQUESTS.filter((r) => {
+        if (!q) return true;
+        return [r.reportNo, r.name, r.leaderName, r.region].some((v) => String(v || '').toLowerCase().includes(q));
+      });
+
+      $('ccCount').textContent = toAr(REQUESTS.length);
+      $('ccLoading').style.display = 'none';
+
+      if (!list.length) {
+        grid.innerHTML = '';
+        $('ccEmpty').style.display = '';
+        $('ccEmptyTitle').textContent = REQUESTS.length ? 'لا توجد نتائج مطابقة' : 'لا توجد طلبات إغلاق حالياً';
+        $('ccEmptySub').textContent   = REQUESTS.length ? 'جرّب البحث بكلمة أخرى.' : 'ستظهر هنا طلبات إغلاق البلاغات التي يرسلها قادة الفرق.';
+        return;
+      }
+      $('ccEmpty').style.display = 'none';
+
+      grid.innerHTML = list.map((r) => {
+        const wa = waLink(r.leaderPhone);
+        const phoneHtml = r.leaderPhone
+          ? `<a class="cc-wa${wa ? '' : ' disabled'}" href="${esc(wa)}" target="_blank" rel="noopener" title="تواصل عبر واتساب">
+               <i class="fab fa-whatsapp"></i>${esc(r.leaderPhone)}
+             </a>`
+          : `<span class="cc-wa disabled"><i class="fab fa-whatsapp"></i>لا يوجد رقم</span>`;
+
+        return `
+        <article class="cc-card">
+          <div class="cc-head">
+            <div class="cc-rid"><i class="fas fa-hashtag"></i> رقم البلاغ: <span>${esc(r.reportNo)}</span></div>
+            <span class="cc-pending"><i class="fas fa-hourglass-half"></i> بانتظار الاعتماد</span>
+          </div>
+
+          <div class="cc-body">
+            <div class="cc-name">${esc(r.name)}</div>
+
+            <div class="cc-info">
+              <div class="cc-i"><div class="cc-l">العمر</div><div class="cc-v">${esc(r.age)}</div></div>
+              <div class="cc-i"><div class="cc-l">الحالة الصحية</div><div class="cc-v">${esc(r.health)}</div></div>
+              <div class="cc-i full"><div class="cc-l">المنطقة / آخر موقع</div><div class="cc-v">${esc(r.region)}</div></div>
+            </div>
+
+            <div class="cc-outcome ${OUTCOME_CLASS[r.outcome] ?? ''}">
+              <div class="cc-l">نتيجة البحث المُبلَّغ عنها</div>
+              <div class="cc-v">${esc(r.outcomeLbl || '—')}</div>
+              ${r.outcomeNotes ? `<div class="cc-note"><b>ملاحظات حول المفقود:</b> ${esc(r.outcomeNotes)}</div>` : ''}
+              ${r.envNote ? `<div class="cc-note"><b>ملاحظات العملية:</b> ${esc(r.envNote)}</div>` : ''}
+            </div>
+
+            <div class="cc-leader">
+              <div class="cc-av">${esc((r.leaderName || '؟').trim().charAt(0) || '؟')}</div>
+              <div>
+                <div class="cc-leader-name">${esc(r.leaderName || '—')}</div>
+                <div class="cc-leader-role">قائد الفريق</div>
+              </div>
+              ${phoneHtml}
+            </div>
+
+            <div class="cc-date"><i class="far fa-clock"></i> تاريخ الطلب: ${esc(r.requestedAtText)}</div>
+          </div>
+
+          <div class="cc-foot">
+            <button class="abtn abtn-acc" type="button" data-act="approve" data-id="${esc(r.docId)}">
+              <i class="fas fa-check"></i> اعتماد الإغلاق
+            </button>
+            <button class="abtn abtn-rej" type="button" data-act="reject" data-id="${esc(r.docId)}">
+              <i class="fas fa-xmark"></i> رفض الطلب
+            </button>
+          </div>
+        </article>`;
+      }).join('');
+    }
+
+    /* ── Decision modal ──────────────────────────────────── */
+    let pending = null; // { act, req }
+
+    function openDecide(act, req) {
+      pending = { act, req };
+      const isApprove = act === 'approve';
+      $('dIcon').className   = 'mhead-icon ' + (isApprove ? 'mhi-acc' : 'mhi-rej');
+      $('dIcon').innerHTML   = `<i class="fas ${isApprove ? 'fa-check' : 'fa-xmark'}"></i>`;
+      $('dTitle').textContent = isApprove ? 'اعتماد إغلاق البلاغ' : 'رفض طلب الإغلاق';
+      $('dText').innerHTML = isApprove
+        ? `سيتم إغلاق البلاغ رقم <b>${esc(req.reportNo)}</b> للمفقود <b>${esc(req.name)}</b> بنتيجة "<b>${esc(req.outcomeLbl)}</b>"، وسيظهر التحديث للمُبلِّغ في صفحة تتبع البلاغ. هل تريد المتابعة؟`
+        : `سيتم رفض طلب إغلاق البلاغ رقم <b>${esc(req.reportNo)}</b>، ويبقى البلاغ مفتوحاً ويستطيع القائد إرسال طلب جديد.`;
+      $('dReasonWrap').style.display = isApprove ? 'none' : 'block';
+      $('dReason').value = '';
+      const btn = $('dConfirm');
+      btn.disabled  = false;
+      btn.className = 'mbtn ' + (isApprove ? 'mbtn-acc' : 'mbtn-rej');
+      btn.innerHTML = isApprove ? '<i class="fas fa-check"></i> اعتماد الإغلاق' : '<i class="fas fa-xmark"></i> تأكيد الرفض';
+      $('decideOvr').classList.add('on');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDecide() {
+      $('decideOvr').classList.remove('on');
+      document.body.style.overflow = '';
+      pending = null;
+    }
+    window.ccCloseDecide = closeDecide;
+
+    $('decideOvr').addEventListener('click', (e) => { if (e.target.id === 'decideOvr') closeDecide(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('decideOvr').classList.contains('on')) closeDecide(); });
+
+    $('dConfirm').addEventListener('click', async () => {
+      if (!pending) return;
+      const { act, req } = pending;
+      const btn = $('dConfirm');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> جارٍ الحفظ…';
+      try {
+        if (act === 'approve') await approveClosure(req);
+        else await rejectClosure(req, $('dReason').value.trim());
+        closeDecide();
+      } catch (e) {
+        console.error('[CaseClosure]', e);
+        notify(e.message && e.message.startsWith('RASID:') ? e.message.slice(6) : 'حدث خطأ أثناء الحفظ. حاول مجدداً.', 'ne');
+        btn.disabled = false;
+        btn.innerHTML = act === 'approve' ? '<i class="fas fa-check"></i> اعتماد الإغلاق' : '<i class="fas fa-xmark"></i> تأكيد الرفض';
+      }
+    });
+
+    /* ── Firestore writes ───────────────────────────────── */
+    async function getFreshPending(docId) {
+      const snap = await getDoc(doc(db, 'Report', docId));
+      if (!snap.exists()) throw new Error('RASID:البلاغ غير موجود.');
+      const d = snap.data();
+      if (!d.closureRequest || d.closureRequest.state !== 'pending') {
+        throw new Error('RASID:تمت معالجة هذا الطلب مسبقاً.');
+      }
+      return d;
+    }
+
+    /* Approve → apply the exact same closing payload the leader used to write directly */
+    async function approveClosure(req) {
+      const d  = await getFreshPending(req.docId);
+      const cr = d.closureRequest;
+      const tsNow    = Timestamp.now();
+      const loggedAt = new Date().toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' });
+
+      const logEntry = {
+        status:         'report_closed',
+        previousStatus: cr.previousStatus || 'search_in_progress',
+        label:          'تم إغلاق البلاغ بنجاح',
+        note:           cr.note || 'تم إغلاق البلاغ.',
+        loggedAt:       loggedAt,
+        timestamp:      tsNow,
+        outcome:        cr.outcome      || null,
+        outcomeLbl:     cr.outcomeLbl   || null,
+        outcomeNotes:   cr.outcomeNotes || null,
+        approvedBy:     ADMIN_UID,
+      };
+
+      await updateDoc(doc(db, 'Report', req.docId), {
+        Status:       'rescued',
+        status:       'rescued',
+        lastUpdate:   loggedAt,
+        statusLog:    arrayUnion(logEntry),
+        closedAt:     tsNow,
+        outcome:      cr.outcome      || null,
+        outcomeLbl:   cr.outcomeLbl   || null,
+        outcomeNotes: cr.outcomeNotes || null,
+        'closureRequest.state':      'approved',
+        'closureRequest.reviewedAt': tsNow,
+        'closureRequest.reviewedBy': ADMIN_UID,
+      });
+      notify('✓ تم اعتماد إغلاق البلاغ ' + req.reportNo, 'ns');
+    }
+
+    async function rejectClosure(req, reason) {
+      await getFreshPending(req.docId);
+      await updateDoc(doc(db, 'Report', req.docId), {
+        'closureRequest.state':        'rejected',
+        'closureRequest.reviewedAt':   Timestamp.now(),
+        'closureRequest.reviewedBy':   ADMIN_UID,
+        'closureRequest.rejectReason': reason || null,
+      });
+      notify('تم رفض طلب إغلاق البلاغ ' + req.reportNo, 'nw');
+    }
+
+    /* ── Card buttons ───────────────────────────────────── */
+    $('ccGrid').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-act]');
+      if (!b) return;
+      const req = REQUESTS.find((r) => r.docId === b.dataset.id);
+      if (req) openDecide(b.dataset.act, req);
+    });
+
+    $('ccSearch').addEventListener('input', function () { SEARCH = this.value; render(); });
+
+    /* ── Live listener: all reports with a pending closure request ── */
+    function listen() {
+      const q = query(collection(db, 'Report'), where('closureRequest.state', '==', 'pending'));
+      onSnapshot(q, (snap) => {
+        REQUESTS = [];
+        snap.forEach((s) => {
+          const d  = s.data();
+          const cr = d.closureRequest || {};
+          const st = d.Status || d.status || '';
+          if (['rescued', 'found', 'closed', 'report_closed'].includes(st)) return; // already closed
+          REQUESTS.push({
+            docId:           s.id,
+            reportNo:        d.reportId || s.id,
+            name:            d.MissingPersonName || d.MisssionPersoneName || d.missingPersonName || '—',
+            age:             d.Age || d.age || '—',
+            health:          d.HealthStatus || d.healthStatus || 'لا يوجد',
+            region:          [d.Region, d.LastSeenLocation].filter(Boolean).join(' — ') || d.location || '—',
+            outcome:         cr.outcome,
+            outcomeLbl:      cr.outcomeLbl,
+            outcomeNotes:    cr.outcomeNotes,
+            envNote:         cr.customNote || '',
+            leaderName:      cr.leaderName || d.leader || '—',
+            leaderPhone:     cr.leaderPhone || '',
+            requestedAtText: fmtDate(cr.requestedAt, cr.requestedAtText),
+            _ms:             tsMs(cr.requestedAt),
+          });
+        });
+        REQUESTS.sort((a, b) => b._ms - a._ms); // newest first
+        render();
+      }, (err) => {
+        console.error('[CaseClosure] listener error', err);
+        $('ccLoading').style.display = 'none';
+        notify('تعذّر تحميل الطلبات. تحقق من الصلاحيات.', 'ne');
+      });
+    }
+
+    /* ── Auth + admin guard ─────────────────────────────── */
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = 'index.html'; return; }
+      ADMIN_UID = user.uid;
+
+      let role = null;
+      try { role = await getRoleFromFirestore(user.uid); } catch (_) {}
+      if (role && role !== 'admin') {
+        notify('هذه الصفحة متاحة للإدارة فقط', 'ne');
+        setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+        return;
+      }
+      if (role) localStorage.setItem('role', role);
+      renderMenu(role || 'admin');
+
+      try {
+        const aDoc = await getDoc(doc(db, 'Admin', user.uid));
+        const { FirstName = '', LastName = '' } = aDoc.exists() ? aDoc.data() : {};
+        $('userName').textContent    = (FirstName + ' ' + LastName).trim() || 'مشرف';
+        $('userInitial').textContent = FirstName ? FirstName.charAt(0) : 'م';
+      } catch (_) {
+        $('userName').textContent = 'مشرف';
+        $('userInitial').textContent = 'م';
+      }
+
+      listen();
+    });
+  </script>
+</body>
+</html>
