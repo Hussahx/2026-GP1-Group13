@@ -737,6 +737,9 @@ section { padding: var(--section-py) 0; }
   gap: 1rem;
   transition: var(--transition);
 }
+.about-card-body { flex: 1; min-width: 0; }
+.about-card-body h3 { margin-bottom: 0.25rem; }
+.about-card-body p { margin: 0; }
 .about-card:hover {
   transform: translateX(-4px);
   box-shadow: 0 12px 36px rgba(139,107,71,0.13);
