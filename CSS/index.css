@@ -830,6 +830,7 @@ section { padding: var(--section-py) 0; }
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   overflow: hidden;
   text-overflow: ellipsis;
   min-height: calc(1.85em * 3); /* consistent content area height */
@@ -1169,7 +1170,7 @@ section { padding: var(--section-py) 0; }
 /* ============================================================
    14. STATS + CHARTS
    ============================================================ */
-.stats { background: var(--white); }
+.stats { background: linear-gradient(180deg, var(--bg-deep) 0%, var(--background) 100%); }
 
 /* Mobile: 2 columns for counters */
 .counters-grid {
@@ -1272,7 +1273,7 @@ canvas {
 /* ============================================================
    15. CTA SECTION
    ============================================================ */
-.cta-section { background: linear-gradient(180deg, var(--bg-deep) 0%, var(--background) 100%); }
+.cta-section { background: var(--white); }
 
 .cta-box {
   background: linear-gradient(135deg, var(--dark-base) 0%, var(--dark-mid) 100%);
