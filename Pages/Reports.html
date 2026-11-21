@@ -587,7 +587,7 @@ body.reports-page .bov{
     
     </button>
       <nav class="header-nav" aria-label="تنقل سريع">
-        <div class="user-chip" title="حسابي" onclick="window.location.href='/profile1.html'" style="cursor:pointer;">
+        <div class="user-chip" title="حسابي" onclick="window.location.href='profile1.html'" style="cursor:pointer;">
           <span class="avatar" id="userInitial"></span>
           <span class="name" id="userName"></span>
         </div>
@@ -630,7 +630,8 @@ body.reports-page .bov{
         <div class="frow">
           <input class="sinput" id="srch" type="search" placeholder="🔍 ابحث باسم أو رقم أو منطقة...">
           <select class="sselect" id="srt">
-            <option value="newest">الأحدث</option>
+            <option value="nearest" selected> الاقرب جغرافيًا</option>
+<option value="newest">الأحدث</option>
             <option value="urgent">الأعلى أولوية</option>
             <option value="oldest">الأقدم</option>
           </select>
@@ -1147,6 +1148,16 @@ if (!visibleStatuses.includes(dbStatus)) return;
       }
 
       startListening(uid);
+
+/* Fetch the volunteer's registered city → used by "nearest" sorting */
+if (uid && window._fbGetRawVolunteerByUid) {
+  window._fbGetRawVolunteerByUid(uid).then(function (v) {
+    window._myCity = (v && v.City) ? String(v.City).trim() : '';
+    if (typeof render === 'function') render();
+  }).catch(function (e) {
+    console.warn('city fetch failed:', e);
+  });
+}
     });
 
     // ── Firestore action: takeover ────────────────────────────────────
@@ -1490,7 +1501,77 @@ await updateDoc(doc(db, 'Report', docId), {
   <script>
     var TAB  = 'all';
     var SRCH = '';
-    var SORT = 'newest';
+    var SORT = 'nearest';
+window._myCity = '';
+
+/* ── Approximate centre of each administrative region (lat, lng) ── */
+var REGION_COORDS = {
+  'الرياض':          [24.7136, 46.6753],
+  'مكة المكرمة':      [21.3891, 39.8579],
+  'المدينة المنورة':  [24.4672, 39.6024],
+  'القصيم':          [26.3260, 43.9750],
+  'المنطقة الشرقية':  [26.4207, 50.0888],
+  'عسير':            [18.2164, 42.5053],
+  'تبوك':            [28.3838, 36.5550],
+  'حائل':            [27.5114, 41.7208],
+  'الحدود الشمالية':  [30.9753, 41.0381],
+  'جازان':           [16.8892, 42.5511],
+  'نجران':           [17.4933, 44.1277],
+  'الباحة':          [20.0129, 41.4677],
+  'الجوف':           [29.9697, 40.2064]
+};
+
+/* ── Volunteer city (Volunteer.City) → administrative region ── */
+var CITY_TO_REGION = {
+  'الرياض':'الرياض', 'الخرج':'الرياض', 'المجمعة':'الرياض',
+  'جدة':'مكة المكرمة', 'مكة المكرمة':'مكة المكرمة', 'الطائف':'مكة المكرمة',
+  'المدينة المنورة':'المدينة المنورة', 'ينبع':'المدينة المنورة',
+  'الدمام':'المنطقة الشرقية', 'الخبر':'المنطقة الشرقية', 'الظهران':'المنطقة الشرقية',
+  'الجبيل':'المنطقة الشرقية', 'الأحساء':'المنطقة الشرقية', 'القطيف':'المنطقة الشرقية',
+  'المنطقة الشرقية':'المنطقة الشرقية',
+  'بريدة':'القصيم', 'القصيم':'القصيم',
+  'أبها':'عسير', 'خميس مشيط':'عسير', 'بيشة':'عسير', 'عسير':'عسير',
+  'تبوك':'تبوك', 'حائل':'حائل', 'نجران':'نجران', 'الباحة':'الباحة',
+  'جازان':'جازان', 'جيزان':'جازان',
+  'عرعر':'الحدود الشمالية', 'الحدود الشمالية':'الحدود الشمالية',
+  'سكاكا':'الجوف', 'الجوف':'الجوف'
+};
+
+function normAr(s){ return String(s || '').replace(/\s+/g,' ').trim(); }
+
+function regionOfCity(city){
+  var c = normAr(city);
+  return c ? (CITY_TO_REGION[c] || '') : '';
+}
+
+function canonRegion(reg){
+  var c = normAr(reg);
+  if (c === 'جيزان') c = 'جازان';
+  return REGION_COORDS[c] ? c : '';
+}
+
+function distKm(a, b){
+  var R = 6371, rad = Math.PI / 180;
+  var dLat = (b[0] - a[0]) * rad, dLng = (b[1] - a[1]) * rad;
+  var h = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(a[0]*rad) * Math.cos(b[0]*rad) * Math.sin(dLng/2) * Math.sin(dLng/2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/* 0 = same region, Infinity = report region unknown */
+function regionDistance(fromRegion, reportRegion){
+  var to = canonRegion(reportRegion);
+  if (!to) return Infinity;
+  if (to === fromRegion) return 0;
+  return distKm(REGION_COORDS[fromRegion], REGION_COORDS[to]);
+}
+
+function emptyMsg(type){
+  if (SRCH && SRCH.trim()) return 'لا توجد نتائج مطابقة لبحثك.';
+  return type === 'active'
+    ? 'لا توجد بلاغات جارٍ العمل عليها حالياً.'
+    : 'لا توجد بلاغات جديدة حالياً.';
+}
 
     var TEAM = {
       'أح':{n:'أحمد العمري',p:'0501110001'},'مح':{n:'محمد الغامدي',p:'0502220002'},
@@ -1527,6 +1608,7 @@ await updateDoc(doc(db, 'Report', docId), {
       var d=new Date(year,m,day); if(isNaN(d.getTime())) return null; return d;
     }
     function getReportTime(r){
+      if (r && typeof r.dt === 'number' && r.dt > 0) return r.dt;
       var raw=(r&&r.ld)?r.ld:(r&&r.det&&(r.det['تاريخ الفقدان']||r.det['تاريخ البلاغ']))?(r.det['تاريخ الفقدان']||r.det['تاريخ البلاغ']):null;
       var d=parseArDate(raw); if(d) return d.getTime();
       return (typeof r.dt==='number')?r.dt:0;
@@ -1571,26 +1653,33 @@ await updateDoc(doc(db, 'Report', docId), {
       });
     }
     function applySort(arr){
-      var s=arr.slice();
-      if(SORT==='urgent'){
-        s.sort(function(a,b){
-          var ha=(a.hlth && a.hlth!=='لا يوجد' && a.hlth!=='جيدة' && a.hlth!=='—')?0:1;
-          var hb=(b.hlth && b.hlth!=='لا يوجد' && b.hlth!=='جيدة' && b.hlth!=='—')?0:1;
-          if(ha!==hb) return ha-hb;
-          var na=parseInt(a2w(String(a.age)))||0;
-          var nb=parseInt(a2w(String(b.age)))||0;
-          var aa=(na<=12||na>=60)?0:1;
-          var ab=(nb<=12||nb>=60)?0:1;
-          if(aa!==ab) return aa-ab;
-          return getReportTime(b)-getReportTime(a);
-        });
-      } else if(SORT==='oldest'){
-        s.sort(function(a,b){return getReportTime(a)-getReportTime(b);});
-      } else {
-        s.sort(function(a,b){return getReportTime(b)-getReportTime(a);});
-      }
-      return s;
+  var s = arr.slice();
+  function byNewest(a,b){ return getReportTime(b) - getReportTime(a); }
+
+  if (SORT === 'urgent') {
+    s.sort(function(a,b){
+      var d = urgency(a.age, a.hlth).ord - urgency(b.age, b.hlth).ord;
+      return d !== 0 ? d : byNewest(a,b);
+    });
+  } else if (SORT === 'oldest') {
+    s.sort(function(a,b){ return getReportTime(a) - getReportTime(b); });
+  } else if (SORT === 'nearest') {
+    var my = regionOfCity(window._myCity);
+    if (!my) {
+      s.sort(byNewest);            /* region unknown → fall back to newest */
+    } else {
+      s.sort(function(a,b){
+        var da = regionDistance(my, a.region);
+        var db = regionDistance(my, b.region);
+        if (da === db) return byNewest(a,b);
+        return da - db;            /* same region = 0 → first; then by km */
+      });
     }
+  } else {
+    s.sort(byNewest);
+  }
+  return s;
+}
 
     function buildCards(arr,type){
       if(!arr.length){
@@ -1598,7 +1687,9 @@ await updateDoc(doc(db, 'Report', docId), {
           '<div class="ei"><i class="fas fa-folder-open"></i></div>' +
           '<div class="empty-title">لا توجد بلاغات</div>' +
           '<div class="empty-sub">' +
-            (type==='org' ? 'لم تنضم لأي بلاغ بعد.' : 'لا يوجد بلاغات جديدة حالياً.') +
+            
+  emptyMsg(type) +
+
           '</div>' +
         '</div>';
       }
@@ -2173,7 +2264,7 @@ function openJoinTeamConfirm(id, missingName){
     }
 
     document.getElementById('srch').addEventListener('input',function(){ SRCH=this.value; render(); });
-    document.getElementById('srt').addEventListener('change',function(){ SORT=this.value; render(); });
+    document.getElementById('srt').addEventListener('change',function(){ SORT=this.value; pageNew=1; pageAct=1; render(); });
 
     render();
   </script>
