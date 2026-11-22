@@ -131,11 +131,10 @@
       display:inline-flex; align-items:center; justify-content:center; gap:6px;
       min-height:40px; transition:all .22s ease; color:#fff;
     }
-    .abtn:disabled { opacity:.55; cursor:not-allowed; transform:none !important; }
-    .abtn-acc { background:linear-gradient(135deg, #3e9a5a, #2d7a44); box-shadow:0 3px 10px rgba(45,122,68,0.28); }
-    .abtn-acc:hover { background:linear-gradient(135deg, #2d7a44, #1e5c30); transform:translateY(-1px); }
-    .abtn-rej { background:linear-gradient(135deg, #c0392b, #962d22); box-shadow:0 3px 10px rgba(192,57,43,0.28); }
-    .abtn-rej:hover { background:linear-gradient(135deg, #962d22, #7a2318); transform:translateY(-1px); }
+    .abtn-acc { background:#edfaf3; color:var(--grn); border:1px solid #a0d8b0; box-shadow:none; }
+.abtn-acc:hover { background:#edfaf3; border-color:var(--grn); transform:translateY(-1px); }
+.abtn-rej { background:#fef2f2; color:var(--red); border:1px solid #ffc0b8; box-shadow:none; }
+.abtn-rej:hover { background:#fef2f2; border-color:var(--red); transform:translateY(-1px); }
 
     /* حالة فارغة */
     .empty-state {

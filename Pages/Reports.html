@@ -211,7 +211,7 @@ body.reports-page .bov{
       font-family: 'Tajawal', sans-serif;
     }
     .mclose:hover { background: rgba(166,124,82,0.10); transform: translateY(-1px); }
-    .mbody { padding: 1.1rem; overflow-y: auto; flex: 1; }
+    .mbody { padding: 1.1rem; overflow-y: auto; flex: 1; min-height: 0; }
     .mbody::-webkit-scrollbar { width: 5px; }
     .mbody::-webkit-scrollbar-track { background: rgba(245,239,230,0.6); border-radius: 4px; }
     .mbody::-webkit-scrollbar-thumb { background: rgba(166,124,82,0.35); border-radius: 4px; }
@@ -238,7 +238,7 @@ body.reports-page .bov{
       border: 1px solid rgba(166,124,82,0.14);
       border-radius: 9px; padding: 12px;
     }
-    .mfoot { padding: 0 1.1rem 1.2rem; border-top: none; }
+    .mfoot { padding: 1rem 1.1rem 1.4rem; border-top: 1px solid rgba(166,124,82,0.10); margin-top: 4px; }
     @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,158,82,.5);}70%{box-shadow:0 0 0 6px rgba(45,158,82,0);}100%{box-shadow:0 0 0 0 rgba(45,158,82,0);}}
     @media(max-width:767px){.s-inner{padding:0 14px;}.tab{padding:12px 13px;font-size:12.5px;}.main{padding:16px 14px 36px;}.grid{grid-template-columns:1fr;gap:11px;}.modal{border-radius:18px;max-width:calc(100% - 2rem);}.dgrid{grid-template-columns:1fr 1fr;}.overlay{align-items:center;padding:1rem;}}
     @media(max-width:380px){.s-inner{padding:0 11px;}.tab{padding:11px 11px;font-size:12px;}.main{padding:14px 12px 30px;}.dgrid{grid-template-columns:1fr;}}
@@ -567,7 +567,7 @@ body.reports-page .bov{
         <div class="msec"><div class="mstitle">معلومات المفقود</div><div class="dgrid" id="mDetails"></div></div>
         <div class="msec"><div class="mstitle">وصف البلاغ</div><div class="mdesc" id="mDesc"></div></div>
 
-        <div class="msec"><div class="mstitle">فريق البحث</div><div id="mTeam"></div></div>
+                        <div class="msec"><div class="mstitle">فريق البحث</div><div id="mTeam"></div></div>
       </div>
       <div class="mfoot" id="mFoot"></div>
     </div>
