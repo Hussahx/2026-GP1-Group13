@@ -28,11 +28,10 @@ const C = {
   text: '#2B2118'
 };
 const STATUS = [
-  { key: 'received', label: 'بلاغ مستلم',   color: '#7FA6C9' },
-  { key: 'progress', label: 'جارٍ العمل عليها', color: '#E0B25C' },
-  { key: 'found',    label: 'تم العثور', color: '#5BA37F' },
-  { key: 'notfound', label: 'لم يتم العثور',        color: '#C9806B' },
-  { key: 'closed',   label: 'مغلق',                 color: '#A8B0AA' }   // fallback only: closed with no outcome (hidden when 0)
+  { key: 'review',   label: 'قيد المراجعة', color: '#7FA6C9' },
+  { key: 'search',   label: 'جارٍ البحث',   color: '#E0B25C' },
+  { key: 'found',    label: 'تم العثور',    color: '#5BA37F' },
+  { key: 'notfound', label: 'لم يتم العثور', color: '#C9806B' }
 ];
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
@@ -46,6 +45,7 @@ const EXCLUDE_MERGED = true;
 
 const $ = (id) => document.getElementById(id);
 const charts = {};
+let drawRegionFn = null;   // region chart is built when its tab is first shown
 
 /* ── Helpers ────────────────────────────────────────────── */
 const toDate = (t) => { if (!t) return null; const d = t.toDate ? t.toDate() : new Date(t); return isNaN(d) ? null : d; };
@@ -64,6 +64,30 @@ function statusKey(d) {
   if (/clos|مغلق|مقفل/.test(s)) return 'closed';                    // closed but no outcome recorded
   if (/progress|جار|متابع|معالج/.test(s)) return 'progress';
   return 'received';                                                // "Report Received" and anything unknown
+}
+
+// Chart-only classification (4 strict categories). Returns a key, or 'skip:<reason>'.
+function chartClass(d) {
+  const st = String(d.Status || d.status || '').trim().toLowerCase();
+  const ap = String(d.ApprovalStutes || d.ApprovalStatus || '').trim().toLowerCase();
+  const outcome = String(d.outcome || '').trim().toLowerCase();
+  const team = (Array.isArray(d.teamMembers) ? d.teamMembers : []).filter(Boolean).length;
+
+  if (ap === 'rejected' || st === 'rejected') return 'skip:مرفوض';
+
+  if (/^(rescued|found|closed|report_closed)$/.test(st)) {
+    if (/^found_(safe|injured|deceased)$/.test(outcome)) return 'found';
+    if (outcome === 'not_found') return 'notfound';
+    return 'skip:مغلق بدون نتيجة مؤكدة';
+  }
+
+  if (ap === 'approved') {
+    return team > 0 ? 'search' : 'skip:معتمد بدون متطوعين';
+  }
+  if (st === 'under review' || st === 'active') return 'skip:حالة متقدمة بدون اعتماد مسجّل';
+
+  if (st === 'report received' || st === '') return 'review';
+  return 'skip:حالة غير معروفة: ' + st;
 }
 
 // Report date: LoggedAt (Timestamp) → ReportDate ("5/10/2026" = M/D/YYYY) → earliest statusLog entry
@@ -86,6 +110,8 @@ async function loadData() {
     days.push({ key: dayKey(dt), label: DAYS_AR[dt.getDay()], count: 0 });
   }
   const status = { received: 0, progress: 0, found: 0, notfound: 0, closed: 0 };
+  const chartStatus = { review: 0, search: 0, found: 0, notfound: 0 };
+  const chartSkipped = [];
   const regions = {};
   let foundCount = 0, volunteers = 0, failed = false;
 
@@ -122,8 +148,11 @@ async function loadData() {
       let key = statusKey(d);
       if (/reject|رفض|مرفوض/.test(approval)) key = 'received';        // rejected reports stay in "received" (only approval moves a report to in-progress)
       if (key === 'received' && /approved|مقبول|معتمد/.test(approval)) key = 'progress';
-      status[key]++;
-      if (key === 'found') foundCount++;
+      status[key]++;                                                   // feeds the total (all non-merged reports)
+
+      const ck = chartClass(d);                                        // strict 4-category donut classification
+      if (ck.indexOf('skip:') === 0) chartSkipped.push({ id: doc.id, reason: ck.slice(5) });
+      else { chartStatus[ck]++; if (ck === 'found') foundCount++; }
 
       const rg = String(d.Region || '').trim();
       if (rg) regions[rg] = (regions[rg] || 0) + 1;
@@ -134,6 +163,8 @@ async function loadData() {
 
     console.log('Charts: Report docs in Firestore =', reports.size, '| counted =', reports.size - skipped.length, '| skipped =', skipped.length);
     if (skipped.length) console.table(skipped);
+    console.log('Chart: excluded from donut =', chartSkipped.length);
+    if (chartSkipped.length) console.table(chartSkipped);
 
     // Volunteers (approved + valid account)
     const vols = await getDocs(collection(db, 'Volunteer'));
@@ -146,7 +177,8 @@ async function loadData() {
     console.error('Charts: could not read Firestore →', err.code || '', err.message);
   }
 
-  return { days, status, regions, foundCount, volunteers, completed: status.found + status.notfound + status.closed, failed };
+  const totalAll = status.received + status.progress + status.found + status.notfound + status.closed;
+  return { days, status, chartStatus, totalAll, regions, foundCount, volunteers, completed: status.found + status.notfound + status.closed, failed };
 }
 
 /* ── Chart.js plugins ───────────────────────────────────── */
@@ -177,12 +209,13 @@ const valueLabelsH = {
     ctx.restore();
   }
 };
+let centerTotalValue = 0;                    // set from drawAll (all non-merged reports)
 const centerTotal = {                       // total inside the doughnut
   id: 'centerTotal',
   afterDraw(chart) {
     const m = chart.getDatasetMeta(0).data[0];
     if (!m) return;
-    const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+    const total = centerTotalValue;
     const { ctx } = chart;
     ctx.save();
     ctx.textAlign = 'center';
@@ -190,44 +223,59 @@ const centerTotal = {                       // total inside the doughnut
     ctx.font = "800 36px 'Tajawal', sans-serif";
     ctx.fillText(total, m.x, m.y + 4);
     ctx.fillStyle = C.text;
-    ctx.font = "500 14px 'Tajawal', sans-serif";
-    ctx.fillText('بلاغ', m.x, m.y + 27);
+    const label = 'إجمالي البلاغات';
+    let fs = 14;
+    ctx.font = "500 " + fs + "px 'Tajawal', sans-serif";
+    while (fs > 10 && ctx.measureText(label).width > m.innerRadius * 1.5) {
+      fs--; ctx.font = "500 " + fs + "px 'Tajawal', sans-serif";
+    }
+    ctx.fillText(label, m.x, m.y + 27);
     ctx.restore();
   }
 };
-
+// Tooltip position for the doughnut: above the center text, never on top of it
+Chart.Tooltip.positioners.aboveCenter = function (items) {
+  if (!items.length) return false;
+  const el = items[0].element;
+  return { x: el.x, y: el.y - 50 };
+};
 Chart.defaults.font.family = "'Tajawal', sans-serif";
 Chart.defaults.color = C.text;
 const axisTitle = (text) => ({ display: true, text, font: { size: 13, weight: '700' } });
 
 /* ── Draw ───────────────────────────────────────────────── */
-function drawAll({ days, status, regions, foundCount, volunteers, completed, failed }) {
+
+function drawAll({ days, status, chartStatus, totalAll, regions, foundCount, volunteers, completed, failed }) {
 
   // Doughnut — status
   if ($('statusDoughnutChart')) {
-    const total = STATUS.reduce((a, s) => a + status[s.key], 0);
+    centerTotalValue = totalAll;
     charts.status = new Chart($('statusDoughnutChart'), {
       type: 'doughnut',
       data: {
         labels: STATUS.map((s) => s.label),
         datasets: [{
-          data: STATUS.map((s) => status[s.key]),
+          data: STATUS.map((s) => chartStatus[s.key]),
           backgroundColor: STATUS.map((s) => s.color),
           borderColor: '#FFFFFF',
           borderWidth: 3,
           hoverOffset: 8
         }]
       },
-      options: { responsive: true, maintainAspectRatio: false, cutout: '64%', plugins: { legend: { display: false } } },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '64%', plugins: { legend: { display: false }, tooltip: { position: 'aboveCenter', xAlign: 'center', yAlign: 'bottom', callbacks: { label: (c) => {
+        const n = c.raw, t = c.dataset.data.reduce((a, b) => a + b, 0);
+        const p = t ? Math.round((n / t) * 100) : 0;
+        const unit = n === 1 ? 'بلاغ' : n === 2 ? 'بلاغان' : n <= 10 ? 'بلاغات' : 'بلاغًا';
+        return ' ' + c.label + ' — ' + n + ' ' + unit + ' — ' + p + '%';
+      } } } } },
       plugins: [centerTotal]
     });
-    if ($('statusLegend')) $('statusLegend').innerHTML = STATUS.filter((s) => s.key !== 'closed' || status.closed > 0).map((s) => {
-      const n = status[s.key];
-      const pct = total ? Math.round((n / total) * 100) : 0;
+    if ($('statusLegend')) $('statusLegend').innerHTML = STATUS.map((s) => {
+      const n = chartStatus[s.key];
       return '<span class="leg-item"><span class="leg-dot" style="background:' + s.color + '"></span>' +
-             s.label + ' <bdi dir="ltr">' + n + ' - ' + pct + '%</bdi></span>';
+             s.label + ' <bdi dir="ltr">(' + n + ')</bdi></span>';
     }).join('');
-    if ($('counterTotalReports')) $('counterTotalReports').textContent = total;
+    if ($('counterTotalReports')) $('counterTotalReports').textContent = totalAll;
     if ($('counterFoundReports')) $('counterFoundReports').textContent = foundCount;
   }
 
@@ -275,7 +323,8 @@ function drawAll({ days, status, regions, foundCount, volunteers, completed, fai
   }
 
   // Tab 2 — horizontal bars, all 13 regions (zero included), sorted high → low
-  if ($('regionBarChart')) {
+  drawRegionFn = () => {
+    if (!$('regionBarChart') || charts.region) return;
     const list = REGIONS.map((r) => [r, regions[r] || 0]).sort((a, b) => b[1] - a[1]);
     charts.region = new Chart($('regionBarChart'), {
       type: 'bar',
@@ -310,9 +359,10 @@ function drawAll({ days, status, regions, foundCount, volunteers, completed, fai
       },
       plugins: [valueLabelsH]
     });
-    if ($('regionTotal')) $('regionTotal').textContent =
+        if ($('regionTotal')) $('regionTotal').textContent =
       'المجموع: ' + list.reduce((a, r) => a + r[1], 0) + ' بلاغ';
-  }
+  };
+  if ($('panelRegion') && !$('panelRegion').hidden) drawRegionFn();
 
   if ($('counterActiveVolunteers')) $('counterActiveVolunteers').textContent = volunteers;
   if ($('counterCompletedMissions')) $('counterCompletedMissions').textContent = completed;
@@ -330,7 +380,11 @@ function initTabs() {
     tab.addEventListener('click', () => {
       tabs.forEach((t) => { t.classList.toggle('active', t === tab); t.setAttribute('aria-selected', t === tab); });
       document.querySelectorAll('.chart-panel').forEach((p) => (p.hidden = p.id !== tab.dataset.target));
-      Object.values(charts).forEach((c) => c.resize());   // redraw at the right size once visible
+            Object.values(charts).forEach((c) => c.resize());
+            if (tab.dataset.target === 'panelRegion' && typeof drawRegionFn === 'function') {
+  drawRegionFn();
+}
+      requestAnimationFrame(() => Object.values(charts).forEach((c) => { c.resize(); c.update('none'); }));   // redraw once the panel has real size
     });
   });
 }
