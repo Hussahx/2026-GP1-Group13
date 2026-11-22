@@ -67,7 +67,7 @@ function statusClass(s) {
 /* ── Firestore ── */
 async function fetchAllRequests() {
   const [{ db }, fsMod] = await Promise.all([
-    import('/JS/firebase.js'),
+    import('../JS/firebase.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
   ]);
   const { collection, getDocs } = fsMod;
@@ -97,7 +97,7 @@ async function fetchAllRequests() {
 
 async function acceptRequest(id) {
   const [{ db }, fsMod, authMod] = await Promise.all([
-    import('/JS/firebase.js'),
+    import('../JS/firebase.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
   ]);
@@ -144,7 +144,7 @@ if (id !== uid) {
 
 async function rejectRequest(id, reason) {
   const [{ db }, fsMod] = await Promise.all([
-    import('/JS/firebase.js'),
+    import('../JS/firebase.js'),
     import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
   ]);
   const { doc, getDoc, updateDoc, serverTimestamp } = fsMod;

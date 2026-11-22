@@ -575,8 +575,8 @@ style="display:none;position:fixed;inset:0;background:rgba(42,31,18,.52);backdro
 
   <!-- ═══════════════ FIREBASE + MAIN LOGIC ═══════════════ -->
   <script type="module">
-  import { renderMenu } from '/JS/sidebar-menu.js';
-  import { getRoleFromFirestore } from '/JS/firebase.js';
+  import { renderMenu } from '../JS/sidebar-menu.js';
+  import { getRoleFromFirestore } from '../JS/firebase.js';
     import { initializeApp, getApps }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getAuth, onAuthStateChanged }
@@ -681,6 +681,25 @@ function calcDaysAgo(value) {
       w.appendChild(d);
       setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); },4200);
     }
+// جديد: إرسال تنبيه واتساب للقائد الجديد
+async function notifyNewLeader(r){
+  try {
+    await fetch('https://rasid-whatsapp-notify.sshrg99.workers.dev/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-App-Secret': 'qwertyuioplkjhgfdsazxcvbnmmmmmmhgfdsavbnbvctr'
+      },
+      body: JSON.stringify({
+        type: 'leader_assigned',
+        reportId: r._docId,
+        missingName: r.nm,
+        reportLocation: r.loc
+      })
+    });
+  } catch(e){ console.error('WhatsApp leader notify error', e); }
+}
+
 window.confirmLeaveTeam = async function(){
   if(!pendingLeaveReport || !currentUid) return;
 
@@ -736,6 +755,11 @@ window.confirmLeaveTeam = async function(){
     }
 
     await updateDoc(doc(db, 'Report', r._docId), payload);
+
+    // جديد: لو الخارج قائد وتعيّن قائد بديل، نرسل له التنبيه
+    if (r.role === 'leader' && remainingUIDs.length > 0) {
+      notifyNewLeader(r);
+    }
 
     window.closeLeaveConfirm();
     notify('تم خروجك من فريق البلاغ بنجاح', 's');

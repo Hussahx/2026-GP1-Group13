@@ -2325,11 +2325,11 @@ style="display:none;position:fixed;inset:0;background:rgba(42,31,18,.52);backdro
   </div>
 </div>
 <script type="module">
-  import { auth, db } from '/JS/firebase.js';
+  import { auth, db } from '../JS/firebase.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { renderMenu } from '/JS/sidebar-menu.js';
-  import { getRoleFromFirestore } from '/JS/firebase.js';
+  import { renderMenu } from '../JS/sidebar-menu.js';
+  import { getRoleFromFirestore } from '../JS/firebase.js';
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
